@@ -9,7 +9,7 @@ import "./surface-motion.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
-  title: "Octagram — Designing Impact. Engineering Beauty.",
+  title: "Octagram",
   description:
     "Jordan-based software engineering and digital innovation. Explore Octagram's web platforms, custom software, AI, healthcare and education projects, and the team behind them.",
   alternates: { canonical: "/" },
