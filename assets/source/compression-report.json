@@ -1,0 +1,9 @@
+{
+  "format": "glTF 2.0 binary",
+  "extension": "EXT_meshopt_compression",
+  "originalBytes": 443088,
+  "compressedBytes": 215968,
+  "compressedViews": 60,
+  "verifiedViews": 60,
+  "lossless": true
+}

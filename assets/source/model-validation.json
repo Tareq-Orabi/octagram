@@ -1,0 +1,24 @@
+{
+  "modules": 8,
+  "meshes": 12,
+  "gradientTextures": 12,
+  "centralHoleRayHits": 0,
+  "bounds": [
+    3.4999999403953552,
+    3.5450577337683478,
+    0.22000020137550902
+  ],
+  "meshoptDecoded": true,
+  "finiteGeometry": true,
+  "bytes": 215968,
+  "moduleNames": [
+    "module-east",
+    "module-north",
+    "module-north-east",
+    "module-north-west",
+    "module-south",
+    "module-south-east",
+    "module-south-west",
+    "module-west"
+  ]
+}

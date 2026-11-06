@@ -1,0 +1,154 @@
+/* Real Blender-rendered relief supplies the grazing light in the existing cards. */
+.motion-surface {
+  transform: perspective(1100px) rotateX(var(--surface-rx, 0deg))
+    rotateY(var(--surface-ry, 0deg)) translateY(var(--surface-lift, 0px));
+  transform-style: preserve-3d;
+  transition:
+    border-color 0.45s,
+    box-shadow 0.45s;
+}
+.motion-surface:hover,
+.motion-surface:focus-within {
+  border-color: color-mix(
+    in srgb,
+    var(--brand-peach) 60%,
+    var(--border-hairline)
+  );
+  box-shadow: 0 22px 48px #0004;
+}
+.team-window.motion-surface,
+.commitment-card.motion-surface {
+  background-image:
+    radial-gradient(
+      ellipse at var(--light-x, 50%) var(--light-y, 0%),
+      #fdaa7d0c,
+      transparent 65%
+    ),
+    linear-gradient(#080909ed, #080909ed), url("/assets/surface-relief.webp");
+  background-size: auto, auto, 420px;
+  background-position: center, center, center;
+}
+.motion-visible .project-visual > svg {
+  animation: artwork-drift 9s ease-in-out infinite alternate;
+  transform-origin: 50% 55%;
+}
+.project-showcase:nth-child(even) .project-visual > svg {
+  animation-delay: -4s;
+}
+.motion-visible .project-visual svg circle {
+  animation: signal-breathe 5s ease-in-out infinite alternate;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.motion-visible .project-visual svg circle:nth-of-type(even) {
+  animation-delay: -2.5s;
+}
+.motion-visible .terminal-idle i {
+  animation: terminal-pulse 1.8s steps(2, end) infinite;
+}
+.principle-column .principle-index {
+  transition:
+    color 0.4s,
+    transform 0.6s;
+}
+.principle-column:hover .principle-index {
+  color: var(--brand-peach);
+  transform: translateY(-8px);
+}
+.engineering-stage {
+  transition:
+    border-color 0.6s,
+    background 0.6s;
+}
+.engineering-stage.stage-current {
+  border-color: var(--brand-teal);
+  background: linear-gradient(90deg, #41978b0b, transparent);
+}
+.engineering-stage.stage-current h3 {
+  color: var(--brand-mint);
+}
+.motion-visible .commitment-card svg {
+  animation: icon-float 6s ease-in-out infinite alternate;
+}
+.motion-visible .section-topline {
+  background-image: linear-gradient(
+    90deg,
+    var(--brand-peach),
+    var(--brand-teal)
+  );
+  background-repeat: no-repeat;
+  background-size: calc(var(--section-progress, 0) * 100%) 1px;
+  background-position: left top;
+}
+.portfolio-intro h2,
+.commitment-intro h2,
+.engineering-intro h2 {
+  translate: 0 var(--section-drift, 0px);
+}
+@keyframes artwork-drift {
+  from {
+    transform: perspective(900px) rotateY(-7deg) rotateX(2deg) translateY(4px);
+  }
+  to {
+    transform: perspective(900px) rotateY(7deg) rotateX(-2deg) translateY(-5px);
+  }
+}
+@keyframes signal-breathe {
+  from {
+    opacity: 0.6;
+    scale: 0.96;
+  }
+  to {
+    opacity: 1;
+    scale: 1.04;
+  }
+}
+@keyframes terminal-pulse {
+  50% {
+    opacity: 0.15;
+  }
+}
+@keyframes icon-float {
+  from {
+    translate: 0 2px;
+    rotate: -3deg;
+  }
+  to {
+    translate: 0 -3px;
+    rotate: 3deg;
+  }
+}
+.motion-surface:not(.motion-visible) *,
+.surfaces-paused .motion-surface * {
+  animation-play-state: paused !important;
+}
+.surfaces-paused .motion-surface {
+  transform: none !important;
+}
+.surfaces-paused
+  :is(.portfolio-intro h2, .commitment-intro h2, .engineering-intro h2) {
+  translate: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .motion-surface {
+    transform: none !important;
+  }
+  .motion-surface * {
+    animation: none !important;
+  }
+  .portfolio-intro h2,
+  .commitment-intro h2,
+  .engineering-intro h2 {
+    translate: none;
+  }
+}
+@media (hover: none) {
+  .motion-surface {
+    transform: translateY(var(--surface-lift, 0px));
+  }
+}
+
+/* Animate the SVG as a composited layer, not every individual vector node. */
+.motion-visible .project-visual svg circle {
+  animation: none;
+}

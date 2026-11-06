@@ -1,0 +1,177 @@
+/* One continuous closing scene, using the same character eye as the opening. */
+.eye-outro {
+  --eye-height: clamp(300px, 62svh, 660px);
+  display: none;
+  position: relative;
+  background: var(--page-bg);
+  isolation: isolate;
+  scroll-margin-top: 90px;
+}
+:is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"]) {
+  display: block;
+  height: calc(var(--eye-height) + 70svh);
+}
+.eye-outro-stage {
+  position: sticky;
+  top: 90px;
+  height: var(--eye-height);
+}
+.eye-outro-art,
+.eye-outro-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.eye-outro-art {
+  overflow: clip;
+}
+main
+  > :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"])
+  + .contact {
+  padding-top: 12px;
+  scroll-margin-top: clamp(300px, calc(62svh - 110px), 550px);
+}
+.eye-outro + .contact .section-topline {
+  margin-bottom: 36px;
+  border-color: color-mix(
+    in srgb,
+    var(--brand-peach) 26%,
+    var(--border-hairline)
+  );
+}
+.eye-outro + .contact h2 {
+  max-width: 18ch;
+  font-size: clamp(38px, 4.7vw, 68px);
+  text-wrap: balance;
+}
+.eye-outro + .contact .contact-panel {
+  margin-top: 28px;
+}
+.eye-outro + .contact .contact-footer-note {
+  margin-top: 56px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border-hairline);
+  max-width: 760px;
+  width: 100%;
+  color: var(--text-muted);
+  font-size: clamp(18px, 2vw, 24px);
+}
+@media (max-width: 600px) {
+  .eye-outro {
+    --eye-height: clamp(260px, 47svh, 420px);
+  }
+  :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"]) {
+    height: calc(var(--eye-height) + 60svh);
+  }
+  .eye-outro + .contact .section-topline {
+    margin-bottom: 28px;
+  }
+  .eye-outro + .contact .section-topline > span:last-child {
+    display: none;
+  }
+  .eye-outro + .contact h2 {
+    font-size: 38px;
+  }
+  main
+    > :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"])
+    + .contact {
+    scroll-margin-top: clamp(160px, calc(47svh - 100px), 320px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"]) {
+    height: var(--eye-height);
+  }
+  .eye-outro-stage {
+    position: relative;
+    top: auto;
+  }
+}
+
+/* Compact eye and contact read as one closing composition. */
+.eye-outro {
+  --eye-height: clamp(240px, 36svh, 360px);
+}
+main
+  > :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"])
+  + .contact {
+  padding-top: 0;
+  padding-bottom: 64px;
+  scroll-margin-top: clamp(140px, calc(36svh - 110px), 250px);
+}
+.eye-outro + .contact h2 {
+  font-size: clamp(32px, 3.5vw, 48px);
+  margin-bottom: 12px;
+  max-width: 22ch;
+}
+.eye-outro + .contact .contact-context {
+  max-width: 520px;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.eye-outro + .contact .contact-panel {
+  margin-top: 20px;
+}
+.contact-socials {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.contact-socials a {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-hairline);
+  border-radius: 50%;
+  color: var(--brand-peach);
+  transition:
+    transform 0.35s,
+    background 0.35s;
+}
+.contact-socials svg {
+  width: 25px;
+  height: 25px;
+}
+.contact-socials a:hover {
+  transform: translateY(-4px);
+  background: #fdaa7d12;
+}
+@media (max-width: 600px) {
+  .eye-outro {
+    --eye-height: 250px;
+  }
+  main
+    > :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"])
+    + .contact {
+    scroll-margin-top: 150px;
+    padding-bottom: 44px;
+  }
+  .eye-outro + .contact h2 {
+    font-size: 32px;
+  }
+}
+
+main
+  > :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"])
+  + .contact {
+  margin-top: -70px;
+  position: relative;
+  z-index: 2;
+}
+@media (max-width: 600px) {
+  main
+    > :is(.js-enabled .eye-outro, .eye-outro[data-eye-ready="true"])
+    + .contact {
+    margin-top: -24px;
+  }
+}
+.eye-outro-stage {
+  top: max(90px, calc(100svh - 720px));
+}
+@media (max-width: 600px) {
+  .eye-outro-stage {
+    top: 90px;
+  }
+}

@@ -1,0 +1,21 @@
+.DS_Store
+node_modules/
+/node_modules
+*.tar.gz
+*.zip
+.next/
+out/
+dist/
+*.tsbuildinfo
+test-results/
+playwright-report/
+
+# Local credentials, hosting identity, reports and editor caches
+.env
+.env.*
+!.env.example
+.openai/
+validation/
+coverage/
+*.log
+*.blend1

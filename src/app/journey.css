@@ -1,0 +1,525 @@
+/* Shared identity, distinct section compositions. */
+:root {
+  --section-space: clamp(72px, 7vw, 112px);
+}
+html {
+  scroll-padding-top: 110px;
+}
+main > .content-section {
+  min-height: 0;
+  padding-block: var(--section-space);
+  background: var(--page-bg);
+}
+.section-topline,
+.service-gallery-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto 40px;
+  padding: 16px 0;
+  border-top: 1px solid var(--border-hairline);
+  color: var(--text-muted);
+  font:
+    10px/1.6 ui-monospace,
+    monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.section-topline > span:last-child {
+  text-align: right;
+}
+.content-section
+  :is(
+    .portfolio-intro,
+    .team-head,
+    .principles-editorial,
+    .engineering-layout,
+    .commitment-grid,
+    .project-gallery,
+    .team-windows
+  ) {
+  max-width: 1280px;
+  margin-inline: auto;
+}
+.portfolio-intro {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: 32px clamp(40px, 6vw, 90px);
+  margin-bottom: 48px;
+}
+.portfolio-section .portfolio-intro h2,
+.company-team .team-head h2,
+.engineering-intro h2,
+.contact h2 {
+  font-size: clamp(36px, 4.2vw, 60px);
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  font-weight: 400;
+}
+.portfolio-intro > .portfolio-prose,
+.portfolio-prose,
+.company-team .team-intro {
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+}
+.portfolio-prose p + p {
+  margin-top: 16px;
+}
+.section-kicker {
+  font:
+    10px/1.6 ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+}
+
+/* Mission: open editorial columns, not a card gallery. */
+.principles-editorial {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--border-hairline);
+}
+.principle-column {
+  padding: 32px 24px 24px 0;
+  min-width: 0;
+}
+.principle-column + .principle-column {
+  padding-left: 24px;
+  border-left: 1px solid var(--border-hairline);
+}
+.principle-column .principle-index {
+  display: block;
+  margin-bottom: 36px;
+  color: var(--brand-peach);
+  font-size: clamp(40px, 4.4vw, 64px);
+  font-weight: 300;
+  line-height: 1;
+  letter-spacing: -0.065em;
+}
+.principle-column:nth-child(2n) .principle-index {
+  color: var(--brand-mint);
+}
+.principle-column:nth-child(3) .principle-index {
+  color: var(--brand-yellow);
+}
+.principle-column h3 {
+  font-size: 23px;
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+  font-weight: 400;
+  min-height: 3.6em;
+  margin-bottom: 16px;
+}
+.principle-column p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+/* Team: authentic terminal windows, with no decorative cover. */
+.company-team .team-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: 32px clamp(40px, 6vw, 90px);
+  text-align: left;
+  margin-bottom: 48px;
+  width: 100%;
+  padding: 0;
+  transform: none;
+}
+.company-team .team-intro {
+  margin: 0;
+  max-width: none;
+  width: auto;
+}
+.company-team .team-intro p + p {
+  margin-top: 16px;
+}
+.company-team .team-intro .text-link {
+  margin-top: 18px;
+}
+.team-windows {
+  gap: 24px;
+}
+.team-window {
+  border-radius: 12px;
+  box-shadow: none;
+}
+.terminal-titlebar {
+  padding: 14px 22px;
+}
+.terminal-content {
+  padding: 28px;
+  gap: 18px;
+}
+.team-window-heading h3 {
+  font-size: 24px;
+}
+
+/* Work: three showcase cards with their own project-specific artwork. */
+.project-gallery {
+  gap: 24px;
+}
+.project-showcase {
+  border-radius: 20px;
+}
+.project-showcase-description {
+  font-size: 15px;
+  line-height: 1.75;
+}
+.showcase-details > summary {
+  width: 40px;
+  height: 40px;
+}
+
+/* Products: two broad editorial features, each with its own flat illustration. */
+.product-gallery {
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 1280px !important;
+  gap: 24px;
+}
+.product-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(200px, 0.8fr);
+  column-gap: 48px;
+  padding: 36px 40px;
+  min-height: 0;
+}
+.product-showcase .project-showcase-heading {
+  grid-column: 1;
+  padding-right: 0;
+}
+.product-showcase .project-showcase-heading h3 {
+  font-size: 36px;
+  letter-spacing: -0.045em;
+}
+.product-showcase .project-app-icon {
+  display: none;
+}
+.product-showcase .project-showcase-description {
+  grid-column: 1;
+  min-height: 0;
+  max-width: 58ch;
+  margin-top: 22px;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.product-showcase .project-showcase-meta {
+  grid-column: 1;
+  margin-top: 24px;
+  padding-top: 18px;
+}
+.product-showcase .product-development-status {
+  grid-column: 1;
+  justify-self: start;
+  margin-top: 20px;
+}
+.product-showcase .project-visual {
+  grid-column: 2;
+  grid-row: 1/5;
+  align-self: center;
+  justify-self: center;
+  width: 100%;
+  max-width: 290px;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.product-showcase .project-visual svg {
+  height: 230px;
+  width: 100%;
+}
+.product-showcase .project-art-caption,
+.product-showcase .project-art-dots {
+  display: none;
+}
+.product-showcase .showcase-details {
+  grid-column: 1/-1;
+}
+.product-showcase .showcase-detail-content {
+  margin-top: 28px;
+}
+.product-showcase--1 .project-visual {
+  opacity: 0.85;
+}
+
+/* Approach: a connected timeline beside a concise introduction. */
+.engineering-layout {
+  align-items: start;
+  gap: clamp(40px, 7vw, 100px);
+}
+.engineering-intro {
+  top: 125px;
+}
+.engineering-intro h2 {
+  margin-top: 0;
+  max-width: 11ch;
+}
+.engineering-principle {
+  font-size: 15px;
+  line-height: 1.8;
+}
+.engineering-stage {
+  padding-bottom: 24px;
+}
+.engineering-stage-heading h3 {
+  font-size: 25px;
+}
+.engineering-stage-body p {
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+/* Why Octagram: a quieter, asymmetric composition with fine line graphics. */
+.commitment-intro {
+  max-width: 960px;
+  margin: 0 auto 48px;
+  text-align: center;
+}
+.commitment-intro h2 {
+  font-size: clamp(38px, 4.5vw, 66px);
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+  margin: 0 0 26px;
+}
+.commitment-intro .portfolio-prose {
+  max-width: 68ch;
+  margin-inline: auto;
+}
+.commitment-grid {
+  gap: 20px;
+}
+.commitment-card {
+  border-radius: 16px;
+}
+.commitment-copy p {
+  font-size: 15px;
+  line-height: 1.75;
+}
+.commitment-closing {
+  font-size: 22px;
+  max-width: 850px;
+}
+
+/* Contact: a spacious closing statement and a single focused form. */
+.contact .closing-mark {
+  display: none;
+}
+.contact .section-topline {
+  margin-bottom: 36px;
+}
+.contact h2 {
+  margin: 0 auto 24px;
+  max-width: 15ch;
+}
+.contact .contact-context {
+  max-width: 760px;
+  margin-top: 0;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.contact-panel form {
+  padding: 28px;
+  border: 1px solid var(--border-hairline);
+  border-radius: 16px;
+  background: var(--surface-subtle);
+}
+.contact .contact-footer-note {
+  font-size: 25px;
+  margin-top: 48px;
+}
+.service-gallery {
+  max-width: 1280px;
+}
+.service-gallery-topline {
+  margin-bottom: 0;
+}
+
+/* The opening models stay unchanged; their copy shares the text scale. */
+.side-copy h2 {
+  font-size: clamp(32px, 3.1vw, 44px);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+  margin: 0 0 22px;
+}
+.side-copy p {
+  font-size: 15px;
+  line-height: 1.75;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.side-copy .section-kicker {
+  margin-bottom: 22px;
+  color: var(--text-muted);
+  font:
+    10px/1.6 ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+}
+@media (min-width: 801px) {
+  .side-copy {
+    width: min(43vw, 550px);
+  }
+}
+
+/* Small, consistent transitions instead of repeated decorative scenes. */
+.journey-ready .journey-revealed {
+  animation: section-arrival 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes section-arrival {
+  from {
+    opacity: 0.65;
+    translate: 0 16px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+.journey-paused .journey-revealed {
+  animation: none !important;
+}
+@media (max-width: 1100px) {
+  .principles-editorial {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 24px;
+  }
+  .principle-column:nth-child(4) {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .principle-column h3 {
+    min-height: 2.4em;
+  }
+}
+@media (max-width: 767px) {
+  html {
+    scroll-padding-top: 100px;
+  }
+  .section-topline,
+  .service-gallery-topline {
+    font-size: 9px;
+    gap: 16px;
+    margin-bottom: 28px;
+    letter-spacing: 0.09em;
+  }
+  .section-topline > span:last-child {
+    max-width: 12ch;
+  }
+  .portfolio-intro,
+  .company-team .team-head {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    margin-bottom: 32px;
+  }
+  .portfolio-intro > .portfolio-prose {
+    grid-column: 1;
+  }
+  .portfolio-section .portfolio-intro h2,
+  .company-team .team-head h2,
+  .engineering-intro h2,
+  .contact h2,
+  .commitment-intro h2 {
+    font-size: 38px;
+  }
+  .portfolio-prose,
+  .portfolio-intro > .portfolio-prose,
+  .company-team .team-intro {
+    font-size: 15px;
+  }
+  .principles-editorial {
+    grid-template-columns: 1fr;
+    row-gap: 0;
+  }
+  .principle-column,
+  .principle-column + .principle-column {
+    display: grid;
+    grid-template-columns: 46px minmax(0, 1fr);
+    column-gap: 20px;
+    padding: 24px 0;
+    border-left: 0;
+    border-bottom: 1px solid var(--border-hairline);
+  }
+  .principle-column .principle-index {
+    grid-column: 1;
+    grid-row: 1/3;
+    font-size: 36px;
+    margin: 0;
+  }
+  .principle-column h3 {
+    grid-column: 2;
+    min-height: 0;
+    font-size: 23px;
+    margin-bottom: 12px;
+  }
+  .principle-column p {
+    grid-column: 2;
+  }
+  .team-windows {
+    gap: 18px;
+  }
+  .terminal-content {
+    padding: 24px;
+  }
+  .product-gallery {
+    display: grid;
+    grid-template-columns: 1fr;
+    overflow: visible;
+  }
+  .product-showcase {
+    display: flex;
+    flex-direction: column;
+    flex-basis: auto;
+    width: 100%;
+    padding: 28px 24px;
+    gap: 0;
+  }
+  .product-showcase .project-showcase-heading {
+    padding-right: 36px;
+  }
+  .product-showcase .project-showcase-heading h3 {
+    font-size: 30px;
+  }
+  .product-showcase .project-showcase-description {
+    font-size: 15px;
+  }
+  .product-showcase .project-visual {
+    max-width: 220px;
+    margin: 24px auto 0;
+  }
+  .product-showcase .project-visual svg {
+    height: 175px;
+  }
+  .product-showcase .showcase-details {
+    width: 100%;
+  }
+  .product-showcase .showcase-detail-content {
+    margin-top: 0;
+  }
+  .commitment-intro {
+    text-align: left;
+    margin-bottom: 32px;
+  }
+  .commitment-closing {
+    font-size: 19px;
+  }
+  .side-copy h2 {
+    font-size: 34px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .journey-ready .journey-revealed {
+    animation: none;
+  }
+}

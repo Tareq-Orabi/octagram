@@ -1,0 +1,481 @@
+# OCTAGRAM
+### Designing Impact. Engineering Beauty.
+
+**COMPANY PORTFOLIO | 2026**
+
+Software Engineering • Digital Innovation • Artificial Intelligence
+
+**From Ambitious Ideas to Exceptional Digital Experiences.**
+
+---
+
+# 01. ABOUT OCTAGRAM
+
+## Engineering Ideas. Creating Impact.
+
+Octagram is a Jordan-based software engineering and digital innovation team dedicated to transforming ambitious ideas into sophisticated digital solutions.
+
+We bring together technical expertise, strategic thinking, and creative design to develop modern software systems that address real-world challenges.
+
+Our work extends beyond conventional software development. We approach each project as an interconnected digital ecosystem, combining thoughtful architecture, intelligent functionality, intuitive experiences, and long-term technical sustainability.
+
+From healthcare management systems and educational platforms to online services and emerging digital products, we engineer technology with purpose.
+
+**We Don't Simply Develop Software. We Engineer Possibilities.**
+
+---
+
+# 02. OUR VISION
+
+## Shaping Tomorrow Through Technology.
+
+Our vision is to establish Octagram as a recognized force in software engineering and digital innovation, creating technologies that challenge conventional approaches and expand what digital systems can achieve.
+
+We aspire to develop meaningful digital products and intelligent ecosystems that empower organizations, enhance human experiences, and contribute to technological progress.
+
+We believe exceptional technology is defined not only by its capabilities, but by the lasting impact it creates.
+
+---
+
+# 03. OUR MISSION
+
+## Turning Complexity Into Opportunity.
+
+Our mission is to empower businesses, institutions, and innovators through reliable, intelligent, and purpose-built software solutions.
+
+We combine engineering discipline, strategic problem-solving, and human-centered design to transform complex requirements into practical digital experiences.
+
+Our commitment centers on five principles:
+
+- **Engineering Excellence:** Building reliable, maintainable, and scalable software systems.
+- **Strategic Thinking:** Connecting technical decisions with business objectives.
+- **Human-Centered Design:** Creating intuitive and meaningful digital experiences.
+- **Continuous Innovation:** Exploring modern technologies and their practical applications.
+- **Long-Term Value:** Developing solutions designed to evolve alongside organizational needs.
+
+---
+
+# 04. OUR SERVICES
+
+## Comprehensive Digital Solutions.
+
+We deliver integrated software engineering and digital services tailored to organizations seeking modern, effective, and sustainable technology.
+
+### 01 — Web Development
+
+**Modern Platforms. Exceptional Experiences.**
+
+We develop responsive websites, interactive web applications, and digital platforms designed to combine functionality, performance, and strong visual identity.
+
+Our solutions include corporate websites, institutional portals, dashboards, content-driven platforms, and custom web applications.
+
+### 02 — Custom Software Development
+
+**Built Around Your Business.**
+
+We design and develop tailored software systems that digitize operations, simplify workflows, and address complex organizational requirements.
+
+Our capabilities include business management platforms, internal applications, backend services, API development, database-driven systems, and third-party integrations.
+
+### 03 — Artificial Intelligence & Automation
+
+**Smarter Systems. Greater Possibilities.**
+
+We explore and implement practical artificial intelligence capabilities and automated workflows that help organizations improve productivity, simplify repetitive processes, and expand their digital capabilities.
+
+Our services include AI integrations, workflow automation, intelligent application features, and custom automation solutions.
+
+### 04 — UI/UX Design
+
+**Where Engineering Meets Creativity.**
+
+We create modern digital experiences that combine usability, visual clarity, accessibility, and coherent interaction design.
+
+Our work includes interface design, user experience planning, wireframes, interactive prototypes, and design systems.
+
+### 05 — Mobile Application Development
+
+**Digital Experiences Without Boundaries.**
+
+We provide mobile application development solutions designed to connect organizations with users through accessible, intuitive, and functional mobile experiences.
+
+Our approach aligns mobile functionality with business requirements and the supporting digital ecosystem.
+
+### 06 — IT Solutions & Infrastructure
+
+**Strong Foundations for Digital Growth.**
+
+We support organizations through software architecture planning, database design, deployment infrastructure, system integration, and technical consulting.
+
+We focus on developing practical technical foundations that support secure, reliable, and maintainable software operations.
+
+---
+
+# 05. INDUSTRIES WE SERVE
+
+## Technology Designed for Real-World Challenges.
+
+### Healthcare & Medical Services
+
+We develop digital solutions that support healthcare administration, clinical workflows, patient management, financial processes, and operational coordination.
+
+**Focus:** Healthcare efficiency, connected operations, and digital service experiences.
+
+### Education & Academic Institutions
+
+We build educational platforms that organize academic information, improve access to learning resources, and enable more structured digital learning experiences.
+
+**Focus:** Learning ecosystems, academic resources, and educational digital transformation.
+
+### Fitness & Wellness
+
+We develop digital experiences for fitness professionals and wellness-oriented services, supporting the presentation and delivery of online coaching and related offerings.
+
+**Focus:** Digital coaching experiences and online service delivery.
+
+### Business & Enterprise
+
+We develop custom software solutions that help organizations manage information, automate workflows, and improve operational efficiency.
+
+**Focus:** Business systems, process improvement, and scalable digital infrastructure.
+
+---
+
+# 06. SELECTED PROJECTS
+
+## Ideas Engineered Into Real-World Solutions.
+
+Our work reflects a commitment to solving practical challenges through software engineering, thoughtful design, and purpose-built technology.
+
+### SIX SENSES
+
+## Clinic Management System
+
+**Industry:** Healthcare
+
+**Category:** Custom Software Development
+
+**Project Status:** Delivered
+
+**Project Overview**
+
+Six Senses is a specialized clinic management system developed to support the administrative, clinical, and financial operations of a healthcare facility.
+
+The solution brings essential operational workflows into a unified digital environment, enabling more structured management of appointments, patient information, treatment sessions, and financial activities.
+
+**Core Capabilities**
+- Patient records and medical information management
+- Appointment and treatment session scheduling
+- Service and treatment package management
+- Invoicing and payment tracking
+- Financial and operational reporting
+- Role-based administrative access
+- Patient-facing digital services
+
+**Engineering Approach**
+
+The system incorporates structured backend architecture, centralized relational data management, API-based communication, and role-based access control.
+
+**Project Value**
+
+An integrated digital foundation designed to simplify healthcare operations and improve the organization of essential clinical and administrative processes.
+
+**Live Website:** [sixsenses.clinic](https://sixsenses.clinic/)
+
+---
+
+### MEDICAL CLUB
+
+## Academic Digital Platform
+
+**Industry:** Medical Education
+
+**Category:** Educational Technology Platform
+
+**Client:** Medical Club — The Hashemite University
+
+**Project Status:** Development & Deployment
+
+**Project Overview**
+
+The Medical Club Platform is a comprehensive academic digital ecosystem developed for the Medical Club at the Hashemite University in Jordan.
+
+The project aims to transform the way medical students discover, organize, contribute to, and interact with academic resources.
+
+Designed as more than a conventional educational website, the platform brings together learning materials, academic content management, examinations, research resources, and personalized educational workflows.
+
+**Designed Capabilities**
+- Academic learning resources
+- Medical lectures and clinical materials
+- Examination resources
+- Research and educational publications
+- Student contributions and content submissions
+- Personalized learning dashboards
+- Study roadmaps and progress tracking
+- Administrative content management
+- Academic search and resource discovery
+- Role-based access and content governance
+
+**Engineering Approach**
+
+The platform's backend architecture incorporates structured academic data models, resource storage, authentication and authorization, administrative governance, search capabilities, and modular service design.
+
+**Project Value**
+
+A connected academic environment designed to improve accessibility, organization, and engagement with medical educational resources.
+
+**Project Website:** [medclubhu.com](https://medclubhu.com/)
+
+---
+
+### THAAERFIT
+
+## Online Fitness Coaching Website
+
+**Industry:** Fitness & Wellness
+
+**Category:** Web Development & Digital Experience
+
+**Project Overview**
+
+ThaaerFit is a digital presence for an online fitness coaching service focused on strength training and nutrition planning.
+
+The website presents the coaching brand and its services through an accessible online experience, helping prospective clients discover its fitness and coaching offerings.
+
+**Project Focus**
+- Fitness coaching brand presentation
+- Strength training service information
+- Nutrition planning service information
+- Online coaching digital experience
+- Accessible website navigation and presentation
+
+**Digital Experience**
+
+The project reflects the importance of combining clear service communication, consistent brand presentation, and an approachable online experience for independent service providers.
+
+**Project Value**
+
+A dedicated digital destination supporting the presentation of fitness coaching services and the connection between a coaching brand and its prospective clients.
+
+**Live Website:** [thaaerfit.com](https://thaaerfit.com/)
+
+---
+
+# 07. PRODUCT INNOVATION
+
+## Beyond Projects. Toward Products.
+
+Octagram's ambitions extend beyond commissioned software development.
+
+We aim to create independent digital products that explore opportunities in education, healthcare, and connected digital services.
+
+Our product initiatives reflect a long-term commitment to innovation, scalable architecture, and meaningful technology.
+
+### THINK
+
+## Rethinking the Future of Education.
+
+**Industry:** Educational Technology
+
+**Category:** Product Vision & Development Initiative
+
+THINK represents Octagram's broader vision for a connected and intelligent educational technology ecosystem.
+
+The initiative explores the integration of academic resources, personalized learning experiences, intelligent assistance, and modern educational workflows within a unified digital environment.
+
+**Vision Areas**
+- Connected learning environments
+- Personalized educational experiences
+- Intelligent academic assistance
+- Organized academic resources
+- Learning progress and insights
+- Institutional digital learning solutions
+
+**Our Ambition**
+
+To explore educational technology that is more accessible, adaptable, and capable of supporting different learning needs.
+
+*Product initiative under development.*
+
+---
+
+### OCTACARE
+
+## Exploring the Future of Digital Healthcare.
+
+**Industry:** Healthcare Technology
+
+**Category:** Product Vision & Development Initiative
+
+OctaCare represents Octagram's long-term ambition to explore connected healthcare technology and intelligent digital health experiences.
+
+The initiative focuses on identifying opportunities to improve how healthcare services, users, and operational workflows interact through technology.
+
+**Vision Areas**
+- Connected healthcare experiences
+- Healthcare management workflows
+- Patient-centered digital services
+- Intelligent healthcare software capabilities
+- Integrated health technology solutions
+
+**Our Ambition**
+
+To contribute to a more connected and efficient digital healthcare landscape through purpose-built software products.
+
+*Product initiative under development.*
+
+---
+
+# 08. OUR ENGINEERING APPROACH
+
+## From Vision to Execution.
+
+Successful software requires structured thinking, technical discipline, and a clear understanding of business requirements.
+
+Our development approach follows five interconnected stages.
+
+### 01 — Discovery & Strategy
+
+Understanding the client's objectives, users, operational challenges, and technical requirements.
+
+### 02 — Architecture & Planning
+
+Transforming requirements into structured workflows, technical specifications, system architecture, and implementation priorities.
+
+### 03 — Design & Development
+
+Building functional software through coordinated interface design, backend engineering, and iterative development.
+
+### 04 — Quality & Validation
+
+Testing critical functionality, reviewing system behavior, and addressing reliability, performance, and security requirements.
+
+### 05 — Deployment & Evolution
+
+Preparing software for operational environments and supporting future improvements according to each project's requirements and agreed scope.
+
+**Our Principle: Understand the Problem. Engineer the Solution. Build for What Comes Next.**
+
+---
+
+# 09. OUR TEAM
+
+## The Minds Behind Octagram.
+
+Behind every digital solution is a team combining technical expertise, leadership, and a shared commitment to meaningful innovation.
+
+Octagram brings together complementary specializations across software engineering, artificial intelligence, digital product development, and technical management.
+
+### TAREQ ORABI
+
+**Chief Executive Officer (CEO) & Project Manager**
+
+Responsible for Octagram's strategic direction, business development, project management, and overall operational leadership.
+
+His responsibilities include project coordination, client relationships, technical direction, planning, and ensuring alignment between business objectives and engineering execution.
+
+**LinkedIn:** [Tareq Orabi](https://www.linkedin.com/in/tareq-orabi-bb67b839b/)
+
+### MAZEN ABU TAHOUN
+
+**Deputy CEO & Frontend Lead**
+
+Supports executive leadership while leading frontend engineering and digital interface development.
+
+His responsibilities include frontend architecture, user interface implementation, technical coordination, and translating product requirements into functional digital experiences.
+
+**LinkedIn:** [Mazen Abu Tahoun](https://www.linkedin.com/in/mazen-abutahoun-7273b5235/)
+
+### ZAID ABU HAMMOUR
+
+**Artificial Intelligence Lead**
+
+Leads artificial intelligence initiatives and contributes to the development of intelligent software features and automation solutions.
+
+His focus includes evaluating AI technologies, exploring practical integrations, and developing intelligent capabilities aligned with product requirements.
+
+### ZAID AL TAIH
+
+**Backend Lead**
+
+Leads backend engineering and contributes to software architecture, server-side application development, API design, and database integration.
+
+His responsibilities focus on developing reliable technical foundations that support Octagram's software systems.
+
+**LinkedIn:** [Zaid Al Taih](https://www.linkedin.com/in/zaid-altayeh-152375364/)
+
+**Different Expertise. Shared Ambition. One Direction.**
+
+---
+
+# 10. WHY OCTAGRAM?
+
+## More Than Development. A Commitment to Engineering.
+
+We believe strong digital solutions emerge from a combination of technical discipline, business understanding, and creative problem-solving.
+
+### Engineering-Driven Thinking
+
+We prioritize system structure, maintainability, reliability, and thoughtful architectural decisions.
+
+### Tailored Digital Solutions
+
+We develop software around actual organizational requirements rather than relying on a one-size-fits-all approach.
+
+### Integrated Expertise
+
+Our team brings together backend engineering, frontend development, artificial intelligence, and digital product thinking.
+
+### Product-Oriented Mindset
+
+We consider the complete digital experience, not simply individual features or isolated technical tasks.
+
+### Direct Collaboration
+
+We value transparent communication, clear requirements, and close collaboration with stakeholders.
+
+### Ambition to Innovate
+
+We approach ambitious ideas as opportunities for serious exploration, structured planning, and purposeful engineering.
+
+**Our Focus Is Not Simply on What Technology Can Do Today, but on What It Can Make Possible Tomorrow.**
+
+---
+
+# 11. CONTACT & COLLABORATION
+
+## Let's Engineer What's Next.
+
+Every remarkable digital product begins with an idea, a challenge, or a vision for something better.
+
+Whether you are a business looking to modernize operations, an institution planning a digital platform, or a strategic partner exploring new opportunities, Octagram brings the engineering perspective required to turn ideas into practical solutions.
+
+We welcome collaboration in:
+
+- Custom software engineering
+- Web and digital platform development
+- Healthcare and educational technology
+- Artificial intelligence and automation
+- Digital product development
+- Technology partnerships
+- Digital transformation initiatives
+
+### Your Vision. Our Engineering.
+
+**OCTAGRAM**
+
+**Website:** [octagramjo.com](https://octagramjo.com/)
+
+**Instagram:** [@Octagram.jo](https://www.instagram.com/octagram.jo/)
+
+**Location:** Jordan
+
+---
+
+## THE FUTURE IS NOT ONLY IMAGINED.
+
+# IT IS ENGINEERED.
+
+**OCTAGRAM**
+
+*Designing Impact. Engineering Beauty.*

@@ -1,0 +1,17 @@
+Made with Natural Earth.
+
+Dataset: Natural Earth, 1:110m physical land polygons (ne_110m_land.geojson)
+Source: https://github.com/nvkelso/natural-earth-vector/blob/master/geojson/ne_110m_land.geojson
+Fetched: 2026-10-24
+License: Public domain. Natural Earth permits personal, educational, commercial,
+and modified uses without attribution or permission. See current source terms:
+https://www.naturalearthdata.com/about/terms-of-use/
+
+The local GeoJSON drives the Earth coastline and land-dot rendering, and its
+static fallback posters. No political borders are drawn.
+
+Octagram marker geographic reference: Amman, Jordan — latitude 31.9539 N,
+longitude 35.9106 E. This marker denotes geographic origin; it is not an office
+address. Sphere axis convention: +Y north, +Z at longitude 0, +X at longitude
+90 E. Initial view centers on latitude 20 N, longitude 28 E. Its quaternion
+rotates longitude -28 degrees around Y, then latitude +20 degrees around X.

@@ -1,0 +1,80 @@
+{
+  "status": "PASS",
+  "sourceFiles": {
+    "pos-33.exr": {
+      "bytes": 281849,
+      "sha256": "ec2500e54313d2d58247e6e6cbd840b3066866eb03bb464a5d377979735420d6"
+    },
+    "sc-33.png": {
+      "bytes": 84325,
+      "sha256": "7d26b023f3ddf3470a1fbc234d97875bd7028d73491862869cd8cb3768c0252e"
+    },
+    "cd-33.png": {
+      "bytes": 109882,
+      "sha256": "22816bb0c213e57e73edcd486b7f462566d688591f27bbb20d5647eb997abc45"
+    },
+    "py-lod7.glb": {
+      "bytes": 1600,
+      "sha256": "8f247565333503f569358d816512724d47e9931c8f574dbdad1fadaf043a82b6"
+    }
+  },
+  "asset": {
+    "bytes": 280560,
+    "sha256": "9d7396441a83cf3bb99a98bf8ad6d8899b959ad4c74c512bd17977bbf6f9a9b9",
+    "particles": 10000,
+    "particleVertices": 20,
+    "particleTriangles": 48,
+    "totalRenderedTriangles": 480000,
+    "mobileParticles": 7000,
+    "maximumPositionError": 0,
+    "meshVerticesByteIdentical": true,
+    "meshIndicesByteIdentical": true,
+    "allNumbersFinite": true,
+    "sourceBasisBounds": {
+      "min": [
+        -4.030608177185059,
+        -4.267895221710205,
+        -4.1662468910217285
+      ],
+      "max": [
+        4.029139518737793,
+        4.121401786804199,
+        4.208619594573975
+      ],
+      "size": [
+        8.059747695922852,
+        8.389297008514404,
+        8.374866485595703
+      ]
+    },
+    "entranceYawMinus45Bounds": {
+      "min": [
+        -4.398171324668974,
+        -4.267895221710205,
+        -3.4853965207063604
+      ],
+      "max": [
+        4.401984940109634,
+        4.121401786804199,
+        3.5026450341657465
+      ],
+      "size": [
+        8.800156264778607,
+        8.389297008514404,
+        6.988041554872106
+      ]
+    }
+  },
+  "posters": {
+    "dimensions": [
+      1080,
+      1020
+    ],
+    "transparent": true,
+    "darkAndLight": true
+  },
+  "globeMorph": {
+    "positions": 10000,
+    "bytes": 120000
+  }
+}

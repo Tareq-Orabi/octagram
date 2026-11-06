@@ -1,0 +1,20 @@
+{
+  "blender": "3.6.23",
+  "modules": 8,
+  "meshes": 12,
+  "vertices": 7500,
+  "polygons": 5508,
+  "source": "Exact owner PDF cubic paths + 101-stop gradients",
+  "glb_bytes": 443088,
+  "axis": "glTF Y up, logo front +Z",
+  "module_names": [
+    "module-north",
+    "module-north-east",
+    "module-east",
+    "module-south-east",
+    "module-south",
+    "module-south-west",
+    "module-west",
+    "module-north-west"
+  ]
+}
