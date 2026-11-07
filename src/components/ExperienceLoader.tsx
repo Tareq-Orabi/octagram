@@ -51,7 +51,7 @@ export default function ExperienceLoader() {
       { rootMargin: "200px 0px" },
     );
     document
-      .querySelectorAll("main .stage")
+      .querySelectorAll("main .stage, main > .content-section:not(#contact)")
       .forEach((el) => observer.observe(el));
     preference.addEventListener("change", sync);
     window.addEventListener("octagram:motion", onMotion);

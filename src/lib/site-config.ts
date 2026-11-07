@@ -1,4 +1,4 @@
-/** Approved company portfolio supplied by Octagram, October 2026. */
+/** Company facts and links supplied by Octagram with edited website copy. */
 export interface Project {
   title: string;
   subtitle?: string;
@@ -23,7 +23,7 @@ export interface Project {
 export interface TeamMember {
   name: string;
   role: string;
-  /** First approved biography paragraph. */
+  /** Short team introduction. */
   description?: string;
   /** Remaining biography paragraphs, displayed after description. */
   bio?: string[];
@@ -50,7 +50,7 @@ export const siteConfig: SiteConfig = {
   contactUrl: "https://www.instagram.com/octagram.jo/",
   socialLinks: [
     {
-      label: "Instagram — @Octagram.jo",
+      label: "Instagram",
       url: "https://www.instagram.com/octagram.jo/",
     },
   ],
@@ -61,40 +61,41 @@ export const siteConfig: SiteConfig = {
       industry: "Healthcare",
       category: "Custom Software Development",
       description:
-        "Six Senses is a specialized clinic management system developed to support the administrative, clinical, and financial operations of a healthcare facility.",
+        "A clinic management system that brings patient care and daily operations into one place.",
       overview: [
-        "Six Senses is a specialized clinic management system developed to support the administrative, clinical, and financial operations of a healthcare facility.",
-        "The solution brings essential operational workflows into a unified digital environment, enabling more structured management of appointments, patient information, treatment sessions, and financial activities.",
+        "A clinic management system that brings patient care and daily operations into one place.",
+        "Six Senses connects appointments, patient records, treatment sessions and finances to help clinic teams keep their work organized.",
       ],
       status: "Delivered",
       capabilitiesLabel: "Core Capabilities",
       capabilities: [
-        "Patient records and medical information management",
-        "Appointment and treatment session scheduling",
-        "Service and treatment package management",
+        "Patient records and medical information",
+        "Appointment and treatment scheduling",
+        "Service and treatment packages",
         "Invoicing and payment tracking",
-        "Financial and operational reporting",
-        "Role-based administrative access",
-        "Patient-facing digital services",
+        "Financial and operational reports",
+        "Role-based access",
+        "Digital services for patients",
       ],
       engineering: [
-        "The system incorporates structured backend architecture, centralized relational data management, API-based communication, and role-based access control.",
+        "A shared relational database connects the clinic’s records, with APIs linking services and role-based controls managing access.",
       ],
       value: [
-        "An integrated digital foundation designed to simplify healthcare operations and improve the organization of essential clinical and administrative processes.",
+        "Designed to make daily clinical and administrative work easier to manage.",
       ],
       url: "https://sixsenses.clinic/",
     },
     {
       title: "OCTACLUB",
-      subtitle: "Learning Platform · THINK AI",
-      industry: "Medical & Technical Education",
+      subtitle: "Learning with THINK AI",
+      industry: "Medical and Technical Education",
       category: "Learning Platform",
+      status: "In development",
       description:
-        "Medical and technical learning across Jordanian universities. Self-learning, connected with THINK AI.",
+        "A learning platform in development for medical and technical students across all Jordanian universities.",
       overview: [
-        "Medical and technical learning across Jordanian universities. Self-learning, connected with THINK AI.",
-        "Octaclub is the evolved version of the original academic platform, expanded to serve medical and technical disciplines across all Jordanian universities and support independent learning with THINK AI.",
+        "A learning platform in development for medical and technical students across all Jordanian universities.",
+        "Evolving from our original academic platform, Octaclub is being developed to support university study and self-directed learning with THINK AI.",
       ],
       capabilitiesLabel: "Learning focus",
       capabilities: [
@@ -108,26 +109,26 @@ export const siteConfig: SiteConfig = {
     {
       title: "THAAERFIT",
       subtitle: "Online Fitness Coaching Website",
-      industry: "Fitness & Wellness",
-      category: "Web Development & Digital Experience",
+      industry: "Fitness and Wellness",
+      category: "Web Development",
       description:
-        "ThaaerFit is a digital presence for an online fitness coaching service focused on strength training and nutrition planning.",
+        "A website for online fitness coaching in strength training and nutrition.",
       overview: [
-        "ThaaerFit is a digital presence for an online fitness coaching service focused on strength training and nutrition planning.",
-        "The website presents the coaching brand and its services through an accessible online experience, helping prospective clients discover its fitness and coaching offerings.",
+        "A website for online fitness coaching in strength training and nutrition.",
+        "ThaaerFit introduces the coaching brand and helps visitors explore its services in a clear and approachable way.",
       ],
       value: [
-        "A dedicated digital destination supporting the presentation of fitness coaching services and the connection between a coaching brand and its prospective clients.",
+        "A place for prospective clients to learn about the coach and find the services that suit them.",
       ],
       digitalExperience: [
-        "The project reflects the importance of combining clear service communication, consistent brand presentation, and an approachable online experience for independent service providers.",
+        "Consistent visuals and simple navigation keep the focus on the coaching services.",
       ],
       focus: [
-        "Fitness coaching brand presentation",
-        "Strength training service information",
-        "Nutrition planning service information",
-        "Online coaching digital experience",
-        "Accessible website navigation and presentation",
+        "Fitness coaching brand",
+        "Strength training information",
+        "Nutrition planning information",
+        "Online coaching services",
+        "Accessible navigation",
       ],
       url: "https://thaaerfit.com/",
     },
@@ -135,21 +136,21 @@ export const siteConfig: SiteConfig = {
   team: [
     {
       name: "TAREQ ORABI",
-      role: "Chief Executive Officer (CEO) & Project Manager",
+      role: "CEO and Project Manager",
       description:
-        "Responsible for Octagram's strategic direction, business development, project management, and overall operational leadership.",
+        "Guides Octagram’s direction and manages projects and client relationships.",
       bio: [
-        "His responsibilities include project coordination, client relationships, technical direction, planning, and ensuring alignment between business objectives and engineering execution.",
+        "Connects business goals with technical planning and keeps the team’s work coordinated.",
       ],
       url: "https://www.linkedin.com/in/tareq-orabi-bb67b839b/",
     },
     {
       name: "MAZEN ABU TAHOUN",
-      role: "Deputy CEO & Frontend Lead",
+      role: "Deputy CEO and Frontend Lead",
       description:
-        "Supports executive leadership while leading frontend engineering and digital interface development.",
+        "Supports the team’s direction and leads frontend development.",
       bio: [
-        "His responsibilities include frontend architecture, user interface implementation, technical coordination, and translating product requirements into functional digital experiences.",
+        "Shapes interface architecture and turns product requirements into clear, usable screens.",
       ],
       url: "https://www.linkedin.com/in/mazen-abutahoun-7273b5235/",
     },
@@ -157,18 +158,18 @@ export const siteConfig: SiteConfig = {
       name: "ZAID ABU HAMMOUR",
       role: "Artificial Intelligence Lead",
       description:
-        "Leads artificial intelligence initiatives and contributes to the development of intelligent software features and automation solutions.",
+        "Leads AI development and explores practical uses for automation.",
       bio: [
-        "His focus includes evaluating AI technologies, exploring practical integrations, and developing intelligent capabilities aligned with product requirements.",
+        "Evaluates AI tools and builds features around the needs of each product.",
       ],
     },
     {
       name: "ZAID AL TAIH",
       role: "Backend Lead",
       description:
-        "Leads backend engineering and contributes to software architecture, server-side application development, API design, and database integration.",
+        "Leads backend development across application logic, APIs and databases.",
       bio: [
-        "His responsibilities focus on developing reliable technical foundations that support Octagram's software systems.",
+        "Builds and maintains the systems that keep our products connected and running.",
       ],
       url: "https://www.linkedin.com/in/zaid-altayeh-152375364/",
     },

@@ -1,6 +1,6 @@
 /**
- * Complete approved company portfolio copy, supplied in October 2026.
- * Paragraphs preserve the source wording and order. Project/member records
+ * Website copy based on the company portfolio, edited for a clear and calm voice.
+ * Project and member records
  * live in site-config.ts; their section introductions live here.
  */
 export interface TextSection {
@@ -28,7 +28,7 @@ export interface ProductInitiative {
   paragraphs: string[];
   visionAreas: string[];
   ambition: string;
-  status: "Product initiative under development.";
+  status: "In development";
 }
 export interface EngineeringStage extends TitledDescription {
   number: string;
@@ -50,7 +50,7 @@ export interface CompanyContent {
   };
   services: TextSection & { items: CompanyService[] };
   projectsIntro: TextSection;
-  products: TextSection & { items: ProductInitiative[] };
+  products: { items: ProductInitiative[] };
   approach: TextSection & { stages: EngineeringStage[] };
   teamIntro: TextSection;
   whyOctagram: TextSection & { reasons: TitledDescription[] };
@@ -65,74 +65,71 @@ export interface CompanyContent {
   closing: { lead: string; headline: string; brand: string; tagline: string };
 }
 
-/** Render each section's paragraphs in order, preserving complete approved copy. */
+/** Render each section’s paragraphs in order. */
 export const companyContent: CompanyContent = {
   brand: {
     name: "OCTAGRAM",
-    tagline: "Designing Impact. Engineering Beauty.",
-    portfolioLabel: "COMPANY PORTFOLIO | 2026",
+    tagline: "Designing impact and engineering beauty",
+    portfolioLabel: "COMPANY PORTFOLIO 2026",
     year: 2026,
-    disciplineLine:
-      "Software Engineering • Digital Innovation • Artificial Intelligence",
-    heroTitle: "From Ambitious Ideas to Exceptional Digital Experiences.",
+    disciplineLine: "Software engineering and thoughtful design",
+    heroTitle: "We turn ideas into software people enjoy using.",
   },
   about: {
     label: "ABOUT OCTAGRAM",
-    title: "Engineering Ideas. Creating Impact.",
+    title: "Good ideas deserve thoughtful software",
     paragraphs: [
-      "Octagram is a Jordan-based software engineering and digital innovation team dedicated to transforming ambitious ideas into sophisticated digital solutions.",
-      "We bring together technical expertise, strategic thinking, and creative design to develop modern software systems that address real-world challenges.",
-      "Our work extends beyond conventional software development. We approach each project as an interconnected digital ecosystem, combining thoughtful architecture, intelligent functionality, intuitive experiences, and long-term technical sustainability.",
-      "From healthcare management systems and educational platforms to online services and emerging digital products, we engineer technology with purpose.",
+      "We are Octagram, a software team based in Jordan.",
+      "We bring design and engineering together to help people build useful digital products.",
+      "We start by understanding the need, then shape software that is clear to use and practical to maintain.",
+      "Our work spans healthcare, education and online services. We build with care for the people who use it.",
     ],
-    closing: "We Don't Simply Develop Software. We Engineer Possibilities.",
+    closing: "Thoughtful software starts with understanding people",
   },
   vision: {
     label: "OUR VISION",
-    title: "Shaping Tomorrow Through Technology.",
+    title: "A little more possible",
     paragraphs: [
-      "Our vision is to establish Octagram as a recognized force in software engineering and digital innovation, creating technologies that challenge conventional approaches and expand what digital systems can achieve.",
-      "We aspire to develop meaningful digital products and intelligent ecosystems that empower organizations, enhance human experiences, and contribute to technological progress.",
-      "We believe exceptional technology is defined not only by its capabilities, but by the lasting impact it creates.",
+      "We want to build technology that opens up new ways to learn and work.",
+      "Our ambition is to grow through useful products and lasting relationships.",
+      "We see progress in the everyday things software helps people do.",
     ],
   },
   mission: {
     label: "OUR MISSION",
-    title: "Turning Complexity Into Opportunity.",
+    title: "Make the complex feel simple",
     paragraphs: [
-      "Our mission is to empower businesses, institutions, and innovators through reliable, intelligent, and purpose-built software solutions.",
-      "We combine engineering discipline, strategic problem-solving, and human-centered design to transform complex requirements into practical digital experiences.",
+      "We help businesses and teams turn everyday challenges into practical software.",
+      "Clear thinking and careful design guide how we build.",
     ],
-    principlesIntro: "Our commitment centers on five principles:",
+    principlesIntro: "What guides our work",
     principles: [
       {
-        title: "Engineering Excellence",
+        title: "Careful engineering",
+        description: "Build software that is reliable and easy to maintain.",
+      },
+      {
+        title: "Clear purpose",
+        description: "Keep technical decisions connected to your goals.",
+      },
+      {
+        title: "People first",
+        description: "Design around the people who will use the product.",
+      },
+      {
+        title: "Keep learning",
         description:
-          "Building reliable, maintainable, and scalable software systems.",
+          "Explore new tools where they can make a useful difference.",
       },
       {
-        title: "Strategic Thinking",
-        description: "Connecting technical decisions with business objectives.",
-      },
-      {
-        title: "Human-Centered Design",
-        description: "Creating intuitive and meaningful digital experiences.",
-      },
-      {
-        title: "Continuous Innovation",
-        description:
-          "Exploring modern technologies and their practical applications.",
-      },
-      {
-        title: "Long-Term Value",
-        description:
-          "Developing solutions designed to evolve alongside organizational needs.",
+        title: "Room to grow",
+        description: "Leave space for the product to evolve as needs change.",
       },
     ],
   },
   services: {
     label: "OCTAGRAM",
-    title: "Our Services.",
+    title: "Our services",
     paragraphs: [],
     items: [
       {
@@ -238,165 +235,152 @@ export const companyContent: CompanyContent = {
   },
   projectsIntro: {
     label: "SELECTED PROJECTS",
-    title: "Ideas Engineered Into Real-World Solutions.",
+    title: "Ideas taking shape",
     paragraphs: [
-      "Our work reflects a commitment to solving practical challenges through software engineering, thoughtful design, and purpose-built technology.",
+      "A selection of our work and the products we are developing. Each starts with a practical need.",
     ],
   },
   products: {
-    label: "PRODUCT INNOVATION",
-    title: "Beyond Projects. Toward Products.",
-    paragraphs: [
-      "Octagram's ambitions extend beyond commissioned software development.",
-      "We aim to create independent digital products that explore opportunities in education, healthcare, and connected digital services.",
-      "Our product initiatives reflect a long-term commitment to innovation, scalable architecture, and meaningful technology.",
-    ],
     items: [
       {
         id: "think",
         name: "THINK",
-        title: "Rethinking the Future of Education.",
+        title: "More room to learn",
         industry: "Educational Technology",
-        category: "Product Vision & Development Initiative",
+        category: "Product initiative",
         paragraphs: [
-          "THINK represents Octagram's broader vision for a connected and intelligent educational technology ecosystem.",
-          "The initiative explores the integration of academic resources, personalized learning experiences, intelligent assistance, and modern educational workflows within a unified digital environment.",
+          "THINK is an education initiative exploring how AI and learning resources can work together.",
+          "We are exploring ways to bring study materials, personal guidance and learning progress into one place.",
         ],
         visionAreas: [
-          "Connected learning environments",
-          "Personalized educational experiences",
-          "Intelligent academic assistance",
-          "Organized academic resources",
+          "Connected learning spaces",
+          "Personalized learning",
+          "AI study assistance",
+          "Organized study resources",
           "Learning progress and insights",
-          "Institutional digital learning solutions",
+          "Tools for educational institutions",
         ],
-        ambition:
-          "To explore educational technology that is more accessible, adaptable, and capable of supporting different learning needs.",
-        status: "Product initiative under development.",
+        ambition: "Help people find a way to learn that fits their needs.",
+        status: "In development",
       },
       {
         id: "octacare",
         name: "OCTACARE",
-        title: "Exploring the Future of Digital Healthcare.",
+        title: "Care that feels connected",
         industry: "Healthcare Technology",
-        category: "Product Vision & Development Initiative",
+        category: "Product initiative",
         paragraphs: [
-          "OctaCare represents Octagram's long-term ambition to explore connected healthcare technology and intelligent digital health experiences.",
-          "The initiative focuses on identifying opportunities to improve how healthcare services, users, and operational workflows interact through technology.",
+          "OCTACARE is a healthcare initiative exploring better connections between patients and care teams.",
+          "We are looking at how software can support daily workflows and make services easier to navigate.",
         ],
         visionAreas: [
-          "Connected healthcare experiences",
-          "Healthcare management workflows",
-          "Patient-centered digital services",
-          "Intelligent healthcare software capabilities",
-          "Integrated health technology solutions",
+          "Connected care experiences",
+          "Healthcare management",
+          "Patient services",
+          "AI support for healthcare workflows",
+          "Connected health systems",
         ],
         ambition:
-          "To contribute to a more connected and efficient digital healthcare landscape through purpose-built software products.",
-        status: "Product initiative under development.",
+          "Make everyday healthcare tasks simpler for patients and care teams.",
+        status: "In development",
       },
     ],
   },
   approach: {
     label: "OUR ENGINEERING APPROACH",
-    title: "From Vision to Execution.",
+    title: "From the first conversation",
     paragraphs: [
-      "Successful software requires structured thinking, technical discipline, and a clear understanding of business requirements.",
-      "Our development approach follows five interconnected stages.",
+      "We begin with your goals and the people the product is for.",
+      "Then we work through five stages with space to review and refine along the way.",
     ],
     stages: [
       {
         number: "01",
-        title: "Discovery & Strategy",
+        title: "Understand",
         description:
-          "Understanding the client's objectives, users, operational challenges, and technical requirements.",
+          "Listen to your goals and learn about your users, daily challenges and technical needs.",
       },
       {
         number: "02",
-        title: "Architecture & Planning",
+        title: "Plan",
         description:
-          "Transforming requirements into structured workflows, technical specifications, system architecture, and implementation priorities.",
+          "Map the workflows and system structure, then agree on priorities and scope.",
       },
       {
         number: "03",
-        title: "Design & Development",
+        title: "Design and build",
         description:
-          "Building functional software through coordinated interface design, backend engineering, and iterative development.",
+          "Bring the interface and underlying systems together through steady iterations.",
       },
       {
         number: "04",
-        title: "Quality & Validation",
+        title: "Test and refine",
         description:
-          "Testing critical functionality, reviewing system behavior, and addressing reliability, performance, and security requirements.",
+          "Review key workflows, performance and security needs before release.",
       },
       {
         number: "05",
-        title: "Deployment & Evolution",
+        title: "Launch and grow",
         description:
-          "Preparing software for operational environments and supporting future improvements according to each project's requirements and agreed scope.",
+          "Prepare for launch and plan ongoing support around the agreed scope.",
       },
     ],
-    closing:
-      "Our Principle: Understand the Problem. Engineer the Solution. Build for What Comes Next.",
+    closing: "A clear next step at every stage",
   },
   teamIntro: {
     label: "OUR TEAM",
-    title: "The Minds Behind Octagram.",
+    title: "The people behind Octagram",
     paragraphs: [
-      "Behind every digital solution is a team combining technical expertise, leadership, and a shared commitment to meaningful innovation.",
-      "Octagram brings together complementary specializations across software engineering, artificial intelligence, digital product development, and technical management.",
+      "We are a small team with different skills and a shared care for our work.",
+      "Together we bring experience in design, software engineering, AI and project delivery.",
     ],
-    closing: "Different Expertise. Shared Ambition. One Direction.",
   },
   whyOctagram: {
-    label: "WHY OCTAGRAM?",
-    title: "More Than Development. A Commitment to Engineering.",
+    label: "WHY OCTAGRAM",
+    title: "Care in the way we build",
     paragraphs: [
-      "We believe strong digital solutions emerge from a combination of technical discipline, business understanding, and creative problem-solving.",
+      "Good work comes from understanding your needs and paying attention to the details. Here is how we approach it.",
     ],
     reasons: [
       {
-        title: "Engineering-Driven Thinking",
+        title: "Solid foundations",
         description:
-          "We prioritize system structure, maintainability, reliability, and thoughtful architectural decisions.",
+          "We give the structure behind your product as much care as the experience on screen.",
       },
       {
-        title: "Tailored Digital Solutions",
-        description:
-          "We develop software around actual organizational requirements rather than relying on a one-size-fits-all approach.",
+        title: "Built around your needs",
+        description: "Your workflows and priorities guide what we build.",
       },
       {
-        title: "Integrated Expertise",
-        description:
-          "Our team brings together backend engineering, frontend development, artificial intelligence, and digital product thinking.",
+        title: "A connected team",
+        description: "Frontend, backend and AI work together from the start.",
       },
       {
-        title: "Product-Oriented Mindset",
+        title: "The whole experience",
         description:
-          "We consider the complete digital experience, not simply individual features or isolated technical tasks.",
+          "We consider how each feature fits into the way people use your product.",
       },
       {
-        title: "Direct Collaboration",
+        title: "Direct conversations",
         description:
-          "We value transparent communication, clear requirements, and close collaboration with stakeholders.",
+          "Work closely with the people building your software, with clear updates along the way.",
       },
       {
-        title: "Ambition to Innovate",
+        title: "Curiosity with purpose",
         description:
-          "We approach ambitious ideas as opportunities for serious exploration, structured planning, and purposeful engineering.",
+          "We explore new ideas carefully and choose tools for the value they bring.",
       },
     ],
-    closing:
-      "Our Focus Is Not Simply on What Technology Can Do Today, but on What It Can Make Possible Tomorrow.",
+    closing: "Something useful today with room for tomorrow",
   },
   contact: {
-    label: "CONTACT & COLLABORATION",
-    title: "Let's Engineer What's Next.",
+    label: "LET’S TALK",
+    title: "Start with a conversation",
     paragraphs: [
-      "Every remarkable digital product begins with an idea, a challenge, or a vision for something better.",
-      "Whether you are a business looking to modernize operations, an institution planning a digital platform, or a strategic partner exploring new opportunities, Octagram brings the engineering perspective required to turn ideas into practical solutions.",
+      "Have an idea or a challenge in mind? Tell us a little about it and we can explore the next step together.",
+      "We welcome new projects and thoughtful partnerships across software, education and healthcare.",
     ],
-    collaborationIntro: "We welcome collaboration in:",
+    collaborationIntro: "Ways we can work together",
     collaborationAreas: [
       "Custom software engineering",
       "Web and digital platform development",
@@ -406,16 +390,16 @@ export const companyContent: CompanyContent = {
       "Technology partnerships",
       "Digital transformation initiatives",
     ],
-    closing: "Your Vision. Our Engineering.",
+    closing: "Let’s build something useful together",
     website: "https://octagramjo.com/",
     instagram: "https://www.instagram.com/octagram.jo/",
     instagramLabel: "@Octagram.jo",
     location: "Jordan",
   },
   closing: {
-    lead: "THE FUTURE IS NOT ONLY IMAGINED.",
-    headline: "IT IS ENGINEERED.",
+    lead: "GOOD IDEAS",
+    headline: "GROW WITH CARE",
     brand: "OCTAGRAM",
-    tagline: "Designing Impact. Engineering Beauty.",
+    tagline: "Designing impact and engineering beauty",
   },
 };

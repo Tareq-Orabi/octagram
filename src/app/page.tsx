@@ -9,7 +9,6 @@ import SiteInteractions from "@/components/SiteInteractions";
 import { companyContent as content } from "@/lib/company-content";
 import {
   MissionSection,
-  InnovationSection,
   ApproachSection,
   WhySection,
   ContactContext,
@@ -155,7 +154,7 @@ export default function HomePage() {
           <a href="#contact">Let&#x27;s build together</a>
         </nav>
         <div className="mobile-menu-bottom">
-          <span>Engineering what&#x27;s next.</span>
+          <span>Made with care</span>
         </div>
       </div>
       <main id="main">
@@ -177,13 +176,11 @@ export default function HomePage() {
           <p className="portfolio-edition">{content.brand.portfolioLabel}</p>
           <div className="hero-content">
             <h1 id="hero-title">
-              {["Designing", "impact.", "Engineering", "beauty."].map(
-                (line) => (
-                  <span className="hero-line" key={line}>
-                    <span>{line}</span>
-                  </span>
-                ),
-              )}
+              {["Designing", "impact", "Engineering", "beauty"].map((line) => (
+                <span className="hero-line" key={line}>
+                  <span>{line}</span>
+                </span>
+              ))}
             </h1>
             <div className="hero-body mobile-blur">
               <p className="eyebrow" data-reveal="hero-body">
@@ -240,17 +237,17 @@ export default function HomePage() {
         >
           <div className="stage narrative" data-phase="fragments">
             <div className="manifesto-copy">
-              <p>We don't simply develop software.</p>
-              <p>We engineer possibilities.</p>
+              <p>Every idea starts somewhere</p>
+              <p>We help it take shape</p>
             </div>
           </div>
           <div className="stage narrative" data-phase="connections">
             <div className="manifesto-copy">
-              <p>Understand the problem.</p>
+              <p>Understand the need</p>
               <p>
-                Engineer the solution.
+                Build with care
                 <br />
-                Build for what comes next.
+                Leave room to grow
               </p>
             </div>
           </div>
@@ -307,9 +304,9 @@ export default function HomePage() {
           <div className="side-copy roots-copy">
             <p className="section-kicker">OCTAGRAM / OUR ROOTS</p>
             <h2 id="jordan-title">
-              Rooted in Jordan.
+              Rooted in Jordan
               <br />
-              Built to go further.
+              Open to what’s next
             </h2>
             <p>{content.about.paragraphs[0]}</p>
             <p>{content.about.paragraphs[3]}</p>
@@ -327,9 +324,9 @@ export default function HomePage() {
           <SectionBar label="OUR TEAM" count="01 — 04" />
           <div className="team-head">
             <h2 id="team-title">
-              The minds
+              The people
               <br />
-              behind Octagram.
+              behind Octagram
             </h2>
             <div className="team-intro">
               {content.teamIntro.paragraphs.map((paragraph) => (
@@ -358,11 +355,10 @@ export default function HomePage() {
           aria-labelledby="work-title"
         >
           <PortfolioIntro section={content.projectsIntro} id="work-title" />
-          <div id="project-list" className="project-gallery">
+          <div id="project-list" className="project-desktop-host">
             <ProjectStudies />
           </div>
         </section>
-        <InnovationSection />
         <ApproachSection />
         <WhySection />
 
@@ -410,7 +406,7 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="field">
-                <label htmlFor="interest">What are you thinking about?</label>
+                <label htmlFor="interest">What you have in mind</label>
                 <select id="interest" name="interest">
                   <option value="A new project">A new project</option>
                   {content.services.items.map((service) => (
@@ -430,7 +426,7 @@ export default function HomePage() {
                   required
                   minLength={10}
                   maxLength={5000}
-                  placeholder="The ambition, the challenge, the possibilities…"
+                  placeholder="What would you like to build and who is it for?"
                 ></textarea>
               </div>
               <p className="form-note" id="form-note">
@@ -441,7 +437,7 @@ export default function HomePage() {
               <button className="button primary" type="submit">
                 <span id="submit-label">
                   {contactEmail
-                    ? "Review & email your brief"
+                    ? "Review and email your brief"
                     : "Prepare project brief"}
                 </span>
               </button>
@@ -462,7 +458,6 @@ export default function HomePage() {
           <a href="#team">Team</a>
           <a href="#expertise">Services</a>
           <a href="#work">Work</a>
-          <a href="#innovation">Products</a>
           <a href="#approach">Approach</a>
           <a href="#contact">Contact</a>
           <span id="social-links">
@@ -475,7 +470,7 @@ export default function HomePage() {
       </footer>
       <dialog id="brief-dialog" aria-labelledby="brief-title">
         <div className="dialog-top">
-          <span className="eyebrow">YOUR NEXT CHAPTER</span>
+          <span className="eyebrow">YOUR PROJECT BRIEF</span>
           <button
             type="button"
             className="icon-button close-dialog"
@@ -485,13 +480,13 @@ export default function HomePage() {
           </button>
         </div>
         <h2 id="brief-title">
-          Your idea,
+          Your idea
           <br />
-          in focus.
+          in focus
         </h2>
         <p id="brief-help">
-          Your brief is ready. Copy or download it to share when you&#x27;re
-          ready. Nothing has been sent.
+          Copy or download your brief to share when you are ready. Nothing has
+          been sent.
         </p>
         <pre id="brief-preview"></pre>
         <div className="dialog-actions">

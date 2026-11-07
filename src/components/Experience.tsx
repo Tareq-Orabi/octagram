@@ -40,7 +40,8 @@ type SectionId =
   | "team"
   | "expertise"
   | "work"
-  | "contact";
+  | "contact"
+  | "closing-eye";
 type Bounds = Record<SectionId, { top: number; height: number }>;
 const sectionIds: SectionId[] = [
   "home",
@@ -52,6 +53,7 @@ const sectionIds: SectionId[] = [
   "expertise",
   "work",
   "contact",
+  "closing-eye",
 ];
 const clearSceneFlags = () =>
   document.documentElement.classList.remove(
@@ -134,6 +136,8 @@ function SceneDirector({ quality }: { quality: number }) {
   const bounds = useRef<Bounds>({} as Bounds);
   const passageBounds = useRef({ top: 0, height: 1 });
   const orbitBounds = useRef({ top: 0, height: 1 });
+  // Clip only Earth, leaving the shared ambient field free to span sections.
+  const globeClip = useRef({ value: new THREE.Vector3(-1, 1e7, 1) });
   const scrolling = useRef({ position: 0 });
   const pointer = useRef<ScenePointer>({ x: 0, y: 0 });
   const smoothedPointer = useRef<ScenePointer>({ x: 0, y: 0 });
@@ -182,6 +186,33 @@ function SceneDirector({ quality }: { quality: number }) {
           model,
           surfaces: captureSurfaces(model),
         };
+        if (name === "globe") {
+          for (const { material } of entry.surfaces) {
+            material.onBeforeCompile = (shader) => {
+              shader.uniforms.octagramSectionClip = globeClip.current;
+              shader.fragmentShader =
+                "uniform vec3 octagramSectionClip;\n" +
+                shader.fragmentShader.replace(
+                  /void main\s*\(\s*\)\s*\{/,
+                  `void main() {
+                    if (gl_FragCoord.y < octagramSectionClip.x ||
+                        gl_FragCoord.y > octagramSectionClip.y) discard;`,
+                );
+              // Fade the planet into the page before its section boundary.
+              // Apply to every surface, including ocean, coastlines and marker.
+              const end = shader.fragmentShader.lastIndexOf("}");
+              shader.fragmentShader =
+                shader.fragmentShader.slice(0, end) +
+                `gl_FragColor.a *= smoothstep(
+                  octagramSectionClip.x,
+                  octagramSectionClip.x + octagramSectionClip.z,
+                  gl_FragCoord.y);
+                ` +
+                shader.fragmentShader.slice(end);
+            };
+            material.customProgramCacheKey = () => "octagram-earth-soft-edge";
+          }
+        }
         models.current[name] = entry;
         setLoaded(
           Object.values(models.current).filter((value): value is ManagedModel =>
@@ -190,7 +221,7 @@ function SceneDirector({ quality }: { quality: number }) {
         );
         document.documentElement.classList.add(`has-${name}`);
         document.documentElement.classList.remove(`fallback-${name}`);
-        if (models.current.brain && !lost.current)
+        if ((models.current.brain || models.current.modules) && !lost.current)
           document.documentElement.classList.add("has-webgl");
         if (name === "brain")
           window.dispatchEvent(
@@ -304,7 +335,7 @@ function SceneDirector({ quality }: { quality: number }) {
       Object.keys(models.current).forEach((name) =>
         document.documentElement.classList.add(`has-${name}`),
       );
-      if (models.current.brain)
+      if (models.current.brain || models.current.modules)
         document.documentElement.classList.add("has-webgl");
       gl.toneMappingExposure = 1.12;
       invalidate();
@@ -325,6 +356,8 @@ function SceneDirector({ quality }: { quality: number }) {
     void document.fonts.ready.then(() => {
       if (alive.current) measure();
     });
+    const onScroll = () => invalidate();
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("pointermove", onPointer, { passive: true });
     document.addEventListener("pointerleave", onPointerLeave);
     window.addEventListener("octagram:entered", enter);
@@ -334,7 +367,6 @@ function SceneDirector({ quality }: { quality: number }) {
     gl.domElement.addEventListener("webglcontextlost", onLost);
     gl.domElement.addEventListener("webglcontextrestored", onRestored);
     gl.toneMappingExposure = 1.12;
-    void ensure("brain");
     void ensure("modules");
     return () => {
       alive.current = false;
@@ -342,6 +374,7 @@ function SceneDirector({ quality }: { quality: number }) {
       gsap.killTweensOf(entrance.current);
       resizeObserver.disconnect();
       clearTimeout(refreshTimer);
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("pointermove", onPointer);
       document.removeEventListener("pointerleave", onPointerLeave);
       window.removeEventListener("octagram:entered", enter);
@@ -377,9 +410,10 @@ function SceneDirector({ quality }: { quality: number }) {
       time = clock.elapsedTime * 0.65;
     const actualScroll = window.scrollY;
     const progress = narrativeProgress(y, b, h);
-    if (progress > 1.7 || actualScroll + h * 2 > b.vision.top)
+    if (actualScroll < b.vision.top + h) void ensure("brain");
+    if (actualScroll + h * 2 > b.vision.top && actualScroll < b.jordan.top)
       void ensure("logo");
-    if (progress > 2.7 || actualScroll + h * 2 > b.jordan.top)
+    if (actualScroll + h * 2 > b.jordan.top && actualScroll < b.team.top)
       void ensure("globe");
     const current = evaluateNarrative(progress, mobile);
     const compactLogo = size.width <= 800 && h > 520;
@@ -433,24 +467,34 @@ function SceneDirector({ quality }: { quality: number }) {
     // Earth is projected from its own document slot, not from a viewport float.
     // This keeps its horizon below the copy even on short or narrow screens.
     const orbit = orbitBounds.current;
-    const radiusPx = Math.min(size.width * 0.48, orbit.height * 1.08, 700);
+    const radiusPx = Math.min(size.width * 0.46, orbit.height * 0.98, 580);
     const unitsPerPixel = (2 * Math.tan(THREE.MathUtils.degToRad(25)) * 10) / h;
     current.globe.x = 0;
     current.globe.y =
-      (h / 2 - (orbit.top - actualScroll + radiusPx)) * unitsPerPixel;
+      (h / 2 - (orbit.top - actualScroll + radiusPx * 0.9)) * unitsPerPixel;
     current.globe.z = current.cameraZ - 10;
     current.globe.scale = (radiusPx * unitsPerPixel) / 2;
     current.globe.yaw = 0;
     // Compensate the low camera angle so Jordan stays above the visible equator.
     current.globe.pitch = Math.atan2(current.globe.y, 10) - 0.2;
-    current.globe.opacity = passage.globeOpacity;
-    // Clip the lower hemisphere at the section edge, including during resize.
+    current.globe.opacity =
+      passage.globeOpacity *
+      (actualScroll + h > b.jordan.top && actualScroll < b.team.top ? 1 : 0);
+    const earthTop = b.jordan.top - actualScroll;
+    const earthBottom = b.jordan.top + b.jordan.height - actualScroll;
+    globeClip.current.value.set(
+      (1 - earthBottom / h) * gl.domElement.height,
+      (1 - earthTop / h) * gl.domElement.height,
+      (THREE.MathUtils.clamp(orbit.height * 0.38, 72, 150) / h) *
+        gl.domElement.height,
+    );
+    // Mask at the actual closing boundary, even when half the viewport is still
+    // showing the preceding section. Contact and footer never receive particles.
+    const closingTop = Math.min(b["closing-eye"].top, b.contact.top);
+    const ambientEnd = THREE.MathUtils.clamp(closingTop - actualScroll, 0, h);
     const canvasHost = gl.domElement.closest<HTMLElement>(".experience-stage");
     if (canvasHost)
-      canvasHost.style.clipPath =
-        passage.logoOpacity < 0.002
-          ? `inset(${Math.max(0, b.jordan.top - actualScroll)}px 0 ${Math.max(0, h - (b.jordan.top + b.jordan.height - actualScroll))}px 0)`
-          : "none";
+      canvasHost.style.clipPath = `inset(0 0 ${h - ambientEnd}px 0)`;
     const damping = 1 - Math.exp(-4 * Math.min(delta, 0.06));
     const input = smoothedPointer.current;
     input.x += (pointer.current.x - input.x) * damping;
@@ -479,17 +523,18 @@ function SceneDirector({ quality }: { quality: number }) {
     pose(m.globe, current.globe);
     fade(m.globe, current.globe.opacity * (actualScroll < b.team.top ? 1 : 0));
 
+    const ambientOpacity =
+      THREE.MathUtils.lerp(current.ambientOpacity, 0.45, passage.globeOpacity) *
+      (1 - passage.alignment * (1 - passage.globeOpacity) * 0.7) *
+      entrance.current.progress *
+      THREE.MathUtils.smoothstep(ambientEnd, 0, h * 0.35);
     if (m.modules) {
-      m.modules.model.setTunnel?.(current.tunnel);
-      m.modules.model.update(time, progress, input, false);
-      m.modules.model.group.position.set(0, 0, 0);
-      fade(
-        m.modules,
-        current.ambientOpacity *
-          (1 - passage.alignment * 0.94) *
-          entrance.current.progress *
-          (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
-      );
+      m.modules.model.setTunnel?.(current.tunnel * (1 - entry));
+      if (ambientOpacity > 0.002)
+        m.modules.model.update(time, progress, input, false);
+      // Keep the original three depth layers in view after the camera passage.
+      m.modules.model.group.position.set(0, 0, current.cameraZ - 10);
+      fade(m.modules, ambientOpacity);
     }
     // Suppress camera tilt while the upright mark is visible.
     const cameraMotion = inJourney
@@ -502,6 +547,8 @@ function SceneDirector({ quality }: { quality: number }) {
     camera.position.z = current.cameraZ;
     const canvas = gl.domElement;
     canvas.dataset.progress = progress.toFixed(3);
+    canvas.dataset.ambientOpacity = ambientOpacity.toFixed(3);
+    canvas.dataset.ambientEnd = ambientEnd.toFixed(1);
     canvas.dataset.brainParticles = String(
       m.brain?.model.group.userData.particleCount ?? 0,
     );
@@ -521,7 +568,7 @@ function SceneDirector({ quality }: { quality: number }) {
     canvas.dataset.globeDepth = current.globe.z.toFixed(3);
     // Keep the existing living materials and ambient pieces animated. Pausing,
     // reduced motion, hidden documents and the menu still suspend this loop.
-    invalidate();
+    if (ambientEnd > 0) invalidate();
   });
 
   return (

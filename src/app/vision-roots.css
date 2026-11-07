@@ -23,6 +23,8 @@
   height: 130svh;
 }
 #jordan.jordan {
+  --orbit-height: clamp(300px, 48svh, 540px);
+  --planet-radius: min(46vw, calc(var(--orbit-height) * 0.98), 580px);
   display: block;
   min-height: 0;
   padding: 120px var(--gutter) 0;
@@ -49,19 +51,25 @@
   flex-wrap: wrap;
 }
 .roots-orbit {
-  height: clamp(300px, 48svh, 540px);
+  height: var(--orbit-height);
   margin-top: 50px;
 }
 #jordan .globe-poster {
-  width: min(96vw, 1040px);
+  width: calc(var(--planet-radius) * 2);
   height: auto;
   max-width: none;
   padding: 0;
   left: 50%;
   right: auto;
   top: auto;
-  bottom: 0;
-  transform: translate(-50%, 50%);
+  bottom: calc(var(--orbit-height) - var(--planet-radius) * 1.9);
+  transform: translateX(-50%);
+  /* The static and reduced-motion planet shares the same soft lower edge. */
+  mask-image: linear-gradient(
+    to bottom,
+    #000 25%,
+    transparent calc(var(--orbit-height) + var(--planet-radius) * 0.1)
+  );
 }
 @media (max-width: 800px) {
   .vision-reading {
@@ -93,8 +101,10 @@
   #jordan .roots-copy p:not(.section-kicker) {
     font-size: 14px;
   }
+  #jordan.jordan {
+    --orbit-height: clamp(180px, 47vw, 360px);
+  }
   .roots-orbit {
-    height: clamp(180px, 47vw, 360px);
     margin-top: 36px;
   }
 }
@@ -114,8 +124,8 @@
   #jordan .roots-copy h2 {
     font-size: 32px;
   }
-  .roots-orbit {
-    height: 240px;
+  #jordan.jordan {
+    --orbit-height: 240px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

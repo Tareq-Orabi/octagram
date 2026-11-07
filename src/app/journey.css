@@ -8,6 +8,10 @@ html {
 main > .content-section {
   min-height: 0;
   padding-block: var(--section-space);
+  background: transparent;
+}
+/* The closing eye and its contact area keep a clean, opaque backdrop. */
+main > .content-section.contact {
   background: var(--page-bg);
 }
 .section-topline,

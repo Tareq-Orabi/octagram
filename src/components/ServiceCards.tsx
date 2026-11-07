@@ -319,14 +319,14 @@ export default function ServiceCards({
         }}
       >
         <div className="service-wheel-heading">
-          <span className="service-eyebrow">ENGINEERED FOR WHAT’S NEXT</span>
+          <span className="service-eyebrow">HOW WE CAN HELP</span>
           <h2 id="expertise-title">
-            Our <span>Services.</span>
+            Our <span>Services</span>
           </h2>
           <p>
             Eight ways to move
             <br />
-            your ideas forward.
+            your ideas forward
           </p>
         </div>
         <div
@@ -427,7 +427,7 @@ export default function ServiceCards({
           <div className="service-gallery-controls">
             {selected === null ? (
               <>
-                <p>Select a card to explore · Drag to rotate</p>
+                <p>Select a card to explore or drag to rotate</p>
                 <div className="service-wheel-actions">
                   <button
                     type="button"
@@ -469,7 +469,7 @@ export default function ServiceCards({
         )}
       </div>
       <p className="service-gallery-note">
-        From the first idea to the systems behind it.
+        Support from the first idea to everyday use
       </p>
     </div>
   );

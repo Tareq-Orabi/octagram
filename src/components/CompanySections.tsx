@@ -1,4 +1,4 @@
-import ProjectFlip from "./ProjectFlip";
+import ProjectDesktop, { type DesktopProject } from "./ProjectDesktop";
 import { SectionBar } from "./BrandPanels";
 import { companyContent as content } from "@/lib/company-content";
 import { safeHref, siteConfig } from "@/lib/site-config";
@@ -50,139 +50,6 @@ export function MissionSection() {
           </li>
         ))}
       </ol>
-    </section>
-  );
-}
-
-function ProductArtwork({ index, name }: { index: number; name: string }) {
-  return (
-    <div className="project-visual" aria-hidden="true">
-      <svg viewBox="0 0 320 300" fill="none">
-        <circle cx="160" cy="150" r="120" stroke="currentColor" opacity=".16" />
-        <circle
-          cx="160"
-          cy="150"
-          r="96"
-          stroke="currentColor"
-          strokeDasharray="2 9"
-          opacity=".45"
-        />
-        {index === 0 ? (
-          <>
-            <path
-              d="M116 178c-36-40-14-100 44-100s80 60 44 100l-16 22h-56z"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="currentColor"
-              fillOpacity=".08"
-            />
-            <path
-              d="M135 214h50M142 226h36M160 198v-43m0 0-23-24m23 24 23-24"
-              stroke="currentColor"
-              strokeWidth="5"
-              strokeLinecap="round"
-            />
-            {[
-              [137, 131],
-              [183, 131],
-              [160, 108],
-            ].map(([x, y]) => (
-              <circle key={x + y} cx={x} cy={y} r="7" fill="currentColor" />
-            ))}
-            <path
-              d="M160 38v17M82 73l13 13M225 86l13-13M58 150h17M245 150h17"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </>
-        ) : (
-          <>
-            <rect
-              x="96"
-              y="86"
-              width="128"
-              height="128"
-              rx="34"
-              stroke="currentColor"
-              strokeWidth="2"
-              fill="currentColor"
-              fillOpacity=".08"
-            />
-            <path
-              d="M148 111h24v27h27v24h-27v27h-24v-27h-27v-24h27z"
-              fill="currentColor"
-            />
-            {[0, 1, 2, 3].map((n) => (
-              <g key={n} transform={`rotate(${n * 90} 160 150)`}>
-                <path d="M160 31v34" stroke="currentColor" opacity=".4" />
-                <circle cx="160" cy="35" r="8" fill="currentColor" />
-              </g>
-            ))}
-          </>
-        )}
-      </svg>
-      <div className="project-art-caption">{name}</div>
-      <div className="project-art-dots">
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
-    </div>
-  );
-}
-
-export function InnovationSection() {
-  return (
-    <section
-      className="portfolio-section content-section"
-      id="innovation"
-      aria-labelledby="innovation-title"
-    >
-      <PortfolioIntro section={content.products} id="innovation-title" />
-      <div className="project-gallery product-gallery">
-        {content.products.items.map((product, index) => (
-          <article
-            className={`project-showcase product-showcase product-showcase--${index}`}
-            id={`product-${product.id}`}
-            key={product.id}
-          >
-            <header className="project-showcase-heading">
-              <span className="project-app-icon" aria-hidden="true">
-                {index === 0 ? "TH" : "OC"}
-              </span>
-              <h3>{product.name}</h3>
-            </header>
-            <p className="project-showcase-description">
-              {product.paragraphs[0]}
-            </p>
-            <div className="project-showcase-meta">{product.industry}</div>
-            <p className="product-development-status">{product.status}</p>
-            <ProductArtwork index={index} name={product.name} />
-            <details className="showcase-details">
-              <summary aria-label={`Explore ${product.name}`}>
-                <span aria-hidden="true">+</span>
-              </summary>
-              <div className="showcase-detail-content">
-                <h4>{product.title}</h4>
-                <p>{product.category}</p>
-                {product.paragraphs.slice(1).map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-                <h4>Vision areas</h4>
-                <ul>
-                  {product.visionAreas.map((area) => (
-                    <li key={area}>{area}</li>
-                  ))}
-                </ul>
-                <h4>Our ambition</h4>
-                <p>{product.ambition}</p>
-              </div>
-            </details>
-          </article>
-        ))}
-      </div>
     </section>
   );
 }
@@ -366,188 +233,88 @@ export function ContactContext() {
   );
 }
 
-function ProjectArtwork({ index }: { index: number }) {
-  return (
-    <div
-      className={`project-visual project-visual--${index}`}
-      aria-hidden="true"
-    >
-      <svg viewBox="0 0 320 300" fill="none">
-        <circle cx="160" cy="150" r="124" stroke="currentColor" opacity=".15" />
-        <circle
-          cx="160"
-          cy="150"
-          r="102"
-          stroke="currentColor"
-          strokeDasharray="2 9"
-          opacity=".4"
-        />
-        {index === 0 ? (
-          <>
-            {[0, 1, 2, 3, 4, 5].map((n) => (
-              <rect
-                key={n}
-                x={79 + n * 28}
-                y={95 - Math.sin(n * 0.8) * 26}
-                width="22"
-                height={110 + Math.sin(n * 0.8) * 52}
-                rx="11"
-                fill="currentColor"
-                opacity={0.25 + n * 0.12}
-              />
-            ))}
-            <path
-              d="M38 154h48l16-30 24 62 28-87 30 67 20-28 14 16h64"
-              stroke="var(--text-primary)"
-              strokeWidth="2"
-            />
-          </>
-        ) : index === 1 ? (
-          <>
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((n) => (
-              <g key={n} transform={`rotate(${n * 45} 160 150)`}>
-                <path d="M160 150V62" stroke="currentColor" opacity=".3" />
-                <rect
-                  x="146"
-                  y="43"
-                  width="28"
-                  height="28"
-                  rx="9"
-                  fill="currentColor"
-                  opacity={0.3 + n * 0.08}
-                />
-              </g>
-            ))}
-            <rect
-              x="117"
-              y="107"
-              width="86"
-              height="86"
-              rx="26"
-              fill="var(--page-bg)"
-              stroke="currentColor"
-            />
-            <text
-              x="160"
-              y="162"
-              textAnchor="middle"
-              fill="currentColor"
-              fontSize="32"
-              fontFamily="monospace"
-            >
-              OC
-            </text>
-          </>
-        ) : (
-          <>
-            <circle
-              cx="160"
-              cy="150"
-              r="82"
-              stroke="currentColor"
-              strokeWidth="18"
-              opacity=".15"
-            />
-            <circle
-              cx="160"
-              cy="150"
-              r="82"
-              stroke="currentColor"
-              strokeWidth="18"
-              strokeDasharray="365 151"
-              transform="rotate(-90 160 150)"
-              strokeLinecap="round"
-            />
-            <path
-              d="M121 150h78M121 130v40M109 138v24M199 130v40M211 138v24"
-              stroke="var(--text-primary)"
-              strokeWidth="8"
-              strokeLinecap="round"
-            />
-          </>
-        )}
-      </svg>
-      <div className="project-art-caption">
-        {["SIX SENSES", "OCTACLUB", "THAAERFIT"][index]}
-      </div>
-      <div className="project-art-dots">
-        <i />
-        <i />
-        <i />
-        <i />
-      </div>
-    </div>
-  );
-}
-
 export function ProjectStudies() {
-  return (
-    <>
-      {siteConfig.projects.map((project, index) => {
-        const href = safeHref(project.url);
-        const paragraphs = project.overview || [project.description];
-        return (
-          <ProjectFlip
-            key={project.title}
-            index={index}
-            title={project.title}
-            front={
-              <>
-                <header className="project-showcase-heading">
-                  <span className="project-app-icon" aria-hidden="true">
-                    {["6S", "OC", "TF"][index]}
-                  </span>
-                  <h3>{project.title}</h3>
-                </header>
-                <p className="project-showcase-description">
-                  {project.description}
-                </p>
-                <div className="project-showcase-meta">
-                  {project.subtitle || project.title}
-                </div>
-                <ProjectArtwork index={index} />
-              </>
-            }
-            back={
-              <div className="showcase-detail-content">
-                {project.status && (
-                  <p className="showcase-status">{project.status}</p>
-                )}
-                {paragraphs.map((p) => (
-                  <p key={p}>{p}</p>
+  const projects: DesktopProject[] = siteConfig.projects.map(
+    (project, index) => ({
+      icon: index,
+      future: project.status === "In development",
+      title: project.title,
+      subtitle: project.subtitle,
+      category: project.category,
+      industry: project.industry,
+      status: project.status,
+      description: project.description,
+      href: safeHref(project.url),
+      details: (
+        <>
+          {(project.overview || [])
+            .filter((p) => p !== project.description)
+            .map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+          {(project.capabilities || project.focus)?.length ? (
+            <>
+              <h4>{project.capabilitiesLabel || "Project focus"}</h4>
+              <ul>
+                {(project.capabilities || project.focus || []).map((item) => (
+                  <li key={item}>{item}</li>
                 ))}
-                {(project.capabilities || project.focus)?.length ? (
-                  <>
-                    <h4>{project.capabilitiesLabel || "Project focus"}</h4>
-                    <ul>
-                      {(project.capabilities || project.focus || []).map(
-                        (item) => (
-                          <li key={item}>{item}</li>
-                        ),
-                      )}
-                    </ul>
-                  </>
-                ) : null}
-                {project.engineering?.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {project.digitalExperience?.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {project.value?.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {project.client && <p>{project.client}</p>}
-                {href && (
-                  <a href={href} target="_blank" rel="noopener noreferrer">
-                    Visit {new URL(href, siteConfig.siteUrl).hostname}{" "}
-                  </a>
-                )}
-              </div>
-            }
-          />
-        );
-      })}
-    </>
+              </ul>
+            </>
+          ) : null}
+          {project.engineering?.length ? (
+            <>
+              <h4>Engineering</h4>
+              {project.engineering.map((p) => (
+                <p key={p}>{p}</p>
+              ))}
+            </>
+          ) : null}
+          {project.digitalExperience?.map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+          {project.value?.length ? (
+            <>
+              <h4>Purpose</h4>
+              {project.value.map((p) => (
+                <p key={p}>{p}</p>
+              ))}
+            </>
+          ) : null}
+          {project.client && <p>{project.client}</p>}
+        </>
+      ),
+    }),
   );
+  projects.push(
+    ...content.products.items.map((product, index) => ({
+      icon: index + 3,
+      title: product.name,
+      subtitle: product.title,
+      industry: product.industry,
+      category: product.category,
+      status: product.status,
+      description: product.paragraphs[0],
+      future: true,
+      details: (
+        <>
+          {product.paragraphs.slice(1).map((p) => (
+            <p key={p}>{p}</p>
+          ))}
+          <h4>Areas we are exploring</h4>
+          <ul>
+            {product.visionAreas.map((area) => (
+              <li key={area}>{area}</li>
+            ))}
+          </ul>
+          <h4>What we hope to make easier</h4>
+          <p>{product.ambition}</p>
+        </>
+      ),
+    })),
+  );
+  projects.sort(
+    (a, b) => Number(Boolean(a.future)) - Number(Boolean(b.future)),
+  );
+  return <ProjectDesktop projects={projects} />;
 }

@@ -9,7 +9,7 @@ export function SectionBar({
   return (
     <div className="section-topline">
       <span>OCTAGRAM / {label}</span>
-      <span>{count || "DESIGNING IMPACT."}</span>
+      <span>{count || "DESIGNING IMPACT"}</span>
     </div>
   );
 }

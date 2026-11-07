@@ -258,13 +258,13 @@ export default function SiteInteractions() {
       event.preventDefault();
       const data = new FormData(form);
       const value = (key: string) => String(data.get(key) || "").trim();
-      briefText = `OCTAGRAM — PROJECT BRIEF\n\nName: ${value("name")}\nEmail: ${value("email")}\nInterest: ${value("interest")}\n\nTHE IDEA\n${value("message")}`;
+      briefText = `OCTAGRAM PROJECT BRIEF\n\nName: ${value("name")}\nEmail: ${value("email")}\nInterest: ${value("interest")}\n\nTHE IDEA\n${value("message")}`;
       preview.textContent = briefText;
       status.textContent = "";
       if (contactEmail) {
         const link = query<HTMLAnchorElement>("#email-brief");
         link.hidden = false;
-        link.href = `mailto:${contactEmail}?subject=${encodeURIComponent(`Project inquiry — ${value("interest")}`)}&body=${encodeURIComponent(briefText)}`;
+        link.href = `mailto:${contactEmail}?subject=${encodeURIComponent(`Project inquiry: ${value("interest")}`)}&body=${encodeURIComponent(briefText)}`;
         query<HTMLParagraphElement>("#brief-help").textContent =
           "Review your brief, then open your email app to send it. Nothing is sent automatically.";
       }
@@ -285,8 +285,7 @@ export default function SiteInteractions() {
     listen(query("#copy-brief"), "click", async () => {
       try {
         await navigator.clipboard.writeText(briefText);
-        if (!signal.aborted)
-          status.textContent = "Brief copied. Ready when you are.";
+        if (!signal.aborted) status.textContent = "Brief copied";
       } catch {
         if (signal.aborted) return;
         const range = document.createRange();
@@ -316,7 +315,7 @@ export default function SiteInteractions() {
       }, 1500);
       timers.add(timer);
       status.textContent =
-        "Your brief has been downloaded. Nothing has been sent.";
+        "Brief downloaded to your device. Nothing has been sent.";
     });
 
     return () => {

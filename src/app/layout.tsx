@@ -7,19 +7,19 @@ import "./journey.css";
 import "./eye-outro.css";
 import "./surface-motion.css";
 import "./vision-roots.css";
-import "./project-flip.css";
+import "./project-desktop.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
   title: "Octagram",
   description:
-    "Jordan-based software engineering and digital innovation. Explore Octagram's web platforms, custom software, AI, healthcare and education projects, and the team behind them.",
+    "A software team based in Jordan building websites, apps and custom systems with thoughtful design and practical AI.",
   alternates: { canonical: "/" },
   icons: { icon: "/assets/brand/logo.svg" },
   openGraph: {
-    title: "Octagram — Designing Impact. Engineering Beauty.",
+    title: "Octagram",
     description:
-      "Software engineering, digital innovation, and artificial intelligence. From ambitious ideas to exceptional digital experiences.",
+      "Thoughtful software from a team in Jordan. Explore our work in web development, custom systems and AI.",
     url: siteConfig.siteUrl,
     siteName: "Octagram",
     type: "website",
@@ -40,8 +40,8 @@ const organization = {
   name: "Octagram",
   url: siteConfig.siteUrl,
   logo: new URL("/assets/brand/logo.svg", siteConfig.siteUrl).href,
-  slogan: "Designing Impact. Engineering Beauty.",
-  description: "Jordan-based software engineering and digital innovation team.",
+  slogan: "Designing impact and engineering beauty",
+  description: "A software team based in Jordan.",
   address: { "@type": "PostalAddress", addressCountry: "JO" },
   sameAs: siteConfig.socialLinks.map((link) => link.url),
 };
