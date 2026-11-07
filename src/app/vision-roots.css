@@ -1,0 +1,125 @@
+/* One reading viewport, then a short native-scroll passage. No scroll pinning. */
+#vision.logo-story {
+  display: block;
+  padding: 0;
+  min-height: 0;
+  overflow: clip;
+}
+.vision-reading {
+  position: relative;
+  min-height: max(100svh, 660px);
+  display: flex;
+  align-items: center;
+  padding: 110px var(--gutter) 70px;
+}
+#vision .side-copy {
+  margin-block: 0;
+  padding: 0;
+}
+.vision-passage {
+  height: 0;
+}
+.js-enabled .vision-passage {
+  height: 130svh;
+}
+#jordan.jordan {
+  display: block;
+  min-height: 0;
+  padding: 120px var(--gutter) 0;
+  overflow: clip;
+}
+#jordan .roots-copy {
+  width: min(100%, 760px);
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0;
+  text-align: center;
+}
+#jordan-title {
+  color: var(--text-primary);
+}
+#jordan .roots-copy p:not(.section-kicker) {
+  max-width: 64ch;
+  margin-inline: auto;
+}
+#jordan .geo-label {
+  justify-content: center;
+  margin-top: 28px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.roots-orbit {
+  height: clamp(300px, 48svh, 540px);
+  margin-top: 50px;
+}
+#jordan .globe-poster {
+  width: min(96vw, 1040px);
+  height: auto;
+  max-width: none;
+  padding: 0;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+}
+@media (max-width: 800px) {
+  .vision-reading {
+    padding-top: 110px;
+    padding-bottom: 55svh;
+    min-height: 100svh;
+  }
+  #vision .side-copy {
+    width: 100%;
+    margin-inline: 0;
+  }
+  #vision .mobile-blur::before {
+    display: none;
+  }
+  #vision .logo-poster {
+    width: 62vw;
+    height: 42svh;
+    top: auto;
+    bottom: 8svh;
+    left: 19vw;
+    padding: 0;
+  }
+  #jordan.jordan {
+    padding-top: 100px;
+  }
+  #jordan .roots-copy h2 {
+    font-size: clamp(30px, 6vw, 42px);
+  }
+  #jordan .roots-copy p:not(.section-kicker) {
+    font-size: 14px;
+  }
+  .roots-orbit {
+    height: clamp(180px, 47vw, 360px);
+    margin-top: 36px;
+  }
+}
+@media (max-height: 520px) and (min-width: 600px) {
+  .vision-reading {
+    min-height: 650px;
+    padding-top: 105px;
+    padding-bottom: 70px;
+  }
+  #vision .side-copy {
+    width: 52%;
+    margin-left: auto;
+  }
+  #jordan.jordan {
+    padding-top: 96px;
+  }
+  #jordan .roots-copy h2 {
+    font-size: 32px;
+  }
+  .roots-orbit {
+    height: 240px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .js-enabled .vision-passage {
+    display: none;
+  }
+}

@@ -15,6 +15,8 @@ import { gsap } from "gsap";
 import type { SceneModel, SceneName, ScenePointer } from "@/three/types";
 import {
   evaluateNarrative,
+  evaluatePassage,
+  ramp,
   narrativeProgress,
   type ShotPose,
 } from "@/three/choreography";
@@ -130,6 +132,8 @@ function SceneDirector({ quality }: { quality: number }) {
   const models = useRef<Partial<Record<SceneName, ManagedModel>>>({});
   const pending = useRef(new Set<SceneName>());
   const bounds = useRef<Bounds>({} as Bounds);
+  const passageBounds = useRef({ top: 0, height: 1 });
+  const orbitBounds = useRef({ top: 0, height: 1 });
   const scrolling = useRef({ position: 0 });
   const pointer = useRef<ScenePointer>({ x: 0, y: 0 });
   const smoothedPointer = useRef<ScenePointer>({ x: 0, y: 0 });
@@ -236,6 +240,17 @@ function SceneDirector({ quality }: { quality: number }) {
             : Number.MAX_SAFE_INTEGER,
           height: section?.offsetHeight ?? innerHeight,
         };
+      }
+      for (const [selector, target] of [
+        [".vision-passage", passageBounds],
+        [".roots-orbit", orbitBounds],
+      ] as const) {
+        const element = document.querySelector<HTMLElement>(selector);
+        if (element)
+          target.current = {
+            top: element.getBoundingClientRect().top + window.scrollY,
+            height: element.offsetHeight,
+          };
       }
       invalidate();
     };
@@ -354,7 +369,8 @@ function SceneDirector({ quality }: { quality: number }) {
     scrolling.current.position = THREE.MathUtils.damp(
       scrolling.current.position,
       window.scrollY,
-      2.4,
+      // A small visual lag softens wheel steps without trailing fast anchor jumps.
+      Math.abs(window.scrollY - scrolling.current.position) > h ? 24 : 9,
       Math.min(delta, 0.06),
     );
     const y = scrolling.current.position,
@@ -366,6 +382,75 @@ function SceneDirector({ quality }: { quality: number }) {
     if (progress > 2.7 || actualScroll + h * 2 > b.jordan.top)
       void ensure("globe");
     const current = evaluateNarrative(progress, mobile);
+    const compactLogo = size.width <= 800 && h > 520;
+    const passageStart =
+      passageBounds.current.top - h * (compactLogo ? 0.65 : 0.15);
+    const passage = evaluatePassage(
+      ramp(y, passageStart, b.jordan.top - h * 0.35),
+    );
+    const inJourney = y >= b.vision.top - h * 0.5;
+    const entry = THREE.MathUtils.smootherstep(
+      y,
+      b.vision.top - h * 0.5,
+      b.vision.top - h * 0.2,
+    );
+    const viewWidth =
+      (2 * Math.tan(THREE.MathUtils.degToRad(25)) * 10 * size.width) / h;
+    if (inJourney) {
+      const mobileY =
+        (h / 2 -
+          (passageBounds.current.top - h * 0.3 - Math.min(y, passageStart))) *
+        (viewWidth / size.width);
+      current.logo.x = THREE.MathUtils.lerp(
+        current.logo.x,
+        (compactLogo ? 0 : -viewWidth * 0.24) * (1 - passage.alignment),
+        entry,
+      );
+      current.logo.y = THREE.MathUtils.lerp(
+        current.logo.y,
+        (compactLogo ? mobileY : 0) * (1 - passage.alignment),
+        entry,
+      );
+      current.logo.z = 0;
+      current.logo.scale = THREE.MathUtils.lerp(
+        current.logo.scale,
+        compactLogo
+          ? Math.min(1.2, (viewWidth * 0.64) / 3.5)
+          : Math.min(1.72, (viewWidth * 0.4) / 3.5),
+        entry,
+      );
+      current.logo.opacity *= passage.logoOpacity;
+      // Keep the assembled mark intact until it has passed behind the camera.
+      if (y < b.jordan.top)
+        current.logo.opacity = THREE.MathUtils.lerp(
+          current.logo.opacity,
+          passage.logoOpacity,
+          entry,
+        );
+      current.assembly = 1;
+      current.cameraZ = passage.cameraZ;
+    }
+    // Earth is projected from its own document slot, not from a viewport float.
+    // This keeps its horizon below the copy even on short or narrow screens.
+    const orbit = orbitBounds.current;
+    const radiusPx = Math.min(size.width * 0.48, orbit.height * 1.08, 700);
+    const unitsPerPixel = (2 * Math.tan(THREE.MathUtils.degToRad(25)) * 10) / h;
+    current.globe.x = 0;
+    current.globe.y =
+      (h / 2 - (orbit.top - actualScroll + radiusPx)) * unitsPerPixel;
+    current.globe.z = current.cameraZ - 10;
+    current.globe.scale = (radiusPx * unitsPerPixel) / 2;
+    current.globe.yaw = 0;
+    // Compensate the low camera angle so Jordan stays above the visible equator.
+    current.globe.pitch = Math.atan2(current.globe.y, 10) - 0.2;
+    current.globe.opacity = passage.globeOpacity;
+    // Clip the lower hemisphere at the section edge, including during resize.
+    const canvasHost = gl.domElement.closest<HTMLElement>(".experience-stage");
+    if (canvasHost)
+      canvasHost.style.clipPath =
+        passage.logoOpacity < 0.002
+          ? `inset(${Math.max(0, b.jordan.top - actualScroll)}px 0 ${Math.max(0, h - (b.jordan.top + b.jordan.height - actualScroll))}px 0)`
+          : "none";
     const damping = 1 - Math.exp(-4 * Math.min(delta, 0.06));
     const input = smoothedPointer.current;
     input.x += (pointer.current.x - input.x) * damping;
@@ -383,18 +468,16 @@ function SceneDirector({ quality }: { quality: number }) {
     pose(m.brain, current.brain);
     fade(m.brain, current.brain.opacity);
 
-    m.logo?.model.update(time, current.assembly, input, false);
+    m.logo?.model.setPassage?.(passage.articulation);
+    if (current.logo.opacity > 0.002)
+      m.logo?.model.update(time, current.assembly, input, false);
     pose(m.logo, current.logo);
     fade(m.logo, current.logo.opacity * (actualScroll < b.team.top ? 1 : 0));
 
-    m.globe?.model.update(time, progress, input, false);
+    if (current.globe.opacity > 0.002)
+      m.globe?.model.update(time, progress, input, false);
     pose(m.globe, current.globe);
-    const narrativeExit = THREE.MathUtils.clamp(
-      (b.team.top - h * 0.1 - actualScroll) / (h * 0.4),
-      0,
-      1,
-    );
-    fade(m.globe, current.globe.opacity * narrativeExit);
+    fade(m.globe, current.globe.opacity * (actualScroll < b.team.top ? 1 : 0));
 
     if (m.modules) {
       m.modules.model.setTunnel?.(current.tunnel);
@@ -403,12 +486,15 @@ function SceneDirector({ quality }: { quality: number }) {
       fade(
         m.modules,
         current.ambientOpacity *
+          (1 - passage.alignment * 0.94) *
           entrance.current.progress *
           (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
       );
     }
     // Suppress camera tilt while the upright mark is visible.
-    const cameraMotion = Math.max(0, 1 - current.logo.opacity * 4);
+    const cameraMotion = inJourney
+      ? 0
+      : Math.max(0, 1 - current.logo.opacity * 4);
     camera.rotation.y +=
       (-0.025 * input.x * cameraMotion - camera.rotation.y) * damping;
     camera.rotation.x +=
@@ -424,7 +510,10 @@ function SceneDirector({ quality }: { quality: number }) {
         .toArray()
         .slice(0, 3)
         .join(",");
-    canvas.dataset.choreography = "cinematic-turn";
+    canvas.dataset.choreography = "logo-passage";
+    canvas.dataset.cameraZ = current.cameraZ.toFixed(3);
+    canvas.dataset.logoOpacity = current.logo.opacity.toFixed(3);
+    canvas.dataset.globeOpacity = current.globe.opacity.toFixed(3);
     canvas.dataset.brainYaw = current.brain.yaw.toFixed(3);
     canvas.dataset.scrollScrub = "native-damped";
     canvas.dataset.logoAssembly = current.assembly.toFixed(3);
@@ -504,7 +593,7 @@ export default function Experience({ onFailure }: { onFailure: () => void }) {
           id="experience-canvas"
           frameloop="demand"
           dpr={dpr}
-          camera={{ fov: 50, near: 0.1, far: 80, position: [0, 0, 10] }}
+          camera={{ fov: 50, near: 0.02, far: 80, position: [0, 0, 10] }}
           gl={{
             alpha: true,
             antialias: innerWidth > 600,

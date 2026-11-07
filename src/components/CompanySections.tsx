@@ -1,3 +1,4 @@
+import ProjectFlip from "./ProjectFlip";
 import { SectionBar } from "./BrandPanels";
 import { companyContent as content } from "@/lib/company-content";
 import { safeHref, siteConfig } from "@/lib/site-config";
@@ -486,32 +487,33 @@ export function ProjectStudies() {
         const href = safeHref(project.url);
         const paragraphs = project.overview || [project.description];
         return (
-          <article
-            className={`project-card project-showcase project-showcase--${index}`}
+          <ProjectFlip
             key={project.title}
-          >
-            <header className="project-showcase-heading">
-              <span className="project-app-icon" aria-hidden="true">
-                {["6S", "OC", "TF"][index]}
-              </span>
-              <h3>{project.title}</h3>
-            </header>
-            <p className="project-showcase-description">
-              {project.description}
-            </p>
-            <div className="project-showcase-meta">
-              {project.subtitle || project.title}
-            </div>
-            <ProjectArtwork index={index} />
-            <details className="showcase-details">
-              <summary aria-label={`Explore ${project.title}`}>
-                <span aria-hidden="true">+</span>
-              </summary>
+            index={index}
+            title={project.title}
+            front={
+              <>
+                <header className="project-showcase-heading">
+                  <span className="project-app-icon" aria-hidden="true">
+                    {["6S", "OC", "TF"][index]}
+                  </span>
+                  <h3>{project.title}</h3>
+                </header>
+                <p className="project-showcase-description">
+                  {project.description}
+                </p>
+                <div className="project-showcase-meta">
+                  {project.subtitle || project.title}
+                </div>
+                <ProjectArtwork index={index} />
+              </>
+            }
+            back={
               <div className="showcase-detail-content">
                 {project.status && (
                   <p className="showcase-status">{project.status}</p>
                 )}
-                {paragraphs.slice(1).map((p) => (
+                {paragraphs.map((p) => (
                   <p key={p}>{p}</p>
                 ))}
                 {(project.capabilities || project.focus)?.length ? (
@@ -542,8 +544,8 @@ export function ProjectStudies() {
                   </a>
                 )}
               </div>
-            </details>
-          </article>
+            }
+          />
         );
       })}
     </>

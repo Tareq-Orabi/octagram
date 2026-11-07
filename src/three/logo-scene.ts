@@ -1,4 +1,4 @@
-import { assemblyOffset } from "./choreography";
+import { assemblyOffset, passageOffset } from "./choreography";
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
@@ -41,6 +41,7 @@ export async function createLogoAsset(): Promise<SceneModel> {
       material.roughness = 0.46;
       material.metalness = 0.12;
     });
+    let passage = 0;
     const update = (
       _time = 0,
       progress = 1,
@@ -50,18 +51,22 @@ export async function createLogoAsset(): Promise<SceneModel> {
       group.rotation.set(0, 0, 0);
       for (const { node, home, index } of modules) {
         const offset = assemblyOffset(reduced ? 1 : progress, index);
+        const travel = passageOffset(reduced ? 0 : passage, home.x, home.y);
         node.position.set(
-          home.x + offset.x,
-          home.y + offset.y,
-          home.z + offset.z,
+          home.x + offset.x + travel.x,
+          home.y + offset.y + travel.y,
+          home.z + offset.z + travel.z,
         );
-        node.rotation.set(0, 0, 0);
+        node.rotation.set(travel.pitch, travel.yaw, 0);
       }
     };
     update();
     return {
       group,
       update,
+      setPassage: (value) => {
+        passage = value;
+      },
       dispose() {
         group.traverse((object) => {
           if (object instanceof THREE.Mesh) object.geometry.dispose();

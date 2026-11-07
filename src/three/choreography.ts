@@ -61,6 +61,30 @@ const ease = (value: number) =>
   value * value * value * (value * (value * 6 - 15) + 10);
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 
+/** Independent, reversible camera travel. Earth cannot share the logo's shot. */
+export function evaluatePassage(progress: number) {
+  const t = clamp(progress);
+  return {
+    alignment: ease(ramp(t, 0, 0.24)),
+    cameraZ: mix(10, -3.2, ease(ramp(t, 0.2, 0.92))),
+    articulation: Math.sin(ease(ramp(t, 0.16, 1)) * Math.PI) * 0.14,
+    logoOpacity: 1 - ease(ramp(t, 0.86, 0.94)),
+    globeOpacity: ease(ramp(t, 0.96, 1)),
+  };
+}
+
+/** The small offsets are radial: the eight original modules never cross the hole. */
+export function passageOffset(amount: number, x: number, y: number) {
+  const angle = Math.atan2(y, x);
+  return {
+    x: x * amount * 0.16,
+    y: y * amount * 0.16,
+    z: Math.sin(angle * 2 + 0.4) * amount * 1.2,
+    pitch: Math.sin(angle) * amount,
+    yaw: -Math.cos(angle) * amount,
+  };
+}
+
 function track(progress: number, frames: readonly Shot[]): ShotPose {
   let end = frames.findIndex(([at]) => at >= progress);
   if (end < 0) end = frames.length - 1;

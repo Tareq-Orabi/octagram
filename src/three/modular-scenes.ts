@@ -1,4 +1,4 @@
-import { assemblyOffset } from "./choreography";
+import { assemblyOffset, passageOffset } from "./choreography";
 import * as Three from "three";
 import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
 import {
@@ -223,6 +223,7 @@ export async function createLogo(
     return module;
   });
 
+  let passage = 0;
   const update = (
     _time = 0,
     progress = 1,
@@ -233,18 +234,22 @@ export async function createLogo(
     for (const module of modules) {
       const { home, index } = module.userData;
       const offset = assemblyOffset(reduced ? 1 : progress, index);
+      const travel = passageOffset(reduced ? 0 : passage, home.x, home.y);
       module.position.set(
-        home.x + offset.x,
-        home.y + offset.y,
-        home.z + offset.z,
+        home.x + offset.x + travel.x,
+        home.y + offset.y + travel.y,
+        home.z + offset.z + travel.z,
       );
-      module.rotation.set(0, 0, 0);
+      module.rotation.set(travel.pitch, travel.yaw, 0);
     }
   };
   update(0, 0.5, { x: 0, y: 0 }, true);
   return {
     group,
     update,
+    setPassage: (value) => {
+      passage = value;
+    },
     dispose: sceneDisposer(group, surfaces),
   };
 }

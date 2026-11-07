@@ -321,6 +321,8 @@ export function createGlobe(THREE: ThreeModule) {
       c.needsUpdate = true;
     }
   }
+  const motionEuler = new THREE.Euler();
+  const motionQuaternion = new THREE.Quaternion();
   function update(
     time = 0,
     progress = 0,
@@ -330,10 +332,9 @@ export function createGlobe(THREE: ThreeModule) {
     const motion = reduced ? 0 : Math.sin(time * 0.13) * 0.055,
       px = reduced ? 0 : pointer?.x || 0,
       py = reduced ? 0 : pointer?.y || 0;
-    const q = new THREE.Quaternion().setFromEuler(
-      new THREE.Euler(py * 0.012, motion + px * 0.026, 0),
-    );
-    earth.quaternion.copy(q).multiply(orientation);
+    motionEuler.set(py * 0.012, motion + px * 0.026, 0);
+    motionQuaternion.setFromEuler(motionEuler);
+    earth.quaternion.copy(motionQuaternion).multiply(orientation);
     const pulse = reduced ? 1 : 1 + Math.sin(time * 1.7) * 0.08;
     halo.scale.setScalar(pulse);
     haloOuter.scale.setScalar(

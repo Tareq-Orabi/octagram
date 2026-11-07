@@ -23,6 +23,7 @@ export interface SceneModel {
   setReveal?: (reveal: number) => void;
   setMorph?: (targets: Float32Array, mix: number) => void;
   setViewport?: (width: number, height: number) => void;
+  setPassage?: (progress: number) => void;
 }
 
 export type SceneName = "brain" | "modules" | "logo" | "globe";

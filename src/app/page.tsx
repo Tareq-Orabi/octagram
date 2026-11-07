@@ -263,29 +263,34 @@ export default function HomePage() {
         </section>
         <div className="scene-transition" aria-hidden="true"></div>
         <section
-          className="stage stage-tall logo-story"
+          className="stage logo-story"
           id="vision"
           data-phase="logo"
           aria-labelledby="vision-title"
         >
-          <img
-            className="stage-fallback logo-poster"
-            src="/assets/brand/logo.svg"
-            alt="The original eight-part Octagram mark with open negative space"
-            width="700"
-            height="700"
-            loading="lazy"
-          />
-          <div className="side-copy copy-right mobile-blur">
-            <p className="section-kicker">OCTAGRAM / {content.vision.label}</p>
-            <h2 id="vision-title">{content.vision.title}</h2>
-            {content.vision.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
+          <div className="vision-reading">
+            <img
+              className="stage-fallback logo-poster"
+              src="/assets/brand/logo.svg"
+              alt="The original eight-part Octagram mark with open negative space"
+              width="700"
+              height="700"
+              loading="lazy"
+            />
+            <div className="side-copy copy-right mobile-blur">
+              <p className="section-kicker">
+                OCTAGRAM / {content.vision.label}
+              </p>
+              <h2 id="vision-title">{content.vision.title}</h2>
+              {content.vision.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
           </div>
+          <div className="vision-passage" aria-hidden="true" />
         </section>
         <section
-          className="stage stage-tall jordan"
+          className="stage jordan"
           id="jordan"
           data-phase="globe"
           aria-labelledby="jordan-title"
@@ -299,7 +304,7 @@ export default function HomePage() {
             height="850"
             loading="lazy"
           />
-          <div className="side-copy copy-left mobile-blur">
+          <div className="side-copy roots-copy">
             <p className="section-kicker">OCTAGRAM / OUR ROOTS</p>
             <h2 id="jordan-title">
               Rooted in Jordan.
@@ -312,6 +317,7 @@ export default function HomePage() {
               <i></i> JORDAN <small>31.9539° N / 35.9106° E</small>
             </span>
           </div>
+          <div className="roots-orbit" aria-hidden="true" />
         </section>
         <section
           className="team content-section company-team"

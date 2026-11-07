@@ -6,6 +6,8 @@ import "./services.css";
 import "./journey.css";
 import "./eye-outro.css";
 import "./surface-motion.css";
+import "./vision-roots.css";
+import "./project-flip.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
