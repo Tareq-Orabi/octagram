@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useLayoutEffect,
-  useRef,
-  useState,
-  type PointerEvent,
-  type ReactNode,
-} from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 export interface DesktopProject {
   icon: number;
@@ -64,121 +58,34 @@ function AppIcon({ index }: { index: number }) {
   );
 }
 
-/** A local desktop metaphor; all project text remains server-rendered children. */
+/** One Finder-style window, with a single route into and out of each project. */
 export default function ProjectDesktop({
   projects,
 }: {
   projects: DesktopProject[];
 }) {
   const [active, setActive] = useState<number | null>(null);
-  const [minimized, setMinimized] = useState(false);
-  const [maximized, setMaximized] = useState(false);
-  const desktop = useRef<HTMLDivElement>(null);
-  const windowRef = useRef<HTMLDivElement>(null);
-  const closeButton = useRef<HTMLButtonElement>(null);
-  const dock = useRef<(HTMLButtonElement | null)[]>([]);
-  const activated = useRef(false);
-  const previous = useRef(0);
-  const drag = useRef<{
-    pointer: number;
-    x: number;
-    y: number;
-    left: number;
-    top: number;
-    minX: number;
-    maxX: number;
-    minY: number;
-    maxY: number;
-  } | null>(null);
-  const position = useRef({ x: 0, y: 0 });
-  const visible = active !== null && !minimized;
+  const launcher = useRef<(HTMLButtonElement | null)[]>([]);
+  const back = useRef<HTMLButtonElement>(null);
+  const page = useRef<HTMLDivElement>(null);
+  const previous = useRef<number | null>(null);
   const project = active === null ? null : projects[active];
-
-  const resetPosition = () => {
-    position.current = { x: 0, y: 0 };
-    windowRef.current?.style.setProperty("--window-x", "0px");
-    windowRef.current?.style.setProperty("--window-y", "0px");
-  };
-  const launch = (index: number) => {
-    activated.current = true;
+  const open = (index: number) => {
     previous.current = index;
     setActive(index);
-    setMinimized(false);
-    resetPosition();
   };
-  const close = () => {
-    setActive(null);
-    setMinimized(false);
-    setMaximized(false);
-    resetPosition();
-  };
-
+  const close = () => setActive(null);
   useLayoutEffect(() => {
-    if (!activated.current) return;
-    (visible ? closeButton.current : dock.current[previous.current])?.focus({
-      preventScroll: true,
-    });
-  }, [active, minimized, visible]);
-  useLayoutEffect(() => {
-    if (active !== null)
-      windowRef.current
-        ?.querySelector<HTMLElement>(`#mac-project-${active}`)
-        ?.scrollTo({ top: 0 });
+    if (previous.current === null) return;
+    page.current?.scrollTo({ top: 0 });
+    (active === null
+      ? launcher.current[previous.current]
+      : back.current
+    )?.focus({ preventScroll: true });
   }, [active]);
-  useLayoutEffect(() => {
-    const observer = new ResizeObserver(resetPosition);
-    if (desktop.current) observer.observe(desktop.current);
-    return () => observer.disconnect();
-  }, []);
-
-  const startDrag = (event: PointerEvent<HTMLDivElement>) => {
-    if (
-      maximized ||
-      event.button !== 0 ||
-      !desktop.current ||
-      !windowRef.current ||
-      desktop.current.clientWidth < 700 ||
-      (event.target as HTMLElement).closest("button, a")
-    )
-      return;
-    const bounds = desktop.current.getBoundingClientRect();
-    const frame = windowRef.current.getBoundingClientRect();
-    drag.current = {
-      pointer: event.pointerId,
-      x: event.clientX,
-      y: event.clientY,
-      left: position.current.x,
-      top: position.current.y,
-      minX: bounds.left + 8 - frame.left + position.current.x,
-      maxX: bounds.right - 8 - frame.right + position.current.x,
-      minY: bounds.top + 38 - frame.top + position.current.y,
-      maxY: bounds.bottom - 94 - frame.bottom + position.current.y,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const moveWindow = (event: PointerEvent<HTMLDivElement>) => {
-    const p = drag.current;
-    if (!p || p.pointer !== event.pointerId) return;
-    position.current = {
-      x: Math.max(p.minX, Math.min(p.maxX, p.left + event.clientX - p.x)),
-      y: Math.max(p.minY, Math.min(p.maxY, p.top + event.clientY - p.y)),
-    };
-    windowRef.current?.style.setProperty(
-      "--window-x",
-      `${position.current.x}px`,
-    );
-    windowRef.current?.style.setProperty(
-      "--window-y",
-      `${position.current.y}px`,
-    );
-  };
 
   return (
-    <div
-      ref={desktop}
-      className="mac-desktop"
-      aria-label="Octagram project desktop"
-    >
+    <div className="mac-desktop" aria-label="Octagram projects">
       <div className="mac-wallpaper" aria-hidden="true">
         <svg viewBox="0 0 1400 850" preserveAspectRatio="xMidYMid slice">
           <defs>
@@ -217,261 +124,144 @@ export default function ProjectDesktop({
         </svg>
       </div>
 
-      <div className="mac-menu-bar">
+      <div className="mac-menu-bar" aria-hidden="true">
         <div className="mac-menu-left">
           <img src="/assets/brand/logo.svg" width="17" height="17" alt="" />
-          <span className="mac-menu-brand">Octagram</span>
-          <button
-            type="button"
-            onClick={() => {
-              if (active !== null) setMinimized(true);
-            }}
-          >
-            Projects
-          </button>
-          <span className="mac-menu-context">
-            {visible ? project?.title : "Portfolio"}
-          </span>
+          <strong>Octagram</strong>
+          <span>Projects</span>
         </div>
-        <div className="mac-menu-right">
-          <span>{projects.length} apps</span>
-          <svg
-            viewBox="0 0 24 18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            aria-hidden="true"
-          >
-            <path d="M3 6q9-8 18 0M6 9q6-5 12 0M9 12q3-2 6 0" />
-            <circle cx="12" cy="15" r=".8" fill="currentColor" />
-          </svg>
-          <span className="mac-battery" aria-hidden="true">
-            <i />
-          </span>
-        </div>
+        <span className="mac-menu-right">Made in Jordan</span>
       </div>
-
       <div
-        className="mac-desktop-content"
-        inert={visible}
-        aria-hidden={visible}
-      >
-        <div className="mac-desktop-welcome">
-          <p>THE OCTAGRAM COLLECTION</p>
-          <div>
-            Ideas
-            <br />
-            Taking shape
-          </div>
-          <span>Open a project to explore</span>
-        </div>
-        <div className="mac-desktop-apps" aria-label="Project applications">
-          {projects.map((app, index) => (
-            <button
-              type="button"
-              key={app.title}
-              className="mac-desktop-app"
-              onClick={() => launch(index)}
-              aria-label={`Open ${app.title}`}
-              aria-haspopup="dialog"
-            >
-              <AppIcon index={app.icon} />
-              <span className="mac-desktop-app-name">{app.title}</span>
-              {app.future && <small>In development</small>}
-            </button>
-          ))}
-        </div>
-        <div className="mac-desktop-note">
-          ENGINEERED IN JORDAN <span>Projects and ideas in development</span>
-        </div>
-      </div>
-
-      <div
-        ref={windowRef}
         className="mac-window"
-        data-maximized={maximized}
-        hidden={!visible}
-        role="dialog"
-        aria-modal="false"
-        aria-label={project ? `${project.title} project` : "Project"}
         onKeyDown={(event) => {
-          if (event.key === "Escape") {
+          if (event.key === "Escape" && active !== null) {
             event.preventDefault();
             event.stopPropagation();
             close();
           }
         }}
       >
-        <div
-          className="mac-window-titlebar"
-          onPointerDown={startDrag}
-          onPointerMove={moveWindow}
-          onPointerUp={() => {
-            drag.current = null;
-          }}
-          onPointerCancel={() => {
-            drag.current = null;
-          }}
-        >
-          <div className="mac-traffic-lights">
+        <div className="mac-window-titlebar">
+          <div className="mac-traffic-lights" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </div>
+          <div className="mac-window-title">
+            {project ? project.title : "Projects"}
+          </div>
+          <span className="mac-window-caption">
+            {project ? "Project details" : `${projects.length} projects`}
+          </span>
+        </div>
+        <div className="mac-app-toolbar">
+          {project ? (
             <button
-              ref={closeButton}
+              ref={back}
               type="button"
-              className="mac-close"
-              aria-label="Close project window"
+              className="mac-back"
               onClick={close}
             >
-              <span />
+              All projects
             </button>
-            <button
-              type="button"
-              className="mac-minimize"
-              aria-label="Minimize project window"
-              onClick={() => setMinimized(true)}
-            >
-              <span />
-            </button>
-            <button
-              type="button"
-              className="mac-maximize"
-              aria-label={
-                maximized ? "Restore window size" : "Maximize project window"
-              }
-              aria-pressed={maximized}
-              onClick={() => {
-                resetPosition();
-                setMaximized(!maximized);
-              }}
-            >
-              <span />
-            </button>
-          </div>
-          <span className="mac-window-title">{project?.title}</span>
-          <span className="mac-window-caption">Project overview</span>
+          ) : (
+            <p>Select a project to explore</p>
+          )}
+          {project?.href && (
+            <a href={project.href} target="_blank" rel="noopener noreferrer">
+              Visit website
+            </a>
+          )}
         </div>
-        <div className="mac-window-body">
-          <nav className="mac-window-sidebar" aria-label="Switch project">
-            <span className="mac-sidebar-label">Projects</span>
-            {projects.map((app, index) => (
-              <div key={app.title}>
-                {app.future && !projects[index - 1]?.future && (
-                  <span className="mac-sidebar-label mac-sidebar-future">
-                    In development
-                  </span>
-                )}
-                <button
-                  type="button"
-                  aria-current={index === active ? "page" : undefined}
-                  onClick={() => launch(index)}
-                >
-                  <AppIcon index={app.icon} />
-                  <span>{app.title}</span>
-                </button>
-              </div>
-            ))}
-            <div className="mac-sidebar-brand">
-              <img src="/assets/brand/logo.svg" alt="" width="22" height="22" />
-              <span>
-                Built by
-                <br />
-                <strong>Octagram</strong>
-              </span>
-            </div>
-          </nav>
-          <div className="mac-app-container">
-            <div className="mac-app-toolbar">
-              <span>
-                {project?.future ? "Future initiative" : project?.industry}
-              </span>
-              {project?.href && (
-                <a
-                  href={project.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Open website
-                </a>
-              )}
-            </div>
-            {projects.map((app, index) => (
-              <div
-                key={app.title}
-                id={`mac-project-${index}`}
-                className="mac-app-page"
-                hidden={active !== index}
-                tabIndex={0}
-                role="region"
-                aria-label={`${app.title} details`}
+        <div
+          ref={page}
+          className="mac-window-content"
+          tabIndex={0}
+          role="region"
+          aria-label={
+            project ? `${project.title} details` : "Project collection"
+          }
+        >
+          <div className="mac-collection" hidden={active !== null}>
+            {[false, true].map((future) => (
+              <section
+                key={String(future)}
+                className="mac-project-group"
+                aria-label={future ? "In development" : "Selected work"}
               >
-                <div className="mac-app-hero">
-                  <AppIcon index={app.icon} />
-                  <div>
-                    <span className="mac-app-eyebrow">
-                      {app.future ? "IN DEVELOPMENT" : "OCTAGRAM / PROJECT"}
-                    </span>
-                    <h3>{app.title}</h3>
-                    <p>{app.subtitle}</p>
-                  </div>
-                </div>
-                <div className="mac-app-facts">
-                  {app.category && <span>{app.category}</span>}
-                  {app.status && (
-                    <span className="mac-status">{app.status}</span>
+                <h3>{future ? "In development" : "Selected work"}</h3>
+                <div className="mac-app-grid">
+                  {projects.map(
+                    (app, index) =>
+                      Boolean(app.future) === future && (
+                        <button
+                          key={app.title}
+                          ref={(node) => {
+                            launcher.current[index] = node;
+                          }}
+                          type="button"
+                          className="mac-launcher"
+                          onClick={() => open(index)}
+                          aria-label={`Open ${app.title}`}
+                        >
+                          <AppIcon index={app.icon} />
+                          <span className="mac-launcher-name">{app.title}</span>
+                          <span className="mac-launcher-type">
+                            {app.subtitle || app.industry}
+                          </span>
+                        </button>
+                      ),
                   )}
                 </div>
-                <div className="mac-app-description">
-                  <h4>About the project</h4>
-                  <p>{app.description}</p>
-                  {app.details}
-                  {app.href && (
-                    <p className="mac-project-address">
-                      <a
-                        href={app.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {new URL(app.href, "https://octagramjo.com").hostname}
-                      </a>
-                    </p>
-                  )}
-                </div>
-              </div>
+              </section>
             ))}
           </div>
+          {projects.map((app, index) => (
+            <article
+              key={app.title}
+              hidden={active !== index}
+              className="mac-app-page"
+            >
+              <header className="mac-app-hero">
+                <AppIcon index={app.icon} />
+                <div>
+                  <h3>{app.title}</h3>
+                  <p>{app.subtitle}</p>
+                </div>
+              </header>
+              <div className="mac-app-facts">
+                {app.category && <span>{app.category}</span>}
+                {app.status && <span className="mac-status">{app.status}</span>}
+              </div>
+              <div className="mac-app-description">
+                <p className="mac-project-intro">{app.description}</p>
+                {app.details}
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="mac-window-status" aria-hidden="true">
+          <span>
+            {project
+              ? project.future
+                ? "In development"
+                : project.industry
+              : "Octagram collection"}
+          </span>
+          <span>{project ? "Press Esc to return" : "Click once to open"}</span>
         </div>
       </div>
-
-      <nav className="mac-dock" aria-label="Project dock">
-        {projects.map((app, index) => (
-          <button
-            key={app.title}
-            type="button"
-            ref={(node) => {
-              dock.current[index] = node;
-            }}
-            className={`mac-dock-app${app.future && !projects[index - 1]?.future ? " mac-dock-future" : ""}`}
-            aria-label={`${active === index && minimized ? "Restore" : "Open"} ${app.title} from Dock`}
-            aria-haspopup="dialog"
-            aria-expanded={active === index && !minimized}
-            onClick={() => launch(index)}
-          >
-            <span className="mac-dock-tooltip">
-              {app.title}
-              {app.future ? " · In development" : ""}
-            </span>
-            <AppIcon index={app.icon} />
-            <i className="mac-running-dot" data-running={active === index} />
-          </button>
-        ))}
-      </nav>
       <noscript>
         <div className="mac-nojs">
           {projects.map((app) => (
             <details key={app.title}>
               <summary>{app.title}</summary>
+              <p>{app.subtitle}</p>
+              {app.status && <p>{app.status}</p>}
               <p>{app.description}</p>
               {app.details}
-              {app.href && <a href={app.href}>Open website</a>}
+              {app.href && <a href={app.href}>Visit website</a>}
             </details>
           ))}
         </div>
