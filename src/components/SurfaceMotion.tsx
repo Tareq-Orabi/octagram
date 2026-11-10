@@ -9,7 +9,7 @@ export default function SurfaceMotion() {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const cards = [
       ...document.querySelectorAll<HTMLElement>(
-        ".team-window, .project-showcase, .principle-column, .engineering-stage, .commitment-card",
+        ".project-showcase, .principle-column, .engineering-stage",
       ),
     ];
     const sections = [

@@ -1,4 +1,4 @@
-import ProjectDesktop, { type DesktopProject } from "./ProjectDesktop";
+import ProjectGallery, { type GalleryProject } from "./ProjectGallery";
 import { SectionBar } from "./BrandPanels";
 import { companyContent as content } from "@/lib/company-content";
 import { safeHref, siteConfig } from "@/lib/site-config";
@@ -133,46 +133,35 @@ export function WhySection() {
   const section = content.whyOctagram;
   return (
     <section
-      className="portfolio-section content-section commitment-section"
+      className="portfolio-section content-section why-section"
       id="why-octagram"
       aria-labelledby="why-title"
     >
       <SectionBar label={section.label} />
-      <header className="commitment-intro">
-        <h2 id="why-title">{section.title}</h2>
-        <div className="portfolio-prose">
-          {section.paragraphs.map((paragraph) => (
-            <p key={paragraph}>{paragraph}</p>
-          ))}
-        </div>
-      </header>
-      <div className="commitment-grid">
-        {section.reasons.map((reason, index) => (
-          <article
-            className={`commitment-card commitment-card--${index}`}
-            key={reason.title}
-          >
-            <div className="commitment-card-top">
-              <EngineeringGlyph index={index} />
+      <div className="why-layout">
+        <header className="why-intro">
+          <h2 id="why-title">{section.title}</h2>
+          <div className="portfolio-prose">
+            {section.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
+          <p className="why-note">{section.closing}</p>
+        </header>
+        <ol className="why-reasons">
+          {section.reasons.map((reason, index) => (
+            <li key={reason.title}>
               <span aria-hidden="true">
                 {String(index + 1).padStart(2, "0")}
               </span>
-            </div>
-            <div className="commitment-copy">
-              <h3>{reason.title}</h3>
-              <p>{reason.description}</p>
-            </div>
-            {index === 0 && (
-              <div className="commitment-structure" aria-hidden="true">
-                <i />
-                <i />
-                <i />
+              <div>
+                <h3>{reason.title}</h3>
+                <p>{reason.description}</p>
               </div>
-            )}
-          </article>
-        ))}
+            </li>
+          ))}
+        </ol>
       </div>
-      <p className="commitment-closing">{section.closing}</p>
     </section>
   );
 }
@@ -234,7 +223,7 @@ export function ContactContext() {
 }
 
 export function ProjectStudies() {
-  const projects: DesktopProject[] = siteConfig.projects.map(
+  const projects: GalleryProject[] = siteConfig.projects.map(
     (project, index) => ({
       icon: index,
       future: project.status === "In development",
@@ -316,5 +305,5 @@ export function ProjectStudies() {
   projects.sort(
     (a, b) => Number(Boolean(a.future)) - Number(Boolean(b.future)),
   );
-  return <ProjectDesktop projects={projects} />;
+  return <ProjectGallery projects={projects} />;
 }

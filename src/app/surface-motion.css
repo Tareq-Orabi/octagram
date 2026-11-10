@@ -1,4 +1,4 @@
-/* Real Blender-rendered relief supplies the grazing light in the existing cards. */
+/* Motion for the engineering and mission surfaces. */
 .motion-surface {
   transform: perspective(1100px) rotateX(var(--surface-rx, 0deg))
     rotateY(var(--surface-ry, 0deg)) translateY(var(--surface-lift, 0px));
@@ -16,18 +16,6 @@
   );
   box-shadow: 0 22px 48px #0004;
 }
-.team-window.motion-surface,
-.commitment-card.motion-surface {
-  background-image:
-    radial-gradient(
-      ellipse at var(--light-x, 50%) var(--light-y, 0%),
-      #fdaa7d0c,
-      transparent 65%
-    ),
-    linear-gradient(#080909ed, #080909ed), url("/assets/surface-relief.webp");
-  background-size: auto, auto, 420px;
-  background-position: center, center, center;
-}
 .motion-visible .project-visual > svg {
   animation: artwork-drift 9s ease-in-out infinite alternate;
   transform-origin: 50% 55%;
@@ -42,9 +30,6 @@
 }
 .motion-visible .project-visual svg circle:nth-of-type(even) {
   animation-delay: -2.5s;
-}
-.motion-visible .terminal-idle i {
-  animation: terminal-pulse 1.8s steps(2, end) infinite;
 }
 .principle-column .principle-index {
   transition:
@@ -67,9 +52,6 @@
 .engineering-stage.stage-current h3 {
   color: var(--brand-mint);
 }
-.motion-visible .commitment-card svg {
-  animation: icon-float 6s ease-in-out infinite alternate;
-}
 .motion-visible .section-topline {
   background-image: linear-gradient(
     90deg,
@@ -81,7 +63,6 @@
   background-position: left top;
 }
 .portfolio-intro h2,
-.commitment-intro h2,
 .engineering-intro h2 {
   translate: 0 var(--section-drift, 0px);
 }
@@ -103,21 +84,6 @@
     scale: 1.04;
   }
 }
-@keyframes terminal-pulse {
-  50% {
-    opacity: 0.15;
-  }
-}
-@keyframes icon-float {
-  from {
-    translate: 0 2px;
-    rotate: -3deg;
-  }
-  to {
-    translate: 0 -3px;
-    rotate: 3deg;
-  }
-}
 .motion-surface:not(.motion-visible) *,
 .surfaces-paused .motion-surface * {
   animation-play-state: paused !important;
@@ -125,8 +91,7 @@
 .surfaces-paused .motion-surface {
   transform: none !important;
 }
-.surfaces-paused
-  :is(.portfolio-intro h2, .commitment-intro h2, .engineering-intro h2) {
+.surfaces-paused :is(.portfolio-intro h2, .engineering-intro h2) {
   translate: none;
 }
 @media (prefers-reduced-motion: reduce) {
@@ -137,7 +102,6 @@
     animation: none !important;
   }
   .portfolio-intro h2,
-  .commitment-intro h2,
   .engineering-intro h2 {
     translate: none;
   }

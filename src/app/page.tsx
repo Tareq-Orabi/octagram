@@ -1,3 +1,4 @@
+import TeamProfiles from "@/components/TeamProfiles";
 import { SectionBar } from "@/components/BrandPanels";
 import SurfaceMotion from "@/components/SurfaceMotion";
 import JourneyInteractions from "@/components/JourneyInteractions";
@@ -19,67 +20,6 @@ import { siteConfig, safeHref, contactEmail } from "@/lib/site-config";
 
 // Server-rendered semantic content stays readable without JavaScript or WebGL.
 
-const approvedTeam = siteConfig.team.filter((person) => person.name.trim());
-function TeamWindows() {
-  return (
-    <div className="team-windows" aria-label="Octagram team">
-      {approvedTeam.map((person, index) => (
-        <article
-          className="team-window"
-          key={person.name}
-          aria-labelledby={`team-person-${index}`}
-        >
-          <header className="terminal-titlebar">
-            <span className="terminal-dots" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </span>
-            <span>octagram — team/0{index + 1}</span>
-            <span className="terminal-shell" aria-hidden="true">
-              zsh
-            </span>
-          </header>
-          <div className="terminal-content">
-            <p className="terminal-command" aria-hidden="true">
-              <span>octagram@team</span>
-              <b>:~$</b> whoami
-            </p>
-            <div className="team-window-heading">
-              <h3 id={`team-person-${index}`}>{person.name}</h3>
-              <span className="team-window-role">{person.role}</span>
-            </div>
-            <p className="terminal-command" aria-hidden="true">
-              <b>$</b> cat profile.md
-            </p>
-            <p className="team-window-summary">{person.description}</p>
-            <div className="team-window-body">
-              <span className="team-window-label"># Responsibilities</span>
-              {person.bio?.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-            <footer className="team-window-footer">
-              <span className="terminal-idle" aria-hidden="true">
-                ~$ <i />
-              </span>
-              {safeHref(person.url) && (
-                <a
-                  href={safeHref(person.url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`${person.name} on LinkedIn`}
-                >
-                  open linkedin
-                </a>
-              )}
-            </footer>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
 function SocialLinks() {
   return (
     <>
@@ -337,7 +277,7 @@ export default function HomePage() {
               </a>
             </div>
           </div>
-          <TeamWindows />
+          <TeamProfiles />
         </section>
         <MissionSection />
 
@@ -355,7 +295,7 @@ export default function HomePage() {
           aria-labelledby="work-title"
         >
           <PortfolioIntro section={content.projectsIntro} id="work-title" />
-          <div id="project-list" className="project-desktop-host">
+          <div id="project-list">
             <ProjectStudies />
           </div>
         </section>

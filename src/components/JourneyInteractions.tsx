@@ -32,11 +32,9 @@ export default function JourneyInteractions() {
         animation = heading.animate(
           [
             { color: finalColor },
-            ...colors
-              .slice(0, 3)
-              .map((color) => ({
-                color: style.getPropertyValue(color).trim(),
-              })),
+            ...colors.slice(0, 3).map((color) => ({
+              color: style.getPropertyValue(color).trim(),
+            })),
             { color: finalColor },
           ],
           { duration: 2200, easing: "ease-in-out", iterations: 1 },
@@ -98,12 +96,12 @@ export default function JourneyInteractions() {
     );
     const cards = Array.from(
       document.querySelectorAll<HTMLElement>(
-        ".team-window, .project-showcase, .principle-column, .engineering-stage, .commitment-card",
+        ".project-showcase, .principle-column, .engineering-stage",
       ),
     );
     const intro = Array.from(
       document.querySelectorAll<HTMLElement>(
-        ".portfolio-intro, .commitment-intro, .engineering-intro",
+        ".portfolio-intro, .engineering-intro",
       ),
     );
     const observer = new IntersectionObserver(

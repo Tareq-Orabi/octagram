@@ -21,6 +21,7 @@ export interface Project {
   url?: string;
 }
 export interface TeamMember {
+  workspace?: "terminal" | "design" | "ai";
   name: string;
   role: string;
   /** Short team introduction. */
@@ -136,6 +137,7 @@ export const siteConfig: SiteConfig = {
   team: [
     {
       name: "TAREQ ORABI",
+      workspace: "terminal",
       role: "CEO and Project Manager",
       description:
         "Guides Octagram’s direction and manages projects and client relationships.",
@@ -146,6 +148,7 @@ export const siteConfig: SiteConfig = {
     },
     {
       name: "MAZEN ABU TAHOUN",
+      workspace: "design",
       role: "Deputy CEO and Frontend Lead",
       description:
         "Supports the team’s direction and leads frontend development.",
@@ -156,6 +159,7 @@ export const siteConfig: SiteConfig = {
     },
     {
       name: "ZAID ABU HAMMOUR",
+      workspace: "ai",
       role: "Artificial Intelligence Lead",
       description:
         "Leads AI development and explores practical uses for automation.",
@@ -165,6 +169,7 @@ export const siteConfig: SiteConfig = {
     },
     {
       name: "ZAID AL TAIH",
+      workspace: "terminal",
       role: "Backend Lead",
       description:
         "Leads backend development across application logic, APIs and databases.",

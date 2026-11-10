@@ -41,7 +41,6 @@ main > .content-section.contact {
     .team-head,
     .principles-editorial,
     .engineering-layout,
-    .commitment-grid,
     .project-gallery,
     .team-windows
   ) {
@@ -153,21 +152,6 @@ main > .content-section.contact {
 .team-windows {
   gap: 24px;
 }
-.team-window {
-  border-radius: 12px;
-  box-shadow: none;
-}
-.terminal-titlebar {
-  padding: 14px 22px;
-}
-.terminal-content {
-  padding: 28px;
-  gap: 18px;
-}
-.team-window-heading h3 {
-  font-size: 24px;
-}
-
 /* Work: three showcase cards with their own project-specific artwork. */
 .project-gallery {
   gap: 24px;
@@ -283,37 +267,6 @@ main > .content-section.contact {
 .engineering-stage-body p {
   font-size: 15px;
   line-height: 1.75;
-}
-
-/* Why Octagram: a quieter, asymmetric composition with fine line graphics. */
-.commitment-intro {
-  max-width: 960px;
-  margin: 0 auto 48px;
-  text-align: center;
-}
-.commitment-intro h2 {
-  font-size: clamp(38px, 4.5vw, 66px);
-  line-height: 1.08;
-  letter-spacing: -0.05em;
-  margin: 0 0 26px;
-}
-.commitment-intro .portfolio-prose {
-  max-width: 68ch;
-  margin-inline: auto;
-}
-.commitment-grid {
-  gap: 20px;
-}
-.commitment-card {
-  border-radius: 16px;
-}
-.commitment-copy p {
-  font-size: 15px;
-  line-height: 1.75;
-}
-.commitment-closing {
-  font-size: 22px;
-  max-width: 850px;
 }
 
 /* Contact: a spacious closing statement and a single focused form. */
@@ -433,8 +386,7 @@ main > .content-section.contact {
   .portfolio-section .portfolio-intro h2,
   .company-team .team-head h2,
   .engineering-intro h2,
-  .contact h2,
-  .commitment-intro h2 {
+  .contact h2 {
     font-size: 38px;
   }
   .portfolio-prose,
@@ -473,9 +425,6 @@ main > .content-section.contact {
   .team-windows {
     gap: 18px;
   }
-  .terminal-content {
-    padding: 24px;
-  }
   .product-gallery {
     display: grid;
     grid-template-columns: 1fr;
@@ -510,13 +459,6 @@ main > .content-section.contact {
   }
   .product-showcase .showcase-detail-content {
     margin-top: 0;
-  }
-  .commitment-intro {
-    text-align: left;
-    margin-bottom: 32px;
-  }
-  .commitment-closing {
-    font-size: 19px;
   }
   .side-copy h2 {
     font-size: 34px;
