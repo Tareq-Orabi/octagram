@@ -114,7 +114,7 @@ export default function CinematicPost({ quality }: { quality: number }) {
     const uniforms = optics.material.uniforms;
     uniforms.uNear.value = (camera as THREE.PerspectiveCamera).near;
     uniforms.uFar.value = (camera as THREE.PerspectiveCamera).far;
-    uniforms.uFocus.value = camera.position.z;
+    uniforms.uFocus.value = camera.userData.opticalFocus ?? camera.position.z;
     uniforms.uTime.value = clock.elapsedTime;
     uniforms.uQuality.value = quality;
     const previousTarget = gl.getRenderTarget();

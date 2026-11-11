@@ -5,7 +5,8 @@
 html {
   scroll-padding-top: 110px;
 }
-main > .content-section {
+main > .content-section,
+.roots-handoff > .content-section {
   min-height: 0;
   padding-block: var(--section-space);
   background: var(--page-bg);
@@ -373,23 +374,6 @@ main > .content-section {
   }
 }
 
-/* Small, consistent transitions instead of repeated decorative scenes. */
-.journey-ready .journey-revealed {
-  animation: section-arrival 0.85s cubic-bezier(0.2, 0.7, 0.2, 1) both;
-}
-@keyframes section-arrival {
-  from {
-    opacity: 0.65;
-    translate: 0 16px;
-  }
-  to {
-    opacity: 1;
-    translate: 0 0;
-  }
-}
-.journey-paused .journey-revealed {
-  animation: none !important;
-}
 @media (max-width: 1100px) {
   .principles-editorial {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -523,3 +507,353 @@ main > .content-section {
     animation: none;
   }
 }
+
+/* The globe holds behind the team surface; native scrolling supplies the wipe. */
+.roots-handoff {
+  position: relative;
+  isolation: isolate;
+}
+.roots-handoff > .jordan {
+  z-index: 0;
+}
+.roots-handoff > .roots-cover {
+  position: relative;
+  z-index: 2;
+  background: var(--page-bg);
+  border-top: 1px solid var(--border-hairline);
+  border-radius: clamp(24px, 3vw, 48px) clamp(24px, 3vw, 48px) 0 0;
+}
+.roots-cover::before {
+  content: "";
+  position: absolute;
+  inset: -1px 12% auto;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--brand-mint) 50%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .roots-handoff .jordan .side-copy {
+    width: min(38vw, 520px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roots-handoff > .jordan {
+    position: relative;
+  }
+}
+.journey-paused .roots-handoff > .jordan {
+  position: relative;
+}
+
+/* Vision has a reading frame and at most one viewport of camera travel. */
+.logo-story {
+  display: block;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
+}
+.vision-frame {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 100svh;
+  padding: 100px var(--gutter) 64px;
+  overflow: hidden;
+  isolation: isolate;
+}
+.vision-frame .vision-copy {
+  margin: 0;
+  width: min(44vw, 560px);
+}
+.logo-passage-distance {
+  height: min(85svh, 800px);
+  pointer-events: none;
+}
+.has-webgl .vision-copy {
+  opacity: var(--vision-copy-opacity, 1);
+  transform: translateY(calc((1 - var(--vision-copy-opacity, 1)) * -24px));
+}
+.has-webgl .roots-copy {
+  opacity: var(--roots-copy-opacity, 1);
+}
+
+/* The full-height native sticky scene stays behind the following surface. */
+.roots-handoff > .jordan {
+  position: sticky;
+  top: 0;
+  display: block;
+  height: 100svh;
+  min-height: 100svh;
+  padding: 0;
+  overflow: clip;
+  --planet-rise: 52svh;
+}
+.roots-handoff .jordan .roots-copy {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100% - var(--gutter) * 2), 860px);
+  max-width: 100%;
+  margin: 0 auto;
+  padding: clamp(100px, 13svh, 140px) 0 0;
+  text-align: center;
+}
+.roots-copy::before { display: none; }
+.roots-copy .section-kicker {
+  margin: 0 0 14px;
+  font: 10px/1.6 Manrope, sans-serif;
+  letter-spacing: .16em;
+}
+.roots-copy h2 {
+  margin: 0 0 20px;
+  font-size: clamp(34px, 4.6vw, 66px);
+  line-height: 1.04;
+  letter-spacing: -.05em;
+  color: var(--text-primary);
+}
+.roots-copy > p:not(.section-kicker) {
+  max-width: 56ch;
+  margin: 0 auto;
+  font-size: clamp(14px, 1.2vw, 17px);
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+.roots-copy .geo-label {
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+.roots-planet-window {
+  position: absolute;
+  isolation: isolate;
+  inset: auto 0 0;
+  width: 100%;
+  height: var(--planet-rise);
+  overflow: hidden;
+  pointer-events: none;
+}
+.roots-planet-window .globe-poster {
+  position: absolute;
+  z-index: 0;
+  /* The original poster has a 230px sphere inside a 600px viewBox. */
+  width: calc(var(--planet-rise) * 2.6087);
+  height: calc(var(--planet-rise) * 2.6087);
+  aspect-ratio: 1;
+  max-width: none;
+  left: 50%;
+  right: auto;
+  top: auto;
+  bottom: 0;
+  transform: translate(-50%, 50%);
+  padding: 0;
+}
+@media (max-width: 767px) and (min-height: 601px) {
+  .roots-handoff > .jordan { --planet-rise: 54svh; }
+  .roots-handoff .jordan .roots-copy { padding-top: 110px; }
+  .roots-copy h2 { margin-bottom: 16px; }
+  .roots-copy .geo-label { margin-top: 18px; }
+}
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+  .roots-handoff > .jordan { --planet-rise: 58svh; }
+}
+@media (max-height: 700px) and (min-width: 768px) {
+  .roots-handoff > .jordan { --planet-rise: 47svh; }
+  .roots-handoff .jordan .roots-copy { padding-top: 88px; }
+  .roots-copy h2 { font-size: clamp(30px, 4vw, 46px); margin-bottom: 12px; }
+  .roots-copy .section-kicker { margin-bottom: 8px; }
+  .roots-copy .geo-label { margin-top: 10px; }
+}
+@media (max-height: 500px) {
+  .roots-handoff > .jordan { --planet-rise: 45svh; }
+  .roots-handoff .jordan .roots-copy {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 8px 36px;
+    width: min(calc(100% - var(--gutter) * 2), 960px);
+    padding-top: 104px;
+    text-align: left;
+  }
+  .roots-copy .section-kicker { display: none; }
+  .roots-copy h2 { grid-column: 1; grid-row: 1/3; margin: 0; font-size: 30px; }
+  .roots-copy > p:not(.section-kicker) { grid-column: 2; font-size: 12px; line-height: 1.5; }
+  .roots-copy .geo-label { grid-column: 2; justify-content: flex-start; margin: 0; font-size: 9px; }
+  .roots-copy .geo-label small { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .roots-handoff > .jordan { position: relative; }
+}
+.journey-paused .roots-handoff > .jordan { position: relative; }
+
+/* Intrinsic front height, absolute back: opening cannot resize the gallery. */
+.project-showcase.flip-card {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: clip;
+  perspective: 1100px;
+  isolation: isolate;
+}
+.flip-card__rotor {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  border-radius: inherit;
+  transform-style: preserve-3d;
+  transition: transform 720ms cubic-bezier(.22, .61, .36, 1);
+}
+.flip-card__face {
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--project-color) 25%, var(--border-hairline));
+  border-radius: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 82%, color-mix(in srgb, var(--project-color) 22%, transparent), transparent 60%),
+    linear-gradient(145deg, color-mix(in srgb, var(--project-color) 12%, var(--page-bg)), var(--surface-subtle));
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-card__face[aria-hidden="true"] { pointer-events: none; }
+.flip-card__front {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 26px 24px 0;
+}
+.flip-card__back {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  transform: rotateY(180deg);
+}
+.flip-card[data-direction="left"][data-open="true"] .flip-card__rotor { transform: rotateY(-180deg); }
+.flip-card[data-direction="right"][data-open="true"] .flip-card__rotor { transform: rotateY(180deg); }
+.flip-card[data-direction="up"][data-open="true"] .flip-card__rotor { transform: rotateX(180deg); }
+.flip-card[data-direction="down"][data-open="true"] .flip-card__rotor { transform: rotateX(-180deg); }
+.flip-card:is([data-direction="up"], [data-direction="down"]) .flip-card__back { transform: rotateX(180deg); }
+.flip-card__open,
+.flip-card__return {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--text-primary) 28%, transparent);
+  border-radius: 9px;
+  background: var(--surface-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.flip-card__open {
+  position: absolute;
+  top: 30px;
+  right: 20px;
+  padding: 0;
+  font-size: 24px;
+  line-height: 1;
+}
+.flip-card__return { flex: none; font-size: 13px; }
+.flip-card__open:hover,
+.flip-card__return:hover { border-color: var(--project-color); color: var(--project-color); }
+.flip-card__back-header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px;
+  border-bottom: 1px solid var(--border-hairline);
+  background: var(--surface-subtle);
+  transform: translateY(var(--return-shift, 0px));
+}
+.flip-card__back-header h3 {
+  font-size: clamp(17px, 1.5vw, 22px);
+  font-weight: 500;
+  line-height: 1.3;
+}
+.flip-card .flip-card__scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 22px 24px 28px;
+  margin: 0;
+  border: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--project-color) transparent;
+  touch-action: pan-y;
+}
+.flip-card__scroll > :first-child { margin-top: 0; }
+.flip-card :is(button, a, [tabindex="0"]):focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: -4px;
+}
+.product-showcase.flip-card .flip-card__front {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(200px, .8fr);
+  column-gap: 48px;
+  padding: 36px 40px;
+}
+.product-showcase.flip-card .flip-card__scroll { margin: 0; }
+.flip-card[data-open="true"] .project-visual *,
+.flip-card:not(.journey-visible) .project-visual * { animation-play-state: paused; }
+@media (max-width: 1023px) and (orientation: portrait) {
+  .vision-frame {
+    --vision-copy-top: min(62svh, 640px);
+    align-items: flex-start;
+    padding-top: var(--vision-copy-top);
+  }
+  .vision-frame .vision-copy { width: 100%; }
+  .vision-frame .logo-poster {
+    width: min(88vw, 600px);
+    height: calc(var(--vision-copy-top) - 120px);
+    max-width: none;
+    top: 100px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    padding: 0;
+  }
+}
+@media (max-width: 767px) {
+  .vision-frame { --vision-copy-top: min(56svh, 480px); }
+  .roots-copy h2 { font-size: clamp(32px, 8vw, 44px); }
+  .roots-copy .geo-label { font-size: 10px; }
+  .product-showcase.flip-card .flip-card__front {
+    display: flex;
+    flex-direction: column;
+    padding: 28px 24px;
+  }
+  .flip-card__back-header { padding: 20px; }
+}
+@media (max-height: 600px) {
+  .vision-frame { position: relative; }
+
+}
+@media (prefers-reduced-motion: reduce) {
+  .vision-frame { position: relative; }
+  .logo-passage-distance { height: 0; }
+  .vision-copy, .roots-copy { opacity: 1 !important; transform: none !important; }
+  .flip-card__rotor, .flip-card__back { transform: none !important; transition: none; }
+  .flip-card[data-open="true"] .flip-card__front,
+  .flip-card[data-open="false"] .flip-card__back { visibility: hidden; }
+}
+.journey-paused .flip-card__rotor,
+.journey-paused .flip-card__back { transform: none !important; transition: none; }
+.journey-paused .vision-frame { position: relative; }
+.journey-paused .logo-passage-distance { height: 0; }
+.journey-paused :is(.vision-copy, .roots-copy) { opacity: 1 !important; transform: none !important; }
+.journey-paused .flip-card[data-open="true"] .flip-card__front,
+.journey-paused .flip-card[data-open="false"] .flip-card__back { visibility: hidden; }

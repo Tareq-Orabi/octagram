@@ -1,0 +1,153 @@
+/* Finite, section-specific entrances. Text stays still after arrival. */
+.js-motion .intro .side-copy h2.in-view,
+.js-motion .vision-copy h2.in-view,
+.js-motion .contact > h2.in-view {
+  animation: editorial-reveal 950ms cubic-bezier(.2,.75,.2,1) both;
+}
+.js-motion :is(.intro .side-copy, .vision-copy) > p.in-view {
+  animation: surface-arrival 950ms cubic-bezier(.2,.8,.2,1) 100ms both;
+}
+.js-motion .manifesto-copy p.in-view {
+  animation: manifesto-arrival 1s cubic-bezier(.16,.8,.2,1) both;
+}
+.js-motion .manifesto-copy p + p.in-view { animation-delay: 120ms; }
+@keyframes manifesto-arrival {
+  from { opacity: .1; translate: 0 60px; rotate: 1 0 0 14deg; }
+  to { opacity: 1; translate: 0 0; rotate: 1 0 0 0deg; }
+}
+.journey-ready :is(.portfolio-intro, .commitment-intro, .engineering-intro, .team-head).journey-revealed {
+  animation: editorial-reveal 850ms cubic-bezier(.2,.75,.2,1) both;
+}
+.journey-ready .team-window.journey-revealed {
+  animation: window-arrival 900ms cubic-bezier(.18,.8,.2,1) var(--arrival-delay, 0ms) both;
+}
+.journey-ready .principle-column.journey-revealed {
+  animation: principle-arrival 800ms cubic-bezier(.2,.8,.2,1) var(--arrival-delay, 0ms) both;
+}
+.journey-ready .engineering-stage.journey-revealed {
+  animation: timeline-arrival 750ms cubic-bezier(.2,.8,.2,1) both;
+}
+.journey-ready .commitment-card.journey-revealed {
+  animation: commitment-arrival 900ms cubic-bezier(.18,.8,.2,1) var(--arrival-delay, 0ms) both;
+}
+.journey-ready :is(.service-gallery, .product-showcase, .contact-context, .contact-panel).journey-revealed {
+  animation: surface-arrival 900ms cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes editorial-reveal {
+  from { opacity: .1; translate: 0 32px; clip-path: inset(0 0 35%); }
+  to { opacity: 1; translate: 0 0; clip-path: inset(0); }
+}
+@keyframes window-arrival {
+  from { opacity: 0; translate: 0 60px; rotate: 1 0 0 12deg; }
+  to { opacity: 1; translate: 0 0; rotate: 1 0 0 0deg; }
+}
+@keyframes principle-arrival {
+  from { opacity: 0; translate: 28px 16px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes timeline-arrival {
+  from { opacity: 0; translate: 42px 0; clip-path: inset(0 100% 0 0); }
+  to { opacity: 1; translate: 0 0; clip-path: inset(0); }
+}
+@keyframes commitment-arrival {
+  from { opacity: 0; translate: 0 40px; rotate: 0 1 0 -9deg; }
+  to { opacity: 1; translate: 0 0; rotate: 0 1 0 0deg; }
+}
+@keyframes surface-arrival {
+  from { opacity: .2; translate: 0 28px; scale: .975; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+
+/* An extra layer gives entry its own transform, separate from card flipping. */
+.project-arrival-layer { position: relative; width: 100%; border-radius: inherit; transform-style: preserve-3d; }
+.project-arrivals .flip-card:is([data-arrival="waiting"], [data-arrival="flying"]) {
+  overflow: visible;
+  isolation: auto;
+  z-index: 4;
+}
+.project-arrivals [data-arrival="waiting"] .project-arrival-layer { opacity: 0; }
+.project-arrivals :is([data-arrival="waiting"], [data-arrival="flying"]) .flip-card__back { visibility: hidden; }
+.project-arrivals [data-arrival="flying"] .project-arrival-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--project-color) 45%, transparent);
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--project-color) 24%, #080909), #080909);
+  transform: translateZ(-2px) rotateY(180deg);
+  backface-visibility: hidden;
+  pointer-events: none;
+}
+.project-comet, .project-impact { display: none; pointer-events: none; }
+.project-arrivals .project-comet {
+  display: block;
+  position: absolute;
+  z-index: -1;
+  top: 42%; right: 60%;
+  width: clamp(180px, 30vw, 500px);
+  height: 80px;
+  border-radius: 50%;
+  background:
+    linear-gradient(0deg, transparent 46%, var(--project-color) 49%, transparent 53%),
+    radial-gradient(ellipse at 100% 50%, color-mix(in srgb, var(--project-color) 35%, transparent), transparent 68%);
+  opacity: 0;
+  transform: rotate(18deg) scaleX(.2);
+  transform-origin: 100% 50%;
+}
+.project-arrivals .flip-card:nth-child(3) .project-comet { right: auto; left: 60%; transform-origin: 0 50%; }
+.project-arrivals .project-impact {
+  display: block;
+  position: absolute;
+  z-index: -1;
+  left: -8%; right: -8%; bottom: -10px;
+  height: 28px;
+  border: 1px solid color-mix(in srgb, var(--project-color) 55%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--project-color) 24%, transparent), transparent 70%);
+  opacity: 0;
+}
+.project-arrivals .project-visual svg { transition: none; }
+.project-arrivals .flip-card:hover .project-visual svg { transform: none; }
+.project-arrivals .project-showcase-description { min-height: 158px; }
+.flip-card__scroll { font-size: 14px; line-height: 1.7; }
+.flip-card__scroll h4 { font-family: "Space Grotesk", sans-serif; margin: 22px 0 10px; }
+.flip-card__scroll p + p { margin-top: 14px; }
+.flip-card__scroll ul { padding-left: 18px; }
+.flip-card__scroll li + li { margin-top: 7px; }
+.flip-card__scroll a { display: inline-block; padding-block: 12px; text-underline-offset: 4px; text-decoration: underline; }
+.team-window-footer { justify-content: flex-end; }
+.team-window .terminal-titlebar { font-family: Manrope, sans-serif; font-size: 11px; }
+.team-window .terminal-content { font-family: Manrope, sans-serif; }
+.section-topline > span:only-child { text-align: left; max-width: none; }
+.side-copy .section-kicker { font-family: Manrope, sans-serif; }
+.roots-copy .geo-label { font-size: 11px; letter-spacing: .08em; }
+.roots-copy .geo-label small { font-size: 10px; letter-spacing: .04em; }
+.roots-handoff { scroll-margin-top: -110px; }
+@media (max-width: 767px) { .roots-handoff { scroll-margin-top: -100px; } }
+
+/* Focus never waits for an entrance. Paused and reduced motion have no travel. */
+.journey-ready .journey-revealed:focus-within { animation: none; }
+.journey-paused .journey-revealed { animation: none !important; }
+.journey-paused .in-view { animation: none !important; }
+.journey-paused .project-arrival-layer { transform: none !important; opacity: 1 !important; }
+.journey-paused :is(.project-comet, .project-impact) { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .journey-ready .journey-revealed { animation: none !important; }
+  .js-motion .in-view { animation: none !important; }
+  .project-arrival-layer { transform: none !important; opacity: 1 !important; }
+  .project-comet, .project-impact { display: none !important; }
+}
+@media (max-width: 767px) and (min-height: 501px) and (max-height: 700px) {
+  .roots-handoff > .jordan { --planet-rise: 44svh; }
+  .roots-handoff .jordan .roots-copy { padding-top: 88px; }
+  .roots-copy h2 { font-size: 30px; margin-bottom: 12px; }
+  .roots-copy .section-kicker { font-size: 9px; margin-bottom: 10px; }
+  .roots-copy > p:not(.section-kicker) { font-size: 12px; line-height: 1.5; }
+  .roots-copy .geo-label { margin-top: 12px; font-size: 9px; }
+}
+@media (max-height: 360px) {
+  .roots-handoff > .jordan { --planet-rise: 40svh; }
+  .roots-handoff .jordan .roots-copy { padding-top: 94px; column-gap: 24px; }
+  .roots-copy h2 { font-size: 25px; }
+  .roots-copy > p:not(.section-kicker) { font-size: 11px; line-height: 1.45; }
+}

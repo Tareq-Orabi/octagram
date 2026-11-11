@@ -1,4 +1,4 @@
-import { assemblyOffset } from "./choreography";
+import { assemblyOffset, logoPassagePose } from "./choreography";
 import * as Three from "three";
 import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
 import {
@@ -8,7 +8,6 @@ import {
   type LogoGradient,
 } from "./brand-paths";
 import type { SceneModel, ScenePointer } from "./types";
-
 // All outlines and gradient placements come from the owner's original PDF.
 // The four small internal pieces stay attached to their respective outer module.
 const clamp = (value: number, low = 0, high = 1) =>
@@ -17,7 +16,6 @@ const smooth = (start: number, end: number, value: number) => {
   const t = clamp((value - start) / (end - start));
   return t * t * (3 - 2 * t);
 };
-
 function gradientTexture(THREE: typeof Three, definition: LogoGradient) {
   const size = 256;
   const bytes = new Uint8Array(size * 4);
@@ -50,11 +48,9 @@ function gradientTexture(THREE: typeof Three, definition: LogoGradient) {
   texture.needsUpdate = true;
   return texture;
 }
-
 function createSurfaceFactory(THREE: typeof Three) {
   const materials: Three.MeshPhysicalMaterial[] = [];
   const textures = new Map<string, Three.DataTexture>();
-
   function materialFor(path: LogoPath) {
     const definition = LOGO_GRADIENTS[path.gradientId];
     if (!textures.has(path.gradientId))
@@ -121,7 +117,6 @@ diffuseColor.rgb *= octagramColor * mix(octagramEdgeShade, 1.0, vBrandFace);`,
     materials.push(material);
     return material;
   }
-
   return {
     materialFor,
     dispose() {
@@ -130,7 +125,6 @@ diffuseColor.rgb *= octagramColor * mix(octagramEdgeShade, 1.0, vBrandFace);`,
     },
   };
 }
-
 function extrudePath(
   THREE: typeof Three,
   path: LogoPath,
@@ -139,7 +133,7 @@ function extrudePath(
   depth: number,
   bevel = 0.012,
 ) {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><path fill="#ffffff" d="${path.d}"/></svg>`;
+  const svg = `<svg xmlns="http\://www\.w3.org/2000/svg" viewBox="0 0 300 300"><path fill="#ffffff" d="${path.d}"/></svg>`;
   const parsed = new SVGLoader().parse(svg);
   const shapes = parsed.paths.flatMap((entry) => SVGLoader.createShapes(entry));
   const geometry = new THREE.ExtrudeGeometry(shapes, {
@@ -173,7 +167,6 @@ function extrudePath(
   geometry.computeBoundingSphere();
   return geometry;
 }
-
 function sceneDisposer(
   group: Three.Group,
   surfaces: ReturnType<typeof createSurfaceFactory>,
@@ -192,12 +185,12 @@ function sceneDisposer(
     group.clear();
   };
 }
-
 export async function createLogo(
   THREE: typeof Three = Three,
 ): Promise<SceneModel> {
   const group = new THREE.Group();
   group.name = "Octagram — eight exact brand modules";
+  let passage = 0;
   const surfaces = createSurfaceFactory(THREE);
   const minX = Math.min(...LOGO_MODULES.map((module) => module.bounds[0]));
   const maxX = Math.max(...LOGO_MODULES.map((module) => module.bounds[2]));
@@ -222,7 +215,6 @@ export async function createLogo(
     group.add(module);
     return module;
   });
-
   const update = (
     _time = 0,
     progress = 1,
@@ -233,22 +225,23 @@ export async function createLogo(
     for (const module of modules) {
       const { home, index } = module.userData;
       const offset = assemblyOffset(reduced ? 1 : progress, index);
+      const travel = logoPassagePose(reduced ? 0 : passage, index, home.x, home.y);
       module.position.set(
-        home.x + offset.x,
-        home.y + offset.y,
-        home.z + offset.z,
+        home.x + offset.x + travel.x,
+        home.y + offset.y + travel.y,
+        home.z + offset.z + travel.z,
       );
-      module.rotation.set(0, 0, 0);
+      module.rotation.set(travel.pitch, travel.yaw, travel.roll);
     }
   };
   update(0, 0.5, { x: 0, y: 0 }, true);
   return {
     group,
     update,
+    setPassage(value: number) { passage = value; },
     dispose: sceneDisposer(group, surfaces),
   };
 }
-
 /** 250 ambient units share 16 draw calls: eight satin batches and eight contours. */
 export async function createModules(
   THREE: typeof Three = Three,
@@ -327,13 +320,12 @@ export async function createModules(
       fromScale: 1,
     };
   });
-
   function outlineGeometry(
     path: LogoPath,
     center: readonly number[],
     scale: number,
   ) {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg"><path fill="#fff" d="${path.d}"/></svg>`;
+    const svg = `<svg xmlns="http\://www\.w3.org/2000/svg"><path fill="#fff" d="${path.d}"/></svg>`;
     const shapes = new SVGLoader()
       .parse(svg)
       .paths.flatMap((entry) => SVGLoader.createShapes(entry));
@@ -388,7 +380,6 @@ export async function createModules(
       new THREE.Float32BufferAttribute(coordinates, 3),
     );
   }
-
   for (let sourceIndex = 0; sourceIndex < 8; sourceIndex++) {
     const source = LOGO_MODULES[sourceIndex].paths[0];
     const center = [
@@ -461,7 +452,6 @@ ${shader.fragmentShader}`.replace(
     lineUnits.forEach((unit, slot) => {
       unit.slot = slot;
     });
-
     const solidUnits = units.filter(
       (unit) => unit.source === sourceIndex && unit.solid,
     );
@@ -493,7 +483,6 @@ ${shader.fragmentShader}`.replace(
     group.add(solidObject);
     solids.push({ object: solidObject });
   }
-
   // Service order follows the six expertise accordions: web, custom software,
   // AI, UI/UX, mobile, then IT infrastructure.
   function servicePose(index: number, service: number, target: Three.Vector3) {
@@ -657,9 +646,9 @@ ${shader.fragmentShader}`.replace(
   const setService = (index: number | null) => {
     const next =
       typeof index === "number" &&
-      Number.isInteger(index) &&
-      index >= 0 &&
-      index < 6
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < 6
         ? index
         : -1;
     if (next === selectedService) return;

@@ -10,6 +10,7 @@ export default function SiteInteractions() {
     const { signal } = controller;
     const root = document.documentElement;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    root.classList.toggle("js-motion", !reduced.matches);
     const desktop = window.matchMedia("(min-width: 801px)");
     const timers = new Set<number>();
     const objectUrls = new Set<string>();

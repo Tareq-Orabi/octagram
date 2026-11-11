@@ -1,11 +1,19 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: Inter;
-  src: url("/assets/fonts/inter-latin.woff2") format("woff2");
+  font-family: Manrope;
+  src: url("/assets/fonts/manrope-latin.woff2") format("woff2");
   font-style: normal;
-  font-weight: 100 900;
-  font-display: optional;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Space Grotesk";
+  src: url("/assets/fonts/space-grotesk-latin.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
 }
 
 :root,
@@ -52,7 +60,7 @@ body {
   background: var(--page-bg);
   color: var(--text-primary);
   font:
-    400 1.5rem/1.5 Inter,
+    400 1.5rem/1.5 Manrope,
     Arial,
     sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -95,6 +103,7 @@ h1,
 h2,
 h3 {
   font-weight: 400;
+  font-family: "Space Grotesk", Manrope, sans-serif;
 }
 h2 {
   font-size: 3.5rem;

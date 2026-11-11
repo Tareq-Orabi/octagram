@@ -9,7 +9,7 @@ export default function SurfaceMotion() {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const cards = [
       ...document.querySelectorAll<HTMLElement>(
-        ".team-window, .project-showcase, .principle-column, .engineering-stage, .commitment-card",
+        ".team-window, .project-showcase:not(.flip-card), .principle-column, .engineering-stage, .commitment-card",
       ),
     ];
     const sections = [
@@ -40,9 +40,9 @@ export default function SurfaceMotion() {
       // All geometry reads precede writes; idle pages schedule no JS frames.
       const sectionReads = scrollDirty
         ? [...visibleSections].map((el) => ({
-            el,
-            rect: el.getBoundingClientRect(),
-          }))
+          el,
+          rect: el.getBoundingClientRect(),
+        }))
         : [];
       const stepReads = scrollDirty
         ? steps.map((el) => ({ el, top: el.getBoundingClientRect().top }))

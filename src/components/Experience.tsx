@@ -16,6 +16,7 @@ import type { SceneModel, SceneName, ScenePointer } from "@/three/types";
 import {
   evaluateNarrative,
   narrativeProgress,
+  rootsGlobePose,
   type ShotPose,
 } from "@/three/choreography";
 import CinematicPost from "./CinematicPost";
@@ -39,7 +40,7 @@ type SectionId =
   | "expertise"
   | "work"
   | "contact";
-type Bounds = Record<SectionId, { top: number; height: number }>;
+type Bounds = Record<SectionId, { top: number; height: number; readHeight?: number }>;
 const sectionIds: SectionId[] = [
   "home",
   "about",
@@ -130,11 +131,15 @@ function SceneDirector({ quality }: { quality: number }) {
   const models = useRef<Partial<Record<SceneName, ManagedModel>>>({});
   const pending = useRef(new Set<SceneName>());
   const bounds = useRef<Bounds>({} as Bounds);
+  const rootsFrame = useRef({ offset: 0, left: 0, height: 200, width: 1, sticky: false });
+  const stageElement = useRef<HTMLElement | null>(null);
+  const clip = useRef("");
   const scrolling = useRef({ position: 0 });
   const pointer = useRef<ScenePointer>({ x: 0, y: 0 });
   const smoothedPointer = useRef<ScenePointer>({ x: 0, y: 0 });
   const pointerActive = useRef(false);
   const entrance = useRef({ progress: 0 });
+  const globeScene = useRef({ elapsed: 0, visible: false });
   const menuOpen = useRef(false);
   const hidden = useRef(false);
   const lost = useRef(false);
@@ -229,16 +234,38 @@ function SceneDirector({ quality }: { quality: number }) {
     hidden.current = document.hidden;
     const measure = () => {
       for (const id of sectionIds) {
-        const section = document.getElementById(id);
+        const section = id === "jordan"
+          ? document.querySelector<HTMLElement>(".roots-handoff > .jordan")
+          : document.getElementById(id);
+        // A sticky section's live rect moves with the viewport. Its wrapper
+        // retains the original document position, including on deep links.
+        const anchor =
+          id === "jordan"
+            ? section?.closest(".roots-handoff") ?? section
+            : section;
         bounds.current[id] = {
-          top: section
-            ? section.getBoundingClientRect().top + window.scrollY
+          top: anchor
+            ? anchor.getBoundingClientRect().top + window.scrollY
             : Number.MAX_SAFE_INTEGER,
           height: section?.offsetHeight ?? innerHeight,
+          readHeight: id === "vision" ? section?.querySelector<HTMLElement>(".vision-frame")?.offsetHeight : undefined,
+        };
+      }
+      const roots = document.querySelector<HTMLElement>(".roots-handoff > .jordan");
+      const planetWindow = roots?.querySelector<HTMLElement>(".roots-planet-window");
+      if (roots && planetWindow) {
+        const rect = planetWindow.getBoundingClientRect();
+        rootsFrame.current = {
+          offset: rect.top - roots.getBoundingClientRect().top,
+          left: rect.left,
+          height: rect.height,
+          width: rect.width,
+          sticky: getComputedStyle(roots).position === "sticky",
         };
       }
       invalidate();
     };
+    stageElement.current = gl.domElement.closest<HTMLElement>(".experience-stage");
     measure();
     scrolling.current.position = window.scrollY;
     entrance.current.progress = document.documentElement.classList.contains(
@@ -299,6 +326,7 @@ function SceneDirector({ quality }: { quality: number }) {
       measure();
       invalidate();
     };
+    const onScroll = () => invalidate();
     // Re-measure geometry only; never write scroll position during layout changes.
     let refreshTimer: ReturnType<typeof setTimeout>;
     const resizeObserver = new ResizeObserver(() => {
@@ -311,6 +339,8 @@ function SceneDirector({ quality }: { quality: number }) {
       if (alive.current) measure();
     });
     window.addEventListener("pointermove", onPointer, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", measure, { passive: true });
     document.addEventListener("pointerleave", onPointerLeave);
     window.addEventListener("octagram:entered", enter);
     window.addEventListener("octagram:menu", onMenu);
@@ -328,6 +358,8 @@ function SceneDirector({ quality }: { quality: number }) {
       resizeObserver.disconnect();
       clearTimeout(refreshTimer);
       window.removeEventListener("pointermove", onPointer);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", measure);
       document.removeEventListener("pointerleave", onPointerLeave);
       window.removeEventListener("octagram:entered", enter);
       window.removeEventListener("octagram:menu", onMenu);
@@ -341,6 +373,7 @@ function SceneDirector({ quality }: { quality: number }) {
       models.current = {};
       pending.current.clear();
       clearSceneFlags();
+      if (stageElement.current) stageElement.current.style.clipPath = "";
       setLoaded([]);
     };
   }, [ensure, gl, invalidate]);
@@ -360,12 +393,20 @@ function SceneDirector({ quality }: { quality: number }) {
     const y = scrolling.current.position,
       time = clock.elapsedTime * 0.65;
     const actualScroll = window.scrollY;
-    const progress = narrativeProgress(y, b, h);
+    const targetProgress = narrativeProgress(actualScroll, b, h);
+    // The camera passage follows actual scroll, so fast reversals cannot leave
+    // an old logo pose behind already-visible Roots content.
+    const progress = targetProgress >= 3 ? targetProgress : narrativeProgress(y, b, h);
+    if (actualScroll >= b.team.top && actualScroll + h < b.contact.top) {
+      Object.values(models.current).forEach((entry) => fade(entry, 0));
+      globeScene.current.visible = false;
+      return; // Native scroll/resize/visibility listeners wake the demand loop.
+    }
     if (progress > 1.7 || actualScroll + h * 2 > b.vision.top)
       void ensure("logo");
     if (progress > 2.7 || actualScroll + h * 2 > b.jordan.top)
       void ensure("globe");
-    const current = evaluateNarrative(progress, mobile);
+    const current = evaluateNarrative(progress, mobile, size.width < 1024 && size.height > size.width);
     const damping = 1 - Math.exp(-4 * Math.min(delta, 0.06));
     const input = smoothedPointer.current;
     input.x += (pointer.current.x - input.x) * damping;
@@ -383,37 +424,62 @@ function SceneDirector({ quality }: { quality: number }) {
     pose(m.brain, current.brain);
     fade(m.brain, current.brain.opacity);
 
-    m.logo?.model.update(time, current.assembly, input, false);
+    m.logo?.model.setPassage?.(current.passage);
+    if (current.logo.opacity > 0.002) m.logo?.model.update(time, current.assembly, input, false);
     pose(m.logo, current.logo);
     fade(m.logo, current.logo.opacity * (actualScroll < b.team.top ? 1 : 0));
 
-    m.globe?.model.update(time, progress, input, false);
-    pose(m.globe, current.globe);
-    const narrativeExit = THREE.MathUtils.clamp(
-      (b.team.top - h * 0.1 - actualScroll) / (h * 0.4),
-      0,
-      1,
+    const frame = rootsFrame.current;
+    const sectionTop = frame.sticky ? Math.max(0, b.jordan.top - actualScroll) : b.jordan.top - actualScroll;
+    const globeWindow = { top: sectionTop + frame.offset, height: frame.height, width: frame.width, left: frame.left };
+    const globeVisible = Boolean(
+      m.globe &&
+      current.globe.opacity > 0.01 &&
+      globeWindow.top < h && globeWindow.top + globeWindow.height > 0 &&
+      actualScroll < b.team.top,
     );
-    fade(m.globe, current.globe.opacity * narrativeExit);
+    const scene = globeScene.current;
+    if (globeVisible) {
+      if (!scene.visible) scene.elapsed = 0;
+      scene.elapsed += Math.min(delta, 0.06);
+      m.globe?.model.setReveal?.(Math.min(1, scene.elapsed / 3.2));
+      m.globe?.model.update(scene.elapsed, progress, input, false);
+    }
+    scene.visible = globeVisible;
+    pose(m.globe, rootsGlobePose(size.width, h, globeWindow, current.cameraZ));
+    // The DOM panel supplies the wipe: do not dissolve or push the globe
+    // towards the camera while it is still visible below the panel's edge.
+    fade(m.globe, current.globe.opacity * (actualScroll < b.team.top ? 1 : 0));
+    const nextClip = actualScroll < b.team.top && current.globe.opacity > 0.002 && current.logo.opacity <= 0.002
+      ? `inset(${Math.min(h, Math.max(0, globeWindow.top))}px ${Math.max(0, size.width - frame.left - frame.width)}px ${Math.max(0, h - Math.max(0, globeWindow.top + globeWindow.height))}px ${Math.max(0, frame.left)}px)`
+      : "";
+    if (nextClip !== clip.current && stageElement.current) {
+      stageElement.current.style.clipPath = nextClip;
+      clip.current = nextClip;
+    }
 
     if (m.modules) {
       m.modules.model.setTunnel?.(current.tunnel);
-      m.modules.model.update(time, progress, input, false);
+      if (current.ambientOpacity > 0.002) m.modules.model.update(time, progress, input, false);
       m.modules.model.group.position.set(0, 0, 0);
       fade(
         m.modules,
         current.ambientOpacity *
-          entrance.current.progress *
-          (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
+        entrance.current.progress *
+        (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
       );
     }
     // Suppress camera tilt while the upright mark is visible.
-    const cameraMotion = Math.max(0, 1 - current.logo.opacity * 4);
+    const preciseCamera = progress >= 3.25 && progress <= 5;
+    const cameraMotion = preciseCamera ? 0 : Math.max(0, 1 - current.logo.opacity * 4);
     camera.rotation.y +=
       (-0.025 * input.x * cameraMotion - camera.rotation.y) * damping;
     camera.rotation.x +=
       (-0.018 * input.y * cameraMotion - camera.rotation.x) * damping;
     camera.position.z = current.cameraZ;
+    camera.userData.opticalFocus = progress >= 3.86 && progress < 5.7
+      ? 10 : Math.max(.25, current.cameraZ);
+    if (preciseCamera) camera.rotation.set(0, 0, 0);
     const canvas = gl.domElement;
     canvas.dataset.progress = progress.toFixed(3);
     canvas.dataset.brainParticles = String(
@@ -424,12 +490,16 @@ function SceneDirector({ quality }: { quality: number }) {
         .toArray()
         .slice(0, 3)
         .join(",");
-    canvas.dataset.choreography = "cinematic-turn";
+    canvas.dataset.choreography = "logo-passage-roots";
+    canvas.dataset.cameraDepth = current.cameraZ.toFixed(3);
+    canvas.dataset.logoPassage = current.passage.toFixed(3);
     canvas.dataset.brainYaw = current.brain.yaw.toFixed(3);
     canvas.dataset.scrollScrub = "native-damped";
     canvas.dataset.logoAssembly = current.assembly.toFixed(3);
     canvas.dataset.brainDepth = current.brain.z.toFixed(3);
     canvas.dataset.globeDepth = current.globe.z.toFixed(3);
+    canvas.dataset.globeReveal = Math.min(1, scene.elapsed / 3.2).toFixed(3);
+    canvas.dataset.globeActive = String(globeVisible);
     // Keep the existing living materials and ambient pieces animated. Pausing,
     // reduced motion, hidden documents and the menu still suspend this loop.
     invalidate();

@@ -21,6 +21,7 @@ export interface SceneModel {
   setService?: (index: number | null) => void;
   setQuality?: (quality: number) => void;
   setReveal?: (reveal: number) => void;
+  setPassage?: (progress: number) => void;
   setMorph?: (targets: Float32Array, mix: number) => void;
   setViewport?: (width: number, height: number) => void;
 }

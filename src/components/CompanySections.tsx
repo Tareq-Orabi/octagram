@@ -1,4 +1,5 @@
 import { SectionBar } from "./BrandPanels";
+import ProjectFlipCard from "./ProjectFlipCard";
 import { companyContent as content } from "@/lib/company-content";
 import { safeHref, siteConfig } from "@/lib/site-config";
 
@@ -86,7 +87,7 @@ function ProductArtwork({ index, name }: { index: number; name: string }) {
               [183, 131],
               [160, 108],
             ].map(([x, y]) => (
-              <circle key={x + y} cx={x} cy={y} r="7" fill="currentColor" />
+              <circle key={`${x}-${y}`} cx={x} cy={y} r="7" fill="currentColor" />
             ))}
             <path
               d="M160 38v17M82 73l13 13M225 86l13-13M58 150h17M245 150h17"
@@ -142,44 +143,41 @@ export function InnovationSection() {
       <PortfolioIntro section={content.products} id="innovation-title" />
       <div className="project-gallery product-gallery">
         {content.products.items.map((product, index) => (
-          <article
+          <ProjectFlipCard
             className={`project-showcase product-showcase product-showcase--${index}`}
             id={`product-${product.id}`}
             key={product.id}
+            title={product.name}
+            front={<>
+              <header className="project-showcase-heading">
+                <span className="project-app-icon" aria-hidden="true">
+                  {index === 0 ? "TH" : "OC"}
+                </span>
+                <h3>{product.name}</h3>
+              </header>
+              <p className="project-showcase-description">
+                {product.paragraphs[0]}
+              </p>
+              <div className="project-showcase-meta">{product.industry}</div>
+              <p className="product-development-status">{product.status}</p>
+              <ProductArtwork index={index} name={product.name} />
+            </>}
           >
-            <header className="project-showcase-heading">
-              <span className="project-app-icon" aria-hidden="true">
-                {index === 0 ? "TH" : "OC"}
-              </span>
-              <h3>{product.name}</h3>
-            </header>
-            <p className="project-showcase-description">
-              {product.paragraphs[0]}
-            </p>
-            <div className="project-showcase-meta">{product.industry}</div>
-            <p className="product-development-status">{product.status}</p>
-            <ProductArtwork index={index} name={product.name} />
-            <details className="showcase-details">
-              <summary aria-label={`Explore ${product.name}`}>
-                <span aria-hidden="true">+</span>
-              </summary>
-              <div className="showcase-detail-content">
-                <h4>{product.title}</h4>
-                <p>{product.category}</p>
-                {product.paragraphs.slice(1).map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
-                ))}
-                <h4>Vision areas</h4>
-                <ul>
-                  {product.visionAreas.map((area) => (
-                    <li key={area}>{area}</li>
-                  ))}
-                </ul>
-                <h4>Our ambition</h4>
-                <p>{product.ambition}</p>
-              </div>
-            </details>
-          </article>
+            <p className="showcase-status">{product.status}</p>
+            <h4>{product.title}</h4>
+            <p>{product.category}</p>
+            {product.paragraphs.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+            <h4>Vision areas</h4>
+            <ul>
+              {product.visionAreas.map((area) => (
+                <li key={area}>{area}</li>
+              ))}
+            </ul>
+            <h4>Our ambition</h4>
+            <p>{product.ambition}</p>
+          </ProjectFlipCard>
         ))}
       </div>
     </section>
@@ -486,64 +484,63 @@ export function ProjectStudies() {
         const href = safeHref(project.url);
         const paragraphs = project.overview || [project.description];
         return (
-          <article
+          <ProjectFlipCard
             className={`project-card project-showcase project-showcase--${index}`}
             key={project.title}
-          >
-            <header className="project-showcase-heading">
-              <span className="project-app-icon" aria-hidden="true">
-                {["6S", "OC", "TF"][index]}
-              </span>
-              <h3>{project.title}</h3>
-            </header>
-            <p className="project-showcase-description">
-              {project.description}
-            </p>
-            <div className="project-showcase-meta">
-              {project.subtitle || project.title}
-            </div>
-            <ProjectArtwork index={index} />
-            <details className="showcase-details">
-              <summary aria-label={`Explore ${project.title}`}>
-                <span aria-hidden="true">+</span>
-              </summary>
-              <div className="showcase-detail-content">
-                {project.status && (
-                  <p className="showcase-status">{project.status}</p>
-                )}
-                {paragraphs.slice(1).map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {(project.capabilities || project.focus)?.length ? (
-                  <>
-                    <h4>{project.capabilitiesLabel || "Project focus"}</h4>
-                    <ul>
-                      {(project.capabilities || project.focus || []).map(
-                        (item) => (
-                          <li key={item}>{item}</li>
-                        ),
-                      )}
-                    </ul>
-                  </>
-                ) : null}
-                {project.engineering?.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {project.digitalExperience?.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {project.value?.map((p) => (
-                  <p key={p}>{p}</p>
-                ))}
-                {project.client && <p>{project.client}</p>}
-                {href && (
-                  <a href={href} target="_blank" rel="noopener noreferrer">
-                    Visit {new URL(href, siteConfig.siteUrl).hostname}{" "}
-                  </a>
-                )}
+            title={project.title}
+            front={<>
+              <header className="project-showcase-heading">
+                <span className="project-app-icon" aria-hidden="true">
+                  {["6S", "OC", "TF"][index]}
+                </span>
+                <h3>{project.title}</h3>
+              </header>
+              <p className="project-showcase-description">
+                {project.description}
+              </p>
+              <div className="project-showcase-meta">
+                {project.subtitle || project.title}
               </div>
-            </details>
-          </article>
+              <ProjectArtwork index={index} />
+            </>}
+          >
+            <p className="flip-card__subtitle">{project.subtitle || project.title}</p>
+            {project.industry && <p>{project.industry}</p>}
+            {project.category && <p>{project.category}</p>}
+            {project.status && (
+              <p className="showcase-status">{project.status}</p>
+            )}
+            {paragraphs.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+            {(project.capabilities || project.focus)?.length ? (
+              <>
+                <h4>{project.capabilitiesLabel || "Project focus"}</h4>
+                <ul>
+                  {(project.capabilities || project.focus || []).map(
+                    (item) => (
+                      <li key={item}>{item}</li>
+                    ),
+                  )}
+                </ul>
+              </>
+            ) : null}
+            {project.engineering?.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+            {project.digitalExperience?.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+            {project.value?.map((p) => (
+              <p key={p}>{p}</p>
+            ))}
+            {project.client && <p>{project.client}</p>}
+            {href && (
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                Visit {new URL(href, siteConfig.siteUrl).hostname}{" "}
+              </a>
+            )}
+          </ProjectFlipCard>
         );
       })}
     </>

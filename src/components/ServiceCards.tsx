@@ -277,7 +277,7 @@ export default function ServiceCards({
       }}
     >
       <div className="service-gallery-topline">
-        <span>OCTAGRAM / OUR SERVICES</span>
+        <span>WHAT WE DO</span>
         <span>01 — 08</span>
       </div>
       <div
@@ -319,14 +319,13 @@ export default function ServiceCards({
         }}
       >
         <div className="service-wheel-heading">
-          <span className="service-eyebrow">ENGINEERED FOR WHAT’S NEXT</span>
           <h2 id="expertise-title">
             Our <span>Services.</span>
           </h2>
           <p>
-            Eight ways to move
+            From a first idea
             <br />
-            your ideas forward.
+            to a working product.
           </p>
         </div>
         <div

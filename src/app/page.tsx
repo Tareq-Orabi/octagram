@@ -1,6 +1,7 @@
 import { SectionBar } from "@/components/BrandPanels";
 import SurfaceMotion from "@/components/SurfaceMotion";
 import JourneyInteractions from "@/components/JourneyInteractions";
+import ProjectArrival from "@/components/ProjectArrival";
 import ServiceCards from "@/components/ServiceCards";
 import EyeIntro from "@/components/EyeIntro";
 import EyeOutro from "@/components/EyeOutro";
@@ -36,34 +37,23 @@ function TeamWindows() {
               <i />
               <i />
             </span>
-            <span>octagram — team/0{index + 1}</span>
+            <span>Meet the team</span>
             <span className="terminal-shell" aria-hidden="true">
-              zsh
+              {String(index + 1).padStart(2, "0")}
             </span>
           </header>
           <div className="terminal-content">
-            <p className="terminal-command" aria-hidden="true">
-              <span>octagram@team</span>
-              <b>:~$</b> whoami
-            </p>
             <div className="team-window-heading">
               <h3 id={`team-person-${index}`}>{person.name}</h3>
               <span className="team-window-role">{person.role}</span>
             </div>
-            <p className="terminal-command" aria-hidden="true">
-              <b>$</b> cat profile.md
-            </p>
             <p className="team-window-summary">{person.description}</p>
             <div className="team-window-body">
-              <span className="team-window-label"># Responsibilities</span>
               {person.bio?.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
             </div>
             <footer className="team-window-footer">
-              <span className="terminal-idle" aria-hidden="true">
-                ~$ <i />
-              </span>
               {safeHref(person.url) && (
                 <a
                   href={safeHref(person.url)}
@@ -71,7 +61,7 @@ function TeamWindows() {
                   rel="noopener noreferrer"
                   aria-label={`${person.name} on LinkedIn`}
                 >
-                  open linkedin
+                  LinkedIn ↗
                 </a>
               )}
             </footer>
@@ -207,7 +197,7 @@ export default function HomePage() {
           aria-labelledby="about-title"
         >
           <div className="side-copy copy-right mobile-blur">
-            <p className="section-kicker">OCTAGRAM / {content.about.label}</p>
+            <p className="section-kicker">{content.about.label}</p>
             <h2 id="about-title">{content.about.title}</h2>
             {content.about.paragraphs.slice(0, 2).map((paragraph) => (
               <p key={paragraph}>{paragraph}</p>
@@ -240,17 +230,17 @@ export default function HomePage() {
         >
           <div className="stage narrative" data-phase="fragments">
             <div className="manifesto-copy">
-              <p>We don't simply develop software.</p>
-              <p>We engineer possibilities.</p>
+              <p>Good software starts</p>
+              <p>with a real problem.</p>
             </div>
           </div>
           <div className="stage narrative" data-phase="connections">
             <div className="manifesto-copy">
-              <p>Understand the problem.</p>
+              <p>Listen closely.</p>
               <p>
-                Engineer the solution.
+                Make it useful.
                 <br />
-                Build for what comes next.
+                Make it last.
               </p>
             </div>
           </div>
@@ -268,74 +258,76 @@ export default function HomePage() {
           data-phase="logo"
           aria-labelledby="vision-title"
         >
-          <img
-            className="stage-fallback logo-poster"
-            src="/assets/brand/logo.svg"
-            alt="The original eight-part Octagram mark with open negative space"
-            width="700"
-            height="700"
-            loading="lazy"
-          />
-          <div className="side-copy copy-right mobile-blur">
-            <p className="section-kicker">OCTAGRAM / {content.vision.label}</p>
-            <h2 id="vision-title">{content.vision.title}</h2>
-            {content.vision.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
-          </div>
-        </section>
-        <section
-          className="stage stage-tall jordan"
-          id="jordan"
-          data-phase="globe"
-          aria-labelledby="jordan-title"
-        >
-          <img
-            className="stage-fallback globe-poster"
-            data-poster="globe"
-            src="/assets/globe-fallback.svg"
-            alt="Earth centered on the Middle East with Jordan geographically marked"
-            width="850"
-            height="850"
-            loading="lazy"
-          />
-          <div className="side-copy copy-left mobile-blur">
-            <p className="section-kicker">OCTAGRAM / OUR ROOTS</p>
-            <h2 id="jordan-title">
-              Rooted in Jordan.
-              <br />
-              Built to go further.
-            </h2>
-            <p>{content.about.paragraphs[0]}</p>
-            <p>{content.about.paragraphs[3]}</p>
-            <span className="geo-label">
-              <i></i> JORDAN <small>31.9539° N / 35.9106° E</small>
-            </span>
-          </div>
-        </section>
-        <section
-          className="team content-section company-team"
-          id="team"
-          aria-labelledby="team-title"
-        >
-          <SectionBar label="OUR TEAM" count="01 — 04" />
-          <div className="team-head">
-            <h2 id="team-title">
-              The minds
-              <br />
-              behind Octagram.
-            </h2>
-            <div className="team-intro">
-              {content.teamIntro.paragraphs.map((paragraph) => (
+          <div className="vision-frame">
+            <img
+              className="stage-fallback logo-poster"
+              src="/assets/brand/logo.svg"
+              alt="The original eight-part Octagram mark with open negative space"
+              width="700"
+              height="700"
+              loading="lazy"
+            />
+            <div className="side-copy copy-right mobile-blur vision-copy">
+              <p className="section-kicker">{content.vision.label}</p>
+              <h2 id="vision-title">{content.vision.title}</h2>
+              {content.vision.paragraphs.map((paragraph) => (
                 <p key={paragraph}>{paragraph}</p>
               ))}
-              <a className="text-link" href="#contact">
-                Start a conversation
-              </a>
             </div>
           </div>
-          <TeamWindows />
+          <div className="logo-passage-distance" aria-hidden="true" />
         </section>
+        <div className="roots-handoff" id="jordan">
+          <section
+            className="stage stage-tall jordan"
+            id="roots-scene"
+            data-phase="globe"
+            aria-labelledby="jordan-title"
+          >
+            <div className="side-copy mobile-blur roots-copy">
+              <p className="section-kicker">OUR ROOTS</p>
+              <h2 id="jordan-title">
+                Rooted in Jordan.
+                <br />
+                Open to the world.
+              </h2>
+              <p>A team from Jordan, building software for the people and ideas around us—and wherever they take us next.</p>
+              <span className="geo-label">
+                <i></i> JORDAN <small>31.9539° N / 35.9106° E</small>
+              </span>
+            </div>
+            <div className="roots-planet-window">
+              <img
+                className="stage-fallback globe-poster"
+                data-poster="globe"
+                src="/assets/globe-fallback.svg"
+                alt="Earth centered on the Middle East with Jordan geographically marked"
+                width="850"
+                height="850"
+                loading="lazy"
+              />
+            </div>
+          </section>
+          <section
+            className="team content-section company-team roots-cover"
+            id="team"
+            aria-labelledby="team-title"
+          >
+            <SectionBar label="OUR TEAM" count="01 — 04" />
+            <div className="team-head">
+              <h2 id="team-title">The people building it.</h2>
+              <div className="team-intro">
+                {content.teamIntro.paragraphs.map((paragraph) => (
+                  <p key={paragraph}>{paragraph}</p>
+                ))}
+                <a className="text-link" href="#contact">
+                  Start a conversation
+                </a>
+              </div>
+            </div>
+            <TeamWindows />
+          </section>
+        </div>
         <MissionSection />
 
         <section
@@ -352,9 +344,9 @@ export default function HomePage() {
           aria-labelledby="work-title"
         >
           <PortfolioIntro section={content.projectsIntro} id="work-title" />
-          <div id="project-list" className="project-gallery">
+          <ProjectArrival>
             <ProjectStudies />
-          </div>
+          </ProjectArrival>
         </section>
         <InnovationSection />
         <ApproachSection />
