@@ -10,7 +10,12 @@ test("server HTML, dark-only styling, responsive layout and reduced-motion fallb
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
     /Designing\s*impact\.\s*Engineering\s*beauty\./,
   );
-  await expect(page.locator(".project-card")).toHaveCount(3);
+  await expect(page.locator("#work .work-card")).toHaveCount(2);
+  await expect(page.locator("#innovation .work-card")).toHaveCount(3);
+  await expect(page.locator("#work")).not.toContainText("OCTACLUB");
+  await expect(page.locator("#product-octaclub .work-status")).toHaveText(
+    "In development",
+  );
   await expect(page.locator("#home [data-poster=brain]")).toBeVisible();
   await expect(page.locator("canvas")).toHaveCount(0);
   await expect(page.locator(".site-loader")).toBeHidden();
@@ -69,12 +74,14 @@ test("mobile menu keyboard behavior and reduced-motion service cards", async ({
   }
 });
 
-test("four team windows show complete profiles", async ({ page }) => {
+test("four discipline-specific team profiles keep complete biographies", async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  const cards = page.locator(".team-window");
+  const cards = page.locator(".person-profile");
   await expect(cards).toHaveCount(4);
-  await expect(cards.locator(".team-window-body p")).toHaveCount(4);
+  await expect(cards.locator(".person-bio p")).toHaveCount(4);
   await expect(cards.getByRole("link")).toHaveCount(3);
   await expect(
     page.getByRole("button", { name: "Next team slide" }),
@@ -144,4 +151,76 @@ test("real WebGL scenes load and survive reverse scroll with dark-only styling",
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator(".experience-stage canvas")).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test("project details expand with the keyboard and preserve the website link", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const project = page.getByRole("article", {
+    name: "SIX SENSES project",
+    exact: true,
+  });
+  const details = project.locator("details");
+  await project.locator("summary").focus();
+  await page.keyboard.press("Enter");
+  await expect(details).toHaveAttribute("open", "");
+  await expect(details.locator("h4")).toBeVisible();
+  await expect(
+    project.getByRole("link", { name: "Visit SIX SENSES website" }),
+  ).toHaveAttribute("href", "https://sixsenses.clinic/");
+  await page.keyboard.press("Enter");
+  await expect(details).not.toHaveAttribute("open", "");
+});
+
+test("service orbit keeps moving on hover and while reading details", async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/?skiploader#expertise");
+  await expect(page.locator(".service-gallery")).toHaveClass(/is-enhanced/);
+  await page.locator(".service-viewport").scrollIntoViewIfNeeded();
+  const card = page.locator(".service-card").first();
+  const expectOrbit = async () => {
+    const initial = await card.getAttribute("style");
+    await expect.poll(() => card.getAttribute("style")).not.toBe(initial);
+  };
+  await expectOrbit();
+  await card.hover({ force: true });
+  await expectOrbit();
+  await page
+    .getByRole("button", { name: "Explore services", exact: true })
+    .click();
+  const panel = page.locator("#service-detail");
+  await expect(panel).toBeVisible();
+  await expect(panel).toBeFocused();
+  await expect(panel.getByRole("heading")).toHaveText("Web Development");
+  await expectOrbit();
+  await page.getByRole("button", { name: "Next service", exact: true }).click();
+  await expect(panel.getByRole("heading")).toHaveText("Mobile App Development");
+  await page.keyboard.press("Escape");
+  await expect(panel).toBeHidden();
+  await expect(
+    page.getByRole("button", {
+      name: "Explore Mobile App Development",
+      exact: true,
+    }),
+  ).toBeFocused();
+  await expectOrbit();
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page
+    .getByRole("button", { name: "Explore services", exact: true })
+    .click();
+  await expect(panel).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth + 1,
+    ),
+  ).toBeTruthy();
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(page.locator(".service-gallery")).not.toHaveClass(/is-enhanced/);
+  await expect(page.locator(".service-card-content li")).toHaveCount(43);
+  await expect(page.locator(".service-card-content").first()).toBeVisible();
 });

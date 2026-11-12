@@ -1,7 +1,7 @@
 import { SectionBar } from "@/components/BrandPanels";
 import SurfaceMotion from "@/components/SurfaceMotion";
 import JourneyInteractions from "@/components/JourneyInteractions";
-import ProjectArrival from "@/components/ProjectArrival";
+import TeamProfiles from "@/components/TeamProfiles";
 import ServiceCards from "@/components/ServiceCards";
 import EyeIntro from "@/components/EyeIntro";
 import EyeOutro from "@/components/EyeOutro";
@@ -21,56 +21,6 @@ import { siteConfig, safeHref, contactEmail } from "@/lib/site-config";
 
 // Server-rendered semantic content stays readable without JavaScript or WebGL.
 
-const approvedTeam = siteConfig.team.filter((person) => person.name.trim());
-function TeamWindows() {
-  return (
-    <div className="team-windows" aria-label="Octagram team">
-      {approvedTeam.map((person, index) => (
-        <article
-          className="team-window"
-          key={person.name}
-          aria-labelledby={`team-person-${index}`}
-        >
-          <header className="terminal-titlebar">
-            <span className="terminal-dots" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </span>
-            <span>Meet the team</span>
-            <span className="terminal-shell" aria-hidden="true">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-          </header>
-          <div className="terminal-content">
-            <div className="team-window-heading">
-              <h3 id={`team-person-${index}`}>{person.name}</h3>
-              <span className="team-window-role">{person.role}</span>
-            </div>
-            <p className="team-window-summary">{person.description}</p>
-            <div className="team-window-body">
-              {person.bio?.map((paragraph) => (
-                <p key={paragraph}>{paragraph}</p>
-              ))}
-            </div>
-            <footer className="team-window-footer">
-              {safeHref(person.url) && (
-                <a
-                  href={safeHref(person.url)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={`${person.name} on LinkedIn`}
-                >
-                  LinkedIn ↗
-                </a>
-              )}
-            </footer>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
 function SocialLinks() {
   return (
     <>
@@ -291,7 +241,10 @@ export default function HomePage() {
                 <br />
                 Open to the world.
               </h2>
-              <p>A team from Jordan, building software for the people and ideas around us—and wherever they take us next.</p>
+              <p>
+                A team from Jordan, building software for the people and ideas
+                around us—and wherever they take us next.
+              </p>
               <span className="geo-label">
                 <i></i> JORDAN <small>31.9539° N / 35.9106° E</small>
               </span>
@@ -325,7 +278,7 @@ export default function HomePage() {
                 </a>
               </div>
             </div>
-            <TeamWindows />
+            <TeamProfiles />
           </section>
         </div>
         <MissionSection />
@@ -344,9 +297,7 @@ export default function HomePage() {
           aria-labelledby="work-title"
         >
           <PortfolioIntro section={content.projectsIntro} id="work-title" />
-          <ProjectArrival>
-            <ProjectStudies />
-          </ProjectArrival>
+          <ProjectStudies />
         </section>
         <InnovationSection />
         <ApproachSection />
