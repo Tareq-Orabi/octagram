@@ -137,6 +137,7 @@ export default function ServiceCards({
   const [globalPaused, setGlobalPaused] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [width, setWidth] = useState(1100);
+  const [height, setHeight] = useState(860);
   const viewport = useRef<HTMLDivElement>(null);
   const cards = useRef<(HTMLElement | null)[]>([]);
   const rotation = useRef(0);
@@ -152,13 +153,13 @@ export default function ServiceCards({
   } | null>(null);
   const dragged = useRef(false);
 
-  const small = width < 600;
+  const small = width <= 600;
   const cardWidth = Math.min(348, width - 54);
-  const radius = Math.min(width * 0.39, 280);
+  const radius = small
+    ? Math.min(width * 0.37, height * 0.42 - 62, 220)
+    : Math.min(width * 0.39, 280);
   const overviewScale = small
-    ? width < 350
-      ? 0.13
-      : 0.15
+    ? Math.max(0.2, 52 / cardWidth)
     : Math.min(0.29, width * 0.00038);
 
   // Only transforms change per frame; the eight cards do not re-render to orbit.
@@ -188,7 +189,7 @@ export default function ServiceCards({
           ? -Math.cos(angle) * radius
           : (1 - Math.cos(focusAngle)) * 360;
       const scale = selected === null ? overviewScale : active ? 1 : 0.82;
-      card.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${active ? 60 : 0}px) rotate(0deg) scale(${scale})`;
+      card.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${active && !small ? 60 : 0}px) rotate(0deg) scale(${scale})`;
     });
   }, [enhanced, selected, services.length, radius, small, overviewScale]);
 
@@ -213,7 +214,10 @@ export default function ServiceCards({
     sync();
     preference.addEventListener("change", sync);
     const element = viewport.current!;
-    const resize = new ResizeObserver(() => setWidth(element.clientWidth));
+    const resize = new ResizeObserver(() => {
+      setWidth(element.clientWidth);
+      setHeight(element.clientHeight);
+    });
     resize.observe(element);
     const visibility = new IntersectionObserver(
       ([entry]) => {
@@ -257,12 +261,29 @@ export default function ServiceCards({
 
   useEffect(() => {
     if (!enhanced || selected === null) return;
-    const timer = window.setTimeout(
-      () => contents.current[selected]?.focus({ preventScroll: true }),
-      350,
-    );
+    const hashAtSelection = location.hash;
+    const timer = window.setTimeout(() => {
+      const element = viewport.current;
+      const card = cards.current[selected];
+      if (small && element && card && location.hash === hashAtSelection) {
+        const headerBottom =
+          document.querySelector(".header")?.getBoundingClientRect().bottom ??
+          76;
+        // The explore button sits below the wheel. Bring the opened card back
+        // below the phone's fixed navigation instead of opening it off-screen.
+        const top =
+          element.getBoundingClientRect().top +
+          element.clientHeight * 0.42 -
+          card.offsetHeight / 2;
+        window.scrollTo({
+          top: Math.max(0, scrollY + top - headerBottom - 12),
+          behavior: "smooth",
+        });
+      }
+      contents.current[selected]?.focus({ preventScroll: true });
+    }, 350);
     return () => window.clearTimeout(timer);
-  }, [selected, enhanced]);
+  }, [selected, enhanced, small]);
 
   useEffect(() => {
     setSpinning(false);

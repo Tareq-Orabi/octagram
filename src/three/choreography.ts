@@ -81,7 +81,12 @@ export function evaluateNarrative(progress: number, mobile = false, portrait = m
   // handoff. Only the parent rotates: the 20,000-particle anatomy stays intact.
   brain.yaw = curve(p, [[0, 0], [1.12, -Math.PI * 0.5], [2.15, -Math.PI * 0.92], [2.98, -Math.PI * 1.25], [6, -Math.PI * 1.25]]);
   if (mobile) {
-    brain.x *= 0.42; brain.y = 0.8 + brain.y * 0.35; brain.scale *= 0.6;
+    // Keep the same sculpture below the opening copy on a narrow screen.
+    // Blend back into its existing scroll path before the About section.
+    const opening = 1 - ease(ramp(p, 0.15, 0.9));
+    brain.x = mix(brain.x * 0.42, 0.15, opening);
+    brain.y = mix(0.8 + brain.y * 0.35, -2.1, opening);
+    brain.scale *= mix(0.6, 0.42, opening);
     if (p > 5.7) logo.opacity *= 0.65;
   }
   if (portrait) {

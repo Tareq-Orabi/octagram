@@ -75,7 +75,7 @@ export default function ProjectArrival({ children, id = "project-list" }: { chil
     const watch = () => {
       observer?.disconnect();
       const tallest = Math.max(1, ...cards.map((card) => card.offsetHeight));
-      const threshold = Math.min(.36, innerHeight / tallest * .55);
+      const threshold = innerWidth < 768 ? .12 : Math.min(.36, innerHeight / tallest * .55);
       observer = new IntersectionObserver((entries) => {
         if (signal.aborted) return;
         for (const entry of entries) {

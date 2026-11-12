@@ -9,6 +9,7 @@ import "./surface-motion.css";
 import "./cinematic.css";
 import "./team-profiles.css";
 import "./project-partnership.css";
+import "./mobile.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -56,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark" data-octagram-build="octagram-refinements-20261112" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" data-octagram-build="octagram-mobile-20261112" suppressHydrationWarning>
       <head>
         <link
           rel="preload"
