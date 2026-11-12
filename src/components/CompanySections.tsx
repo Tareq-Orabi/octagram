@@ -1,7 +1,7 @@
 import { SectionBar } from "./BrandPanels";
 import ProjectFlipCard from "./ProjectFlipCard";
 import { companyContent as content } from "@/lib/company-content";
-import { safeHref, siteConfig } from "@/lib/site-config";
+import { contactEmail, safeHref, siteConfig } from "@/lib/site-config";
 
 type SectionCopy = { label: string; title: string; paragraphs: string[] };
 
@@ -295,6 +295,11 @@ export function ContactContext() {
   return (
     <div className="contact-context">
       <p>{content.contact.paragraphs[0]}</p>
+      {contactEmail && (
+        <p className="contact-email">
+          <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
+        </p>
+      )}
       <div className="contact-socials">
         <a
           href="https://wa.me/962780668491"

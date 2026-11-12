@@ -112,6 +112,12 @@ main
 .eye-outro + .contact .contact-panel {
   margin-top: 20px;
 }
+.contact-email a {
+  color: var(--brand-peach);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
 .contact-socials {
   display: flex;
   gap: 12px;

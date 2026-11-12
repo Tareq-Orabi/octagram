@@ -46,7 +46,7 @@ export interface SiteConfig {
 /** No email, employee portraits or unsupported project statuses are inferred. */
 export const siteConfig: SiteConfig = {
   siteUrl: "https://octagramjo.com/",
-  contactEmail: "",
+  contactEmail: "octgramjo@gmail.com",
   contactUrl: "https://www.instagram.com/octagram.jo/",
   socialLinks: [
     {
@@ -164,7 +164,7 @@ export const siteConfig: SiteConfig = {
       ],
     },
     {
-      name: "ZAID AL TAIH",
+      name: "Zaid Altayeh",
       role: "Backend Lead",
       description:
         "Leads backend engineering and contributes to software architecture, server-side application development, API design, and database integration.",
