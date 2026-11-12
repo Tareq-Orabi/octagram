@@ -46,7 +46,7 @@ export interface SiteConfig {
 /** No email, employee portraits or unsupported project statuses are inferred. */
 export const siteConfig: SiteConfig = {
   siteUrl: "https://octagramjo.com/",
-  contactEmail: "octgramjo@gmail.com",
+  contactEmail: "octagramjo@gmail.com",
   contactUrl: "https://www.instagram.com/octagram.jo/",
   socialLinks: [
     {
