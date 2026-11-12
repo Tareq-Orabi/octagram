@@ -11,7 +11,7 @@ import SiteInteractions from "@/components/SiteInteractions";
 import { companyContent as content } from "@/lib/company-content";
 import {
   MissionSection,
-  InnovationSection,
+  ProductStudies,
   ApproachSection,
   WhySection,
   ContactContext,
@@ -295,11 +295,26 @@ export default function HomePage() {
           aria-labelledby="work-title"
         >
           <PortfolioIntro section={content.projectsIntro} id="work-title" />
-          <ProjectArrival>
-            <ProjectStudies />
-          </ProjectArrival>
+          <div className="project-group project-group--selected" aria-labelledby="selected-projects-title">
+            <div className="project-group-heading">
+              <h3 id="selected-projects-title">Selected work</h3>
+              <p>Built around real needs.</p>
+            </div>
+            <ProjectArrival>
+              <ProjectStudies />
+            </ProjectArrival>
+          </div>
+          <div className="project-group" id="innovation" aria-labelledby="innovation-title">
+            <div className="project-group-heading">
+              <h3 id="innovation-title">In development</h3>
+              <p>The ideas we’re building next.</p>
+            </div>
+            <ProjectArrival id="development-project-list">
+              <ProjectStudies inDevelopment />
+              <ProductStudies />
+            </ProjectArrival>
+          </div>
         </section>
-        <InnovationSection />
         <ApproachSection />
         <WhySection />
 
@@ -398,8 +413,7 @@ export default function HomePage() {
           <a href="#about">About</a>
           <a href="#team">Team</a>
           <a href="#expertise">Services</a>
-          <a href="#work">Work</a>
-          <a href="#innovation">Products</a>
+          <a href="#work">Projects</a>
           <a href="#approach">Approach</a>
           <a href="#contact">Contact</a>
           <span id="social-links">

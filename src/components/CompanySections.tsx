@@ -133,22 +133,17 @@ function ProductArtwork({ index, name }: { index: number; name: string }) {
   );
 }
 
-export function InnovationSection() {
+export function ProductStudies() {
   return (
-    <section
-      className="portfolio-section content-section"
-      id="innovation"
-      aria-labelledby="innovation-title"
-    >
-      <PortfolioIntro section={content.products} id="innovation-title" />
-      <div className="project-gallery product-gallery">
-        {content.products.items.map((product, index) => (
-          <ProjectFlipCard
-            className={`project-showcase product-showcase product-showcase--${index}`}
-            id={`product-${product.id}`}
-            key={product.id}
-            title={product.name}
-            front={<>
+    <>
+      {content.products.items.map((product, index) => (
+        <ProjectFlipCard
+          className={`project-showcase development-showcase development-showcase--${index}`}
+          id={`product-${product.id}`}
+          key={product.id}
+          title={product.name}
+          front={
+            <>
               <header className="project-showcase-heading">
                 <span className="project-app-icon" aria-hidden="true">
                   {index === 0 ? "TH" : "OC"}
@@ -159,28 +154,28 @@ export function InnovationSection() {
                 {product.paragraphs[0]}
               </p>
               <div className="project-showcase-meta">{product.industry}</div>
-              <p className="product-development-status">{product.status}</p>
+              <p className="project-stage">In development</p>
               <ProductArtwork index={index} name={product.name} />
-            </>}
-          >
-            <p className="showcase-status">{product.status}</p>
-            <h4>{product.title}</h4>
-            <p>{product.category}</p>
-            {product.paragraphs.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
+            </>
+          }
+        >
+          <p className="showcase-status">{product.status}</p>
+          <h4>{product.title}</h4>
+          <p>{product.category}</p>
+          {product.paragraphs.map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+          <h4>Vision areas</h4>
+          <ul>
+            {product.visionAreas.map((area) => (
+              <li key={area}>{area}</li>
             ))}
-            <h4>Vision areas</h4>
-            <ul>
-              {product.visionAreas.map((area) => (
-                <li key={area}>{area}</li>
-              ))}
-            </ul>
-            <h4>Our ambition</h4>
-            <p>{product.ambition}</p>
-          </ProjectFlipCard>
-        ))}
-      </div>
-    </section>
+          </ul>
+          <h4>Our ambition</h4>
+          <p>{product.ambition}</p>
+        </ProjectFlipCard>
+      ))}
+    </>
   );
 }
 
@@ -263,46 +258,35 @@ export function WhySection() {
   const section = content.whyOctagram;
   return (
     <section
-      className="portfolio-section content-section commitment-section"
+      className="portfolio-section content-section partnership-section"
       id="why-octagram"
       aria-labelledby="why-title"
     >
       <SectionBar label={section.label} />
-      <header className="commitment-intro">
-        <h2 id="why-title">{section.title}</h2>
-        <div className="portfolio-prose">
+      <div className="partnership-layout">
+        <header className="partnership-intro">
+          <h2 id="why-title">{section.title}</h2>
           {section.paragraphs.map((paragraph) => (
             <p key={paragraph}>{paragraph}</p>
           ))}
-        </div>
-      </header>
-      <div className="commitment-grid">
-        {section.reasons.map((reason, index) => (
-          <article
-            className={`commitment-card commitment-card--${index}`}
-            key={reason.title}
-          >
-            <div className="commitment-card-top">
-              <EngineeringGlyph index={index} />
-              <span aria-hidden="true">
+          <a className="partnership-contact" href="#contact">
+            {section.closing}
+          </a>
+        </header>
+        <ol className="partnership-list">
+          {section.reasons.map((reason, index) => (
+            <li key={reason.title}>
+              <span className="partnership-number" aria-hidden="true">
                 {String(index + 1).padStart(2, "0")}
               </span>
-            </div>
-            <div className="commitment-copy">
-              <h3>{reason.title}</h3>
-              <p>{reason.description}</p>
-            </div>
-            {index === 0 && (
-              <div className="commitment-structure" aria-hidden="true">
-                <i />
-                <i />
-                <i />
+              <div>
+                <h3>{reason.title}</h3>
+                <p>{reason.description}</p>
               </div>
-            )}
-          </article>
-        ))}
+            </li>
+          ))}
+        </ol>
       </div>
-      <p className="commitment-closing">{section.closing}</p>
     </section>
   );
 }
@@ -477,10 +461,11 @@ function ProjectArtwork({ index }: { index: number }) {
   );
 }
 
-export function ProjectStudies() {
+export function ProjectStudies({ inDevelopment = false }: { inDevelopment?: boolean }) {
   return (
     <>
       {siteConfig.projects.map((project, index) => {
+        if ((project.status === "In development") !== inDevelopment) return null;
         const href = safeHref(project.url);
         const paragraphs = project.overview || [project.description];
         return (
@@ -501,6 +486,7 @@ export function ProjectStudies() {
               <div className="project-showcase-meta">
                 {project.subtitle || project.title}
               </div>
+              {inDevelopment && <p className="project-stage">In development</p>}
               <ProjectArtwork index={index} />
             </>}
           >

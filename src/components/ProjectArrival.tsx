@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { gsap } from "gsap";
 
 /** One finite arrival per card. The grid and the independent flip never move. */
-export default function ProjectArrival({ children }: { children: ReactNode }) {
+export default function ProjectArrival({ children, id = "project-list" }: { children: ReactNode; id?: string }) {
   const gallery = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -110,5 +110,5 @@ export default function ProjectArrival({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  return <div ref={gallery} id="project-list" className="project-gallery project-arrivals">{children}</div>;
+  return <div ref={gallery} id={id} className="project-gallery project-arrivals">{children}</div>;
 }

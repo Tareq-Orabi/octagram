@@ -227,10 +227,10 @@ export const companyContent: CompanyContent = {
     ]
   },
   "projectsIntro": {
-    "label": "SELECTED WORK",
+    "label": "OUR PROJECTS",
     "title": "Built for the real world.",
     "paragraphs": [
-      "A few projects across healthcare, learning, and coaching. Turn a card over to see what went into it."
+      "Client work and products in development, across healthcare, learning, and coaching. Explore a card to see what goes into it."
     ]
   },
   "products": {

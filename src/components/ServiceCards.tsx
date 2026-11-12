@@ -1,6 +1,14 @@
 "use client";
 
-import { memo, useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import type { CompanyService } from "@/lib/company-content";
 
 const palettes = [
@@ -123,15 +131,16 @@ export default function ServiceCards({
 }) {
   const [enhanced, setEnhanced] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
-  const [rotation, setRotation] = useState(0);
   const [inView, setInView] = useState(false);
-  const [hovered, setHovered] = useState(false);
   const [focusPaused, setFocusPaused] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [width, setWidth] = useState(1100);
   const viewport = useRef<HTMLDivElement>(null);
+  const cards = useRef<(HTMLElement | null)[]>([]);
+  const rotation = useRef(0);
+  const resumeAt = useRef(0);
   const contents = useRef<(HTMLDivElement | null)[]>([]);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
   const drag = useRef<{
@@ -139,32 +148,112 @@ export default function ServiceCards({
     x: number;
     rotation: number;
     moved: boolean;
+    target: HTMLElement;
   } | null>(null);
   const dragged = useRef(false);
 
+  const small = width < 600;
+  const cardWidth = Math.min(348, width - 54);
+  const radius = Math.min(width * 0.39, 280);
+  const overviewScale = small
+    ? width < 350
+      ? 0.13
+      : 0.15
+    : Math.min(0.29, width * 0.00038);
+
+  // Only transforms change per frame; the eight cards do not re-render to orbit.
+  const positionCards = useCallback(() => {
+    cards.current.forEach((card, index) => {
+      if (!card) return;
+      if (!enhanced) {
+        card.style.removeProperty("transform");
+        return;
+      }
+      const angle =
+        ((index * (360 / services.length) + rotation.current) * Math.PI) / 180;
+      const delta =
+        selected === null
+          ? 0
+          : ((index - selected + services.length + services.length / 2) %
+              services.length) -
+            services.length / 2;
+      const active = index === selected;
+      const focusAngle = delta * 0.53;
+      const x =
+        selected === null
+          ? Math.sin(angle) * radius
+          : Math.sin(focusAngle) * (small ? 610 : 880);
+      const y =
+        selected === null
+          ? -Math.cos(angle) * radius
+          : (1 - Math.cos(focusAngle)) * 360;
+      const scale = selected === null ? overviewScale : active ? 1 : 0.82;
+      card.style.transform = `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${active ? 60 : 0}px) rotate(0deg) scale(${scale})`;
+    });
+  }, [enhanced, selected, services.length, radius, small, overviewScale]);
+
+  useLayoutEffect(positionCards, [positionCards]);
+
+  const finishDrag = useCallback(() => {
+    const current = drag.current;
+    drag.current = null;
+    setDragging(false);
+    if (current?.target.hasPointerCapture(current.id))
+      current.target.releasePointerCapture(current.id);
+  }, []);
+
   useEffect(() => {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setEnhanced(!preference.matches);
+    const sync = () => {
+      setEnhanced(!preference.matches);
+      setSelected(null);
+      setFocusPaused(false);
+      finishDrag();
+    };
     sync();
     preference.addEventListener("change", sync);
     const element = viewport.current!;
     const resize = new ResizeObserver(() => setWidth(element.clientWidth));
     resize.observe(element);
     const visibility = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.1 },
+      ([entry]) => {
+        setInView(entry.isIntersecting);
+        if (!entry.isIntersecting) {
+          // A detail view or interrupted gesture must not strand the wheel.
+          resumeAt.current = 0;
+          setSelected(null);
+          setFocusPaused(false);
+          finishDrag();
+        }
+      },
+      { threshold: 0 },
     );
     visibility.observe(element);
     const onMotion = (event: Event) =>
       setGlobalPaused(Boolean((event as CustomEvent<boolean>).detail));
     window.addEventListener("octagram:motion", onMotion);
+    const releasePointer = (event: PointerEvent) => {
+      if (event.pointerId === drag.current?.id) finishDrag();
+    };
+    const leaveWindow = () => {
+      finishDrag();
+      setFocusPaused(false);
+    };
+    window.addEventListener("pointerup", releasePointer);
+    window.addEventListener("pointercancel", releasePointer);
+    window.addEventListener("blur", leaveWindow);
+    document.addEventListener("visibilitychange", leaveWindow);
     return () => {
       preference.removeEventListener("change", sync);
       resize.disconnect();
       visibility.disconnect();
       window.removeEventListener("octagram:motion", onMotion);
+      window.removeEventListener("pointerup", releasePointer);
+      window.removeEventListener("pointercancel", releasePointer);
+      window.removeEventListener("blur", leaveWindow);
+      document.removeEventListener("visibilitychange", leaveWindow);
     };
-  }, []);
+  }, [finishDrag]);
 
   useEffect(() => {
     if (!enhanced || selected === null) return;
@@ -179,29 +268,33 @@ export default function ServiceCards({
     setSpinning(false);
     if (
       !enhanced ||
-      !inView ||
       selected !== null ||
       globalPaused ||
-      hovered ||
-      focusPaused ||
+      (focusPaused && inView) ||
       dragging
     )
       return;
     let frame = 0;
     let previous = 0;
     const tick = (now: number) => {
-      if (previous && now - previous >= 32) {
+      if (previous) {
         const delta = Math.min(now - previous, 64);
-        if (!document.hidden) setRotation((value) => value + delta * 0.006);
-        previous = now;
-      } else if (!previous) previous = now;
+        if (!document.hidden) {
+          rotation.current = (rotation.current + delta * 0.006) % 360;
+          positionCards();
+        }
+      }
+      previous = now;
       frame = requestAnimationFrame(tick);
     };
     // Let the selected card return to the wheel before starting its orbit.
-    const timer = window.setTimeout(() => {
-      setSpinning(true);
-      frame = requestAnimationFrame(tick);
-    }, 1100);
+    const timer = window.setTimeout(
+      () => {
+        setSpinning(true);
+        frame = requestAnimationFrame(tick);
+      },
+      Math.max(0, resumeAt.current - performance.now()),
+    );
     return () => {
       clearTimeout(timer);
       cancelAnimationFrame(frame);
@@ -211,18 +304,22 @@ export default function ServiceCards({
     inView,
     selected,
     globalPaused,
-    hovered,
     focusPaused,
     dragging,
+    positionCards,
   ]);
 
   const choose = (index: number) => {
+    finishDrag();
+    setFocusPaused(false);
     setSelected(index);
   };
-  const back = () => {
+  const back = (restoreFocus: boolean) => {
     const previous = selected;
+    resumeAt.current = performance.now() + 1050;
+    setFocusPaused(false);
     setSelected(null);
-    if (previous !== null)
+    if (restoreFocus && previous !== null)
       requestAnimationFrame(() =>
         triggers.current[previous]?.focus({ preventScroll: true }),
       );
@@ -232,14 +329,6 @@ export default function ServiceCards({
       (current) =>
         ((current ?? 0) + direction + services.length) % services.length,
     );
-  const small = width < 600;
-  const cardWidth = Math.min(348, width - 54);
-  const radius = Math.min(width * 0.39, 280);
-  const overviewScale = small
-    ? width < 350
-      ? 0.13
-      : 0.15
-    : Math.min(0.29, width * 0.00038);
 
   return (
     <div
@@ -266,7 +355,7 @@ export default function ServiceCards({
         if (!enhanced || event.target instanceof HTMLAnchorElement) return;
         if (event.key === "Escape" && selected !== null) {
           event.preventDefault();
-          back();
+          back(true);
         }
         if (["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
           event.preventDefault();
@@ -285,15 +374,30 @@ export default function ServiceCards({
         ref={viewport}
         style={{ "--card-width": `${cardWidth}px` } as CSSProperties}
         onPointerDown={(event) => {
-          if (!enhanced || selected !== null || event.button !== 0) return;
+          if (
+            !enhanced ||
+            selected !== null ||
+            event.button !== 0 ||
+            !event.isPrimary
+          )
+            return;
+          const control = (event.target as HTMLElement).closest<HTMLElement>(
+            "button, a",
+          );
+          if (control && !control.classList.contains("service-card-trigger"))
+            return;
+          const target = control || event.currentTarget;
           dragged.current = false;
           setDragging(true);
           drag.current = {
             id: event.pointerId,
             x: event.clientX,
-            rotation,
+            rotation: rotation.current,
             moved: false,
+            target,
           };
+          // Capture on the actual trigger so a tap still dispatches its click.
+          target.setPointerCapture(event.pointerId);
         }}
         onPointerMove={(event) => {
           const current = drag.current;
@@ -302,21 +406,16 @@ export default function ServiceCards({
           if (Math.abs(delta) > 8) {
             current.moved = true;
             dragged.current = true;
-            event.currentTarget.setPointerCapture(event.pointerId);
-            setRotation(current.rotation + delta * 0.3);
+            rotation.current = current.rotation + delta * 0.3;
+            positionCards();
           }
         }}
         onPointerUp={(event) => {
           if (drag.current?.id !== event.pointerId) return;
-          if (event.currentTarget.hasPointerCapture(event.pointerId))
-            event.currentTarget.releasePointerCapture(event.pointerId);
-          drag.current = null;
-          setDragging(false);
+          finishDrag();
         }}
-        onPointerCancel={() => {
-          drag.current = null;
-          setDragging(false);
-        }}
+        onPointerCancel={finishDrag}
+        onLostPointerCapture={finishDrag}
       >
         <div className="service-wheel-heading">
           <h2 id="expertise-title">
@@ -334,8 +433,6 @@ export default function ServiceCards({
           aria-label="Octagram service cards"
         >
           {services.map((service, index) => {
-            const angle = index * (360 / services.length) + rotation;
-            const radians = (angle * Math.PI) / 180;
             const delta =
               selected === null
                 ? 0
@@ -343,37 +440,22 @@ export default function ServiceCards({
                     services.length) -
                   services.length / 2;
             const active = index === selected;
-            const focusAngle = delta * 0.53;
-            const x =
-              selected === null
-                ? Math.sin(radians) * radius
-                : Math.sin(focusAngle) * (small ? 610 : 880);
-            const y =
-              selected === null
-                ? -Math.cos(radians) * radius
-                : (1 - Math.cos(focusAngle)) * 360;
-            const rotate = 0; // Upright gondolas: orbit changes position, never card orientation.
-            const scale = selected === null ? overviewScale : active ? 1 : 0.82;
             const palette = palettes[index % palettes.length];
             const style = {
               "--card-a": `var(--brand-${palette[0]})`,
               "--card-b": `var(--brand-${palette[1]})`,
               "--card-c": `var(--brand-${palette[2]})`,
-              transform: enhanced
-                ? `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${active ? 60 : 0}px) rotate(${rotate}deg) scale(${scale})`
-                : undefined,
               zIndex: active ? 12 : 8 - Math.abs(delta),
             } as CSSProperties;
             return (
               <article
+                ref={(element) => {
+                  cards.current[index] = element;
+                }}
                 className={`service-card${active ? " is-selected" : ""}`}
                 style={style}
                 key={service.id}
                 data-service={index}
-                onPointerEnter={(event) => {
-                  if (event.pointerType === "mouse") setHovered(true);
-                }}
-                onPointerLeave={() => setHovered(false)}
               >
                 <div className="service-cover">
                   <CardPrint index={index} />
@@ -459,7 +541,11 @@ export default function ServiceCards({
                     Next
                   </button>
                 </div>
-                <button type="button" className="service-back" onClick={back}>
+                <button
+                  type="button"
+                  className="service-back"
+                  onClick={(event) => back(event.detail === 0)}
+                >
                   All services
                 </button>
               </>
