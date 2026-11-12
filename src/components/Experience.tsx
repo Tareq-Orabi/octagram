@@ -40,10 +40,7 @@ type SectionId =
   | "expertise"
   | "work"
   | "contact";
-type Bounds = Record<
-  SectionId,
-  { top: number; height: number; readHeight?: number }
->;
+type Bounds = Record<SectionId, { top: number; height: number; readHeight?: number }>;
 const sectionIds: SectionId[] = [
   "home",
   "about",
@@ -134,13 +131,7 @@ function SceneDirector({ quality }: { quality: number }) {
   const models = useRef<Partial<Record<SceneName, ManagedModel>>>({});
   const pending = useRef(new Set<SceneName>());
   const bounds = useRef<Bounds>({} as Bounds);
-  const rootsFrame = useRef({
-    offset: 0,
-    left: 0,
-    height: 200,
-    width: 1,
-    sticky: false,
-  });
+  const rootsFrame = useRef({ offset: 0, left: 0, height: 200, width: 1, sticky: false });
   const stageElement = useRef<HTMLElement | null>(null);
   const clip = useRef("");
   const scrolling = useRef({ position: 0 });
@@ -243,34 +234,25 @@ function SceneDirector({ quality }: { quality: number }) {
     hidden.current = document.hidden;
     const measure = () => {
       for (const id of sectionIds) {
-        const section =
-          id === "jordan"
-            ? document.querySelector<HTMLElement>(".roots-handoff > .jordan")
-            : document.getElementById(id);
+        const section = id === "jordan"
+          ? document.querySelector<HTMLElement>(".roots-handoff > .jordan")
+          : document.getElementById(id);
         // A sticky section's live rect moves with the viewport. Its wrapper
         // retains the original document position, including on deep links.
         const anchor =
           id === "jordan"
-            ? (section?.closest(".roots-handoff") ?? section)
+            ? section?.closest(".roots-handoff") ?? section
             : section;
         bounds.current[id] = {
           top: anchor
             ? anchor.getBoundingClientRect().top + window.scrollY
             : Number.MAX_SAFE_INTEGER,
           height: section?.offsetHeight ?? innerHeight,
-          readHeight:
-            id === "vision"
-              ? section?.querySelector<HTMLElement>(".vision-frame")
-                  ?.offsetHeight
-              : undefined,
+          readHeight: id === "vision" ? section?.querySelector<HTMLElement>(".vision-frame")?.offsetHeight : undefined,
         };
       }
-      const roots = document.querySelector<HTMLElement>(
-        ".roots-handoff > .jordan",
-      );
-      const planetWindow = roots?.querySelector<HTMLElement>(
-        ".roots-planet-window",
-      );
+      const roots = document.querySelector<HTMLElement>(".roots-handoff > .jordan");
+      const planetWindow = roots?.querySelector<HTMLElement>(".roots-planet-window");
       if (roots && planetWindow) {
         const rect = planetWindow.getBoundingClientRect();
         rootsFrame.current = {
@@ -283,8 +265,7 @@ function SceneDirector({ quality }: { quality: number }) {
       }
       invalidate();
     };
-    stageElement.current =
-      gl.domElement.closest<HTMLElement>(".experience-stage");
+    stageElement.current = gl.domElement.closest<HTMLElement>(".experience-stage");
     measure();
     scrolling.current.position = window.scrollY;
     entrance.current.progress = document.documentElement.classList.contains(
@@ -415,50 +396,17 @@ function SceneDirector({ quality }: { quality: number }) {
     const targetProgress = narrativeProgress(actualScroll, b, h);
     // The camera passage follows actual scroll, so fast reversals cannot leave
     // an old logo pose behind already-visible Roots content.
-    const progress =
-      targetProgress >= 3 ? targetProgress : narrativeProgress(y, b, h);
-    if (actualScroll >= b.team.top - Math.min(110, h * 0.15)) {
-      // Carry the opening's actual floating modules behind the content. The
-      // narrative sculptures keep their original section-specific entrances.
-      const m = models.current;
-      fade(m.brain, 0);
-      fade(m.logo, 0);
-      fade(m.globe, 0);
+    const progress = targetProgress >= 3 ? targetProgress : narrativeProgress(y, b, h);
+    if (actualScroll >= b.team.top && actualScroll + h < b.contact.top) {
+      Object.values(models.current).forEach((entry) => fade(entry, 0));
       globeScene.current.visible = false;
-      if (stageElement.current && clip.current) {
-        stageElement.current.style.clipPath = "";
-        clip.current = "";
-      }
-      const damping = 1 - Math.exp(-4 * Math.min(delta, 0.06));
-      const input = smoothedPointer.current;
-      input.x += (pointer.current.x - input.x) * damping;
-      input.y += (pointer.current.y - input.y) * damping;
-      if (m.modules) {
-        m.modules.model.setTunnel?.(0);
-        m.modules.model.group.position.set(0, 0, 0);
-        m.modules.model.update(time, 0, input, false);
-        fade(m.modules, 0.55 * entrance.current.progress);
-      }
-      camera.position.z = 10;
-      camera.rotation.y += (-0.025 * input.x - camera.rotation.y) * damping;
-      camera.rotation.x += (-0.018 * input.y - camera.rotation.x) * damping;
-      camera.userData.opticalFocus = 10;
-      gl.domElement.dataset.ambientSpace = "continuous";
-      gl.domElement.dataset.ambientTime = time.toFixed(3);
-      gl.domElement.dataset.globeActive = "false";
-      invalidate();
-      return;
+      return; // Native scroll/resize/visibility listeners wake the demand loop.
     }
-    gl.domElement.dataset.ambientSpace = "narrative";
     if (progress > 1.7 || actualScroll + h * 2 > b.vision.top)
       void ensure("logo");
     if (progress > 2.7 || actualScroll + h * 2 > b.jordan.top)
       void ensure("globe");
-    const current = evaluateNarrative(
-      progress,
-      mobile,
-      size.width < 1024 && size.height > size.width,
-    );
+    const current = evaluateNarrative(progress, mobile, size.width < 1024 && size.height > size.width);
     const damping = 1 - Math.exp(-4 * Math.min(delta, 0.06));
     const input = smoothedPointer.current;
     input.x += (pointer.current.x - input.x) * damping;
@@ -477,26 +425,17 @@ function SceneDirector({ quality }: { quality: number }) {
     fade(m.brain, current.brain.opacity);
 
     m.logo?.model.setPassage?.(current.passage);
-    if (current.logo.opacity > 0.002)
-      m.logo?.model.update(time, current.assembly, input, false);
+    if (current.logo.opacity > 0.002) m.logo?.model.update(time, current.assembly, input, false);
     pose(m.logo, current.logo);
     fade(m.logo, current.logo.opacity * (actualScroll < b.team.top ? 1 : 0));
 
     const frame = rootsFrame.current;
-    const sectionTop = frame.sticky
-      ? Math.max(0, b.jordan.top - actualScroll)
-      : b.jordan.top - actualScroll;
-    const globeWindow = {
-      top: sectionTop + frame.offset,
-      height: frame.height,
-      width: frame.width,
-      left: frame.left,
-    };
+    const sectionTop = frame.sticky ? Math.max(0, b.jordan.top - actualScroll) : b.jordan.top - actualScroll;
+    const globeWindow = { top: sectionTop + frame.offset, height: frame.height, width: frame.width, left: frame.left };
     const globeVisible = Boolean(
       m.globe &&
       current.globe.opacity > 0.01 &&
-      globeWindow.top < h &&
-      globeWindow.top + globeWindow.height > 0 &&
+      globeWindow.top < h && globeWindow.top + globeWindow.height > 0 &&
       actualScroll < b.team.top,
     );
     const scene = globeScene.current;
@@ -511,12 +450,9 @@ function SceneDirector({ quality }: { quality: number }) {
     // The DOM panel supplies the wipe: do not dissolve or push the globe
     // towards the camera while it is still visible below the panel's edge.
     fade(m.globe, current.globe.opacity * (actualScroll < b.team.top ? 1 : 0));
-    const nextClip =
-      actualScroll < b.team.top &&
-      current.globe.opacity > 0.002 &&
-      current.logo.opacity <= 0.002
-        ? `inset(${Math.min(h, Math.max(0, globeWindow.top))}px ${Math.max(0, size.width - frame.left - frame.width)}px ${Math.max(0, h - Math.max(0, Math.min(globeWindow.top + globeWindow.height, b.team.top - actualScroll)))}px ${Math.max(0, frame.left)}px)`
-        : "";
+    const nextClip = actualScroll < b.team.top && current.globe.opacity > 0.002 && current.logo.opacity <= 0.002
+      ? `inset(${Math.min(h, Math.max(0, globeWindow.top))}px ${Math.max(0, size.width - frame.left - frame.width)}px ${Math.max(0, h - Math.max(0, globeWindow.top + globeWindow.height))}px ${Math.max(0, frame.left)}px)`
+      : "";
     if (nextClip !== clip.current && stageElement.current) {
       stageElement.current.style.clipPath = nextClip;
       clip.current = nextClip;
@@ -524,28 +460,25 @@ function SceneDirector({ quality }: { quality: number }) {
 
     if (m.modules) {
       m.modules.model.setTunnel?.(current.tunnel);
-      if (current.ambientOpacity > 0.002)
-        m.modules.model.update(time, progress, input, false);
+      if (current.ambientOpacity > 0.002) m.modules.model.update(time, progress, input, false);
       m.modules.model.group.position.set(0, 0, 0);
       fade(
         m.modules,
         current.ambientOpacity *
-          entrance.current.progress *
-          (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
+        entrance.current.progress *
+        (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
       );
     }
     // Suppress camera tilt while the upright mark is visible.
     const preciseCamera = progress >= 3.25 && progress <= 5;
-    const cameraMotion = preciseCamera
-      ? 0
-      : Math.max(0, 1 - current.logo.opacity * 4);
+    const cameraMotion = preciseCamera ? 0 : Math.max(0, 1 - current.logo.opacity * 4);
     camera.rotation.y +=
       (-0.025 * input.x * cameraMotion - camera.rotation.y) * damping;
     camera.rotation.x +=
       (-0.018 * input.y * cameraMotion - camera.rotation.x) * damping;
     camera.position.z = current.cameraZ;
-    camera.userData.opticalFocus =
-      progress >= 3.86 && progress < 5.7 ? 10 : Math.max(0.25, current.cameraZ);
+    camera.userData.opticalFocus = progress >= 3.86 && progress < 5.7
+      ? 10 : Math.max(.25, current.cameraZ);
     if (preciseCamera) camera.rotation.set(0, 0, 0);
     const canvas = gl.domElement;
     canvas.dataset.progress = progress.toFixed(3);

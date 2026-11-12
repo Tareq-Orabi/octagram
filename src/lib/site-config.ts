@@ -87,7 +87,6 @@ export const siteConfig: SiteConfig = {
     },
     {
       title: "OCTACLUB",
-      status: "In development",
       subtitle: "Learning Platform · THINK AI",
       industry: "Medical & Technical Education",
       category: "Learning Platform",

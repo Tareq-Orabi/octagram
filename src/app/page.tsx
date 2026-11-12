@@ -1,6 +1,7 @@
 import { SectionBar } from "@/components/BrandPanels";
 import SurfaceMotion from "@/components/SurfaceMotion";
 import JourneyInteractions from "@/components/JourneyInteractions";
+import ProjectArrival from "@/components/ProjectArrival";
 import TeamProfiles from "@/components/TeamProfiles";
 import ServiceCards from "@/components/ServiceCards";
 import EyeIntro from "@/components/EyeIntro";
@@ -241,10 +242,7 @@ export default function HomePage() {
                 <br />
                 Open to the world.
               </h2>
-              <p>
-                A team from Jordan, building software for the people and ideas
-                around us—and wherever they take us next.
-              </p>
+              <p>A team from Jordan, building software for the people and ideas around us—and wherever they take us next.</p>
               <span className="geo-label">
                 <i></i> JORDAN <small>31.9539° N / 35.9106° E</small>
               </span>
@@ -297,7 +295,9 @@ export default function HomePage() {
           aria-labelledby="work-title"
         >
           <PortfolioIntro section={content.projectsIntro} id="work-title" />
-          <ProjectStudies />
+          <ProjectArrival>
+            <ProjectStudies />
+          </ProjectArrival>
         </section>
         <InnovationSection />
         <ApproachSection />

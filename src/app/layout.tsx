@@ -7,7 +7,7 @@ import "./journey.css";
 import "./eye-outro.css";
 import "./surface-motion.css";
 import "./cinematic.css";
-import "./studio-sections.css";
+import "./team-profiles.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -55,12 +55,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      data-theme="dark"
-      data-octagram-build="octagram-space-20261112-02"
-      suppressHydrationWarning
-    >
+    <html lang="en" data-theme="dark" data-octagram-build="octagram-team-20261112" suppressHydrationWarning>
       <head>
         <link
           rel="preload"
@@ -69,13 +64,7 @@ export default function RootLayout({
           type="font/woff2"
           crossOrigin="anonymous"
         />
-        <link
-          rel="preload"
-          href="/assets/fonts/space-grotesk-latin.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
+        <link rel="preload" href="/assets/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: initializeIntro }} />
         <script
           type="application/ld+json"

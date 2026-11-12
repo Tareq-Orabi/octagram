@@ -124,6 +124,7 @@ export default function ServiceCards({
   const [enhanced, setEnhanced] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
+  const [inView, setInView] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [focusPaused, setFocusPaused] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -150,18 +151,8 @@ export default function ServiceCards({
     const resize = new ResizeObserver(() => setWidth(element.clientWidth));
     resize.observe(element);
     const visibility = new IntersectionObserver(
-      ([entry]) => {
-        // Leaving the section restores the original wheel, including after
-        // following a link from an expanded card. Never retain a hover pause.
-        if (!entry.isIntersecting) {
-          setSelected(null);
-          setHovered(false);
-          setFocusPaused(false);
-          setDragging(false);
-          drag.current = null;
-        }
-      },
-      { threshold: 0 },
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.1 },
     );
     visibility.observe(element);
     const onMotion = (event: Event) =>
@@ -188,6 +179,7 @@ export default function ServiceCards({
     setSpinning(false);
     if (
       !enhanced ||
+      !inView ||
       selected !== null ||
       globalPaused ||
       hovered ||
@@ -214,7 +206,15 @@ export default function ServiceCards({
       clearTimeout(timer);
       cancelAnimationFrame(frame);
     };
-  }, [enhanced, selected, globalPaused, hovered, focusPaused, dragging]);
+  }, [
+    enhanced,
+    inView,
+    selected,
+    globalPaused,
+    hovered,
+    focusPaused,
+    dragging,
+  ]);
 
   const choose = (index: number) => {
     setSelected(index);

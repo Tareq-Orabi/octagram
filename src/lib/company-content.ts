@@ -230,7 +230,7 @@ export const companyContent: CompanyContent = {
     "label": "SELECTED WORK",
     "title": "Built for the real world.",
     "paragraphs": [
-      "A closer look at our work in healthcare and coaching. Explore the ideas, details, and systems behind each project."
+      "A few projects across healthcare, learning, and coaching. Turn a card over to see what went into it."
     ]
   },
   "products": {

@@ -22,7 +22,7 @@ export default function EyeOutro() {
     canvas.className = "eye-outro-canvas";
     host.appendChild(canvas);
     const painter = createAsciiEye(canvas, {
-      background: "transparent",
+      background: "#080909",
       maxDpr: 1.25,
       size: () => ({ width: host.clientWidth, height: host.clientHeight }),
     });
