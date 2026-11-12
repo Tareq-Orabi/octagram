@@ -52,11 +52,36 @@
     min-height: 46px;
   }
   .brain-poster {
-    width: 86vw;
-    height: 34svh;
-    right: 7vw;
-    top: auto;
-    bottom: 24px;
+    width: 130vw;
+    height: 100svh;
+    right: -40vw;
+    top: 0;
+    bottom: auto;
+  }
+  .mobile-blur::before {
+    background: color-mix(in srgb, var(--page-bg) 25%, transparent);
+    backdrop-filter: blur(8px);
+  }
+  #about .side-copy,
+  .manifesto-copy,
+  .vision-frame .vision-copy,
+  .portfolio-intro,
+  .company-team .team-head,
+  .engineering-intro,
+  #why-octagram .partnership-intro {
+    text-align: center;
+  }
+  #about .side-copy > *,
+  .vision-copy > *,
+  .portfolio-intro h2,
+  .portfolio-intro .portfolio-prose,
+  .company-team .team-head > *,
+  .engineering-intro > *,
+  #why-octagram .partnership-intro > * {
+    margin-inline: auto;
+  }
+  .company-team .team-connect {
+    text-align: center;
   }
   #about {
     min-height: 100svh;
