@@ -58,7 +58,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-theme="dark"
-      data-octagram-build="octagram-studio-20261112"
+      data-octagram-build="octagram-space-20261112-02"
       suppressHydrationWarning
     >
       <head>

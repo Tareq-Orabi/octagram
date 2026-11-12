@@ -44,14 +44,15 @@ export function createAsciiEye(
   options: EyeOptions = {},
 ) {
   const background = options.background ?? "#030303";
+  const transparent = background === "transparent";
   const columns = window.innerWidth < 600 ? 96 : 160;
   const rows = Math.round((columns * 96) / 190);
-  const context = canvas.getContext("2d", { alpha: false });
+  const context = canvas.getContext("2d", { alpha: transparent });
   if (!context) return null;
   const texture = document.createElement("canvas");
   texture.width = columns * cellW;
   texture.height = rows * cellH;
-  const ink = texture.getContext("2d", { alpha: false });
+  const ink = texture.getContext("2d", { alpha: transparent });
   if (!ink) return null;
   const cells: Cell[] = [];
   for (let row = 0; row < rows; row++) {
@@ -97,8 +98,11 @@ export function createAsciiEye(
     lastGazeX = gazeX;
     lastGazeY = gazeY;
     ink.globalAlpha = 1;
-    ink.fillStyle = background;
-    ink.fillRect(0, 0, texture.width, texture.height);
+    if (transparent) ink.clearRect(0, 0, texture.width, texture.height);
+    else {
+      ink.fillStyle = background;
+      ink.fillRect(0, 0, texture.width, texture.height);
+    }
     ink.font = "bold 12px 'Courier New', monospace";
     ink.textAlign = "center";
     ink.textBaseline = "middle";
@@ -201,8 +205,11 @@ export function createAsciiEye(
     draw(opening: number, zoom: number, gazeX = 0, gazeY = 0) {
       paintEye(opening, gazeX, gazeY);
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
-      context.fillStyle = background;
-      context.fillRect(0, 0, width, height);
+      if (transparent) context.clearRect(0, 0, width, height);
+      else {
+        context.fillStyle = background;
+        context.fillRect(0, 0, width, height);
+      }
       // Keep the whole eye visible on portrait screens; then travel into its pupil.
       const base = Math.min(
         width * (width < 600 ? 1.15 : 0.86),

@@ -174,53 +174,62 @@ test("project details expand with the keyboard and preserve the website link", a
   await expect(details).not.toHaveAttribute("open", "");
 });
 
-test("service orbit keeps moving on hover and while reading details", async ({
+test("service cards retain their expanded layout and reset to a moving wheel after leaving", async ({
   page,
 }) => {
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/?skiploader#expertise");
   await expect(page.locator(".service-gallery")).toHaveClass(/is-enhanced/);
-  await page.locator(".service-viewport").scrollIntoViewIfNeeded();
+  await page
+    .getByRole("button", { name: "Explore services", exact: true })
+    .click();
+  const expanded = page.locator(".service-card.is-selected");
+  await expect(expanded).toHaveCount(1);
+  await expect(expanded.locator(".service-card-content")).toBeVisible();
+  await expect(expanded.getByRole("heading")).toHaveText("Web Development");
+  await expect(expanded).toHaveAttribute("style", /scale\(1\)/);
+  await expect(page.locator("#service-detail")).toHaveCount(0);
+  await page
+    .locator(".desktop-nav")
+    .getByRole("link", { name: "Work", exact: true })
+    .click();
+  await expect(expanded).toHaveCount(0);
   const card = page.locator(".service-card").first();
-  const expectOrbit = async () => {
-    const initial = await card.getAttribute("style");
-    await expect.poll(() => card.getAttribute("style")).not.toBe(initial);
-  };
-  await expectOrbit();
-  await card.hover({ force: true });
-  await expectOrbit();
+  const initial = await card.getAttribute("style");
+  await expect.poll(() => card.getAttribute("style")).not.toBe(initial);
   await page
-    .getByRole("button", { name: "Explore services", exact: true })
+    .locator(".desktop-nav")
+    .getByRole("link", { name: "Services", exact: true })
     .click();
-  const panel = page.locator("#service-detail");
-  await expect(panel).toBeVisible();
-  await expect(panel).toBeFocused();
-  await expect(panel.getByRole("heading")).toHaveText("Web Development");
-  await expectOrbit();
-  await page.getByRole("button", { name: "Next service", exact: true }).click();
-  await expect(panel.getByRole("heading")).toHaveText("Mobile App Development");
-  await page.keyboard.press("Escape");
-  await expect(panel).toBeHidden();
+  await expect(page.locator(".service-gallery")).toHaveClass(/is-spinning/);
   await expect(
-    page.getByRole("button", {
-      name: "Explore Mobile App Development",
-      exact: true,
-    }),
-  ).toBeFocused();
-  await expectOrbit();
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page
-    .getByRole("button", { name: "Explore services", exact: true })
-    .click();
-  await expect(panel).toBeVisible();
-  expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= innerWidth + 1,
-    ),
-  ).toBeTruthy();
+    page.getByRole("button", { name: "Explore services", exact: true }),
+  ).toBeVisible();
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(page.locator(".service-gallery")).not.toHaveClass(/is-enhanced/);
   await expect(page.locator(".service-card-content li")).toHaveCount(43);
   await expect(page.locator(".service-card-content").first()).toBeVisible();
+});
+
+test("opening space stays alive behind content and the original scenes return", async ({
+  page,
+}, testInfo) => {
+  test.skip(testInfo.project.name !== "chrome", "Uses real WebGL in Chrome.");
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  await page.goto("/?skiploader#work");
+  const canvas = page.locator(".experience-stage canvas");
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toHaveAttribute("data-ambient-space", "continuous");
+  const before = await canvas.getAttribute("data-ambient-time");
+  await expect
+    .poll(() => canvas.getAttribute("data-ambient-time"))
+    .not.toBe(before);
+  await expect(page.locator("#work")).toHaveCSS(
+    "background-color",
+    "rgba(0, 0, 0, 0)",
+  );
+  await page.locator(".header .brand").click();
+  await expect(canvas).toHaveAttribute("data-ambient-space", "narrative");
+  await expect(page.locator("html")).toHaveClass(/has-brain/);
 });

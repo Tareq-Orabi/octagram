@@ -1,102 +1,13 @@
-/* Open layouts, quiet surfaces, and discipline-specific work samples. */
-/* The wheel keeps moving around a stationary service detail panel. */
-.service-detail-panel:not([hidden]) {
-  position: absolute;
-  top: 44%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 340px;
-  max-width: calc(100% - 44px);
-  padding: 26px;
-  background: #0c100e;
-  border: 1px solid #3e5145;
-  border-radius: 8px;
-  z-index: 3;
+/* The same space remains behind every content section. */
+main > .content-section,
+.roots-handoff > .content-section,
+.roots-handoff > .roots-cover,
+.service-section,
+.eye-outro,
+.footer {
+  background: transparent;
 }
-.service-detail-number {
-  font:
-    9px/1.5 ui-monospace,
-    monospace;
-  letter-spacing: 0.1em;
-  color: var(--brand-mint);
-}
-.service-detail-panel h3 {
-  font-size: 25px;
-  line-height: 1.15;
-  font-weight: 500;
-  letter-spacing: -0.04em;
-  margin: 22px 0 20px;
-}
-.service-detail-panel ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-.service-detail-panel li {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  padding-block: 8px;
-  border-bottom: 1px solid var(--border-hairline);
-}
-.service-detail-panel:focus-visible {
-  outline: 2px solid var(--focus-color);
-  outline-offset: 5px;
-}
-.service-detail-panel .service-enquire {
-  min-height: 36px;
-  align-items: center;
-  font-size: 11px;
-}
-.is-enhanced .service-card.is-selected {
-  box-shadow: 0 0 0 9px var(--brand-peach);
-}
-.service-pagination button {
-  width: auto;
-  min-width: 105px;
-  padding: 10px 16px;
-  border-radius: 30px;
-  font-size: 12px;
-}
-.service-pagination {
-  gap: 14px;
-}
-.service-gallery-controls .service-back {
-  font-size: 12px;
-}
-@media (max-width: 600px) {
-  .js-enabled .service-gallery.is-enhanced.is-focused .service-viewport {
-    height: auto;
-    min-height: 680px;
-    padding-bottom: 12px;
-  }
-  .is-enhanced.is-focused .service-orbit {
-    height: 470px;
-    bottom: auto;
-  }
-  .is-enhanced.is-focused .service-card {
-    top: 50%;
-  }
-  .is-enhanced.is-focused .service-wheel-heading {
-    top: 235px;
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-  .service-detail-panel:not([hidden]) {
-    position: relative;
-    left: auto;
-    top: auto;
-    transform: none;
-    width: auto;
-    max-width: none;
-    margin: 470px 22px 24px;
-    padding: 26px;
-  }
-  .is-enhanced.is-focused .service-gallery-controls {
-    position: relative;
-    bottom: auto;
-  }
-}
+
 .selected-work-grid,
 .development-grid,
 .people-grid,
@@ -110,264 +21,109 @@
   max-width: 1280px;
   margin-inline: auto;
 }
-.selected-work-grid {
+
+/* Compact project cards use the site's own type, dark surfaces, and palette. */
+.selected-work-grid,
+.development-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 30px;
   align-items: start;
+  gap: 20px;
+}
+.development-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .work-card {
-  min-width: 0;
   --work-accent: var(--brand-mint);
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid #2d3830;
+  border-radius: 6px;
+  background: rgba(9, 13, 11, 0.88);
 }
-.work-card--fitness {
+.work-card--fitness,
+.work-card--think {
   --work-accent: var(--brand-peach);
+}
+.work-card--care {
+  --work-accent: var(--brand-yellow);
 }
 .work-card-index {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 16px;
-  padding-block: 18px;
-  border-top: 1px solid var(--border-hairline);
-  font:
-    10px/1.6 ui-monospace,
-    monospace;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
   color: var(--text-muted);
+  font:
+    9px/1.6 ui-monospace,
+    monospace;
 }
 .work-status {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  white-space: nowrap;
+  gap: 6px;
   color: var(--work-accent);
+  font-size: 9px;
+  white-space: nowrap;
 }
 .work-status::before {
   content: "";
-  width: 5px;
-  height: 5px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: currentColor;
 }
-.work-preview {
-  position: relative;
-  overflow: hidden;
-  padding: 32px;
-  min-height: 444px;
+.work-identity {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 24px;
-  border-radius: 4px;
-}
-.preview-caption {
-  font-size: clamp(24px, 2.6vw, 36px);
-  letter-spacing: -0.05em;
-  line-height: 1.15;
-}
-.preview-note {
-  display: block;
-  font:
-    9px/1.5 ui-monospace,
-    monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  text-align: right;
-  opacity: 0.75;
-}
-.clinic-preview {
-  background: #a7c6ba;
-  color: #1a332b;
-}
-.clinic-window {
-  display: grid;
-  grid-template-columns: 105px minmax(0, 1fr);
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #839e91;
-  background: #eff1e8;
-  box-shadow: 0 12px 24px #1a332b14;
-}
-.clinic-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 20px 15px;
-  border-right: 1px solid #d6dfd4;
-  color: #4a6256;
-  font-size: 8px;
-}
-.clinic-sidebar b {
-  font:
-    500 24px/1.1 var(--font-space),
-    sans-serif;
-  color: #213d31;
-  margin-bottom: 14px;
-}
-.clinic-main {
-  padding: 22px;
-}
-.clinic-main > small {
-  font:
-    7px/1.5 ui-monospace,
-    monospace;
-  letter-spacing: 0.12em;
-}
-.clinic-main > strong {
-  display: block;
-  font-size: 24px;
-  line-height: 1.2;
-  letter-spacing: -0.05em;
-  font-weight: 500;
-  margin: 8px 0 22px;
-}
-.clinic-tabs {
-  display: flex;
-  gap: 16px;
-  font-size: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #bdcdbd;
-}
-.clinic-tabs span:first-child {
-  font-weight: 700;
-}
-.clinic-row {
-  display: flex;
-  gap: 12px;
   align-items: center;
-  padding: 11px 0;
-  border-bottom: 1px solid #d6dfd4;
-  font-size: 9px;
+  gap: 13px;
+  margin: 22px 0 16px;
 }
-.clinic-row i {
+.work-mark {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #3a4940;
+  border-radius: 5px;
+  color: var(--work-accent);
   font:
-    normal 8px/1 ui-monospace,
+    13px/1 ui-monospace,
     monospace;
-  color: #647669;
 }
-.clinic-row b {
-  margin-left: auto;
+.work-card h3 {
+  margin: 0;
+  font-size: 26px;
+  line-height: 1.15;
   font-weight: 400;
-}
-.fitness-preview {
-  background: #e7a273;
-  color: #382217;
-}
-.fitness-window {
-  background: #22291f;
-  color: #eef0d9;
-  padding: 22px;
-  border-radius: 6px;
-  box-shadow: 0 12px 24px #38221714;
-}
-.fitness-wordmark {
-  font-size: 12px;
-  font-weight: 800;
   letter-spacing: -0.04em;
 }
-.fitness-wordmark span {
-  color: #c3d388;
-}
-.fitness-layout {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr;
-  align-items: end;
-  gap: 16px;
-  padding: 22px 0;
-}
-.fitness-layout small {
-  font:
-    7px/1.5 ui-monospace,
-    monospace;
-  letter-spacing: 0.1em;
-  color: #c3d388;
-}
-.fitness-layout strong {
-  display: block;
-  font-size: clamp(22px, 2.3vw, 32px);
-  line-height: 1.1;
-  letter-spacing: -0.055em;
-  margin: 10px 0 18px;
-  font-weight: 500;
-}
-.fitness-action {
-  display: inline-block;
-  font-size: 7px;
-  padding: 8px 10px;
-  background: #c3d388;
-  color: #22291f;
-  border-radius: 2px;
-}
-.fitness-bars {
-  height: 130px;
-  display: flex;
-  align-items: end;
-  gap: 5px;
-}
-.fitness-bars i {
-  flex: 1;
-  height: 30%;
-  background: #aebd7f;
-}
-.fitness-bars i:nth-child(2) {
-  height: 48%;
-}
-.fitness-bars i:nth-child(3) {
-  height: 65%;
-}
-.fitness-bars i:nth-child(4) {
-  height: 80%;
-}
-.fitness-bars i:nth-child(5) {
-  height: 100%;
-  background: #e7a273;
-}
-.fitness-bottom {
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid #ffffff26;
-  padding-top: 12px;
-  font:
-    7px/1.5 ui-monospace,
-    monospace;
-  color: #bdc4b0;
-}
-.work-card-copy {
-  padding: 26px 0 0;
-}
-.work-card-copy h3 {
-  font-size: clamp(28px, 3vw, 42px);
-  font-weight: 500;
-  letter-spacing: -0.05em;
-  line-height: 1.1;
-  margin: 0 0 16px;
-}
 .work-card-copy > p {
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.8;
   color: var(--text-secondary);
-  margin: 0 0 22px;
-  max-width: 60ch;
+  margin: 0 0 20px;
 }
 .work-details {
   border-top: 1px solid var(--border-hairline);
-  border-bottom: 1px solid var(--border-hairline);
 }
 .work-details summary {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  min-height: 54px;
+  min-height: 44px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   list-style: none;
 }
 .work-details summary::-webkit-details-marker {
   display: none;
 }
 .work-details summary > span {
-  font-size: 23px;
+  font-size: 20px;
   line-height: 1;
   color: var(--work-accent);
   transition: transform 0.2s;
@@ -376,41 +132,41 @@
   transform: rotate(45deg);
 }
 .work-details-body {
-  padding: 4px 0 24px;
-  font-size: 13px;
-  line-height: 1.8;
+  padding: 8px 0 20px;
+  font-size: 12px;
+  line-height: 1.85;
   color: var(--text-secondary);
 }
 .work-details-body p + p {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 .work-details-body h4 {
   color: var(--text-primary);
-  font-size: 14px;
-  margin: 22px 0 10px;
+  font-size: 13px;
+  margin: 20px 0 10px;
   font-weight: 500;
 }
 .work-details-body ul {
   padding-left: 18px;
-  margin-block: 12px 20px;
+  margin-block: 12px 18px;
 }
 .work-details-body li + li {
   margin-top: 5px;
 }
 .work-details-body .work-detail-status {
   font:
-    10px/1.6 ui-monospace,
+    9px/1.6 ui-monospace,
     monospace;
   color: var(--work-accent);
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 .work-site-link {
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
-  gap: 40px;
-  padding: 18px 0;
-  font-size: 12px;
+  gap: 26px;
+  min-height: 36px;
+  font-size: 11px;
   color: var(--work-accent);
 }
 .work-site-link:hover,
@@ -418,64 +174,26 @@
   text-decoration: underline;
   text-underline-offset: 5px;
 }
-.development-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 28px;
-  align-items: start;
+@media (max-width: 900px) {
+  .development-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
 }
-.work-card--development {
-  --work-accent: var(--brand-mint);
-}
-.work-card--think {
-  --work-accent: var(--brand-peach);
-}
-.work-card--care {
-  --work-accent: var(--brand-yellow);
-}
-.work-card--development .work-card-index {
-  flex-wrap: wrap;
-  gap: 8px 12px;
-}
-.work-card--development .work-card-copy h3 {
-  font-size: 30px;
-}
-.work-card--development .work-card-copy > p {
-  font-size: 14px;
-}
-.product-symbol {
-  min-height: 230px;
-  padding: 26px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  border-radius: 4px;
-  background: #172722;
-  color: #adcfbf;
-}
-.product-symbol--think {
-  background: #2c211b;
-  color: #fdaa7d;
-}
-.product-symbol--care {
-  background: #29291b;
-  color: #cac56a;
-}
-.product-monogram {
-  font-size: clamp(74px, 8vw, 112px);
-  font-weight: 500;
-  letter-spacing: -0.1em;
-  line-height: 1.25;
-}
-.product-monogram > span {
-  margin-left: 10px;
-  font-weight: 300;
-}
-.product-symbol-line {
-  font:
-    8px/1.6 ui-monospace,
-    monospace;
-  letter-spacing: 0.12em;
+@media (max-width: 600px) {
+  .selected-work-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .work-card {
+    padding: 22px;
+  }
+  .work-card h3 {
+    font-size: 24px;
+  }
+  .work-card-index {
+    font-size: 8px;
+  }
 }
 
 /* Team: the work gives each profile its own identity. */
@@ -1015,23 +733,6 @@
 }
 
 @media (max-width: 1100px) {
-  .work-preview {
-    padding: 24px;
-  }
-  .clinic-sidebar {
-    width: 88px;
-    padding-inline: 12px;
-    font-size: 7px;
-  }
-  .clinic-window {
-    grid-template-columns: 88px minmax(0, 1fr);
-  }
-  .clinic-main {
-    padding: 18px 14px;
-  }
-  .development-grid {
-    gap: 20px;
-  }
   .person-profile {
     padding: 26px;
   }
@@ -1053,24 +754,6 @@
   }
 }
 @media (max-width: 850px) {
-  .development-grid {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-  .work-card--development {
-    display: grid;
-    grid-template-columns: 0.8fr 1.2fr;
-    gap: 0 28px;
-  }
-  .work-card--development .work-card-index {
-    grid-column: 1 / -1;
-  }
-  .work-card--development .work-card-copy {
-    padding-top: 0;
-  }
-  .product-symbol {
-    min-height: 240px;
-  }
   .people-grid {
     gap: 20px;
   }
@@ -1166,51 +849,6 @@
   }
 }
 @media (max-width: 600px) {
-  .selected-work-grid,
-  .people-grid,
-  .values-layout,
-  .process-heading {
-    grid-template-columns: 1fr;
-  }
-  .selected-work-grid {
-    gap: 44px;
-  }
-  .work-preview {
-    min-height: 320px;
-    padding: 24px;
-    gap: 24px;
-  }
-  .work-card-index {
-    font-size: 9px;
-  }
-  .preview-caption {
-    font-size: 29px;
-  }
-  .clinic-main > strong {
-    font-size: 23px;
-  }
-  .fitness-layout strong {
-    font-size: 28px;
-  }
-  .fitness-layout {
-    padding-block: 24px;
-  }
-  .work-card-copy h3 {
-    font-size: 32px;
-  }
-  .work-card--development {
-    grid-template-columns: 1fr;
-  }
-  .work-card--development .work-card-copy {
-    padding-top: 24px;
-  }
-  .product-symbol {
-    min-height: 225px;
-    padding: 28px;
-  }
-  .product-monogram {
-    font-size: 90px;
-  }
   .people-grid {
     gap: 24px;
   }
@@ -1330,20 +968,6 @@
   }
 }
 @media (max-width: 360px) {
-  .work-preview {
-    padding: 18px;
-  }
-  .clinic-window {
-    grid-template-columns: 73px minmax(0, 1fr);
-  }
-  .clinic-sidebar {
-    width: auto;
-    padding-inline: 9px;
-    font-size: 6px;
-  }
-  .clinic-main {
-    padding-inline: 11px;
-  }
   .person-profile {
     padding: 18px;
   }

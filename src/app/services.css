@@ -223,6 +223,18 @@
     transform 0.45s,
     visibility 0.35s;
 }
+.is-enhanced .is-selected .service-cover {
+  height: 125px;
+}
+.is-enhanced .is-selected .service-card-trigger {
+  display: none;
+}
+.is-enhanced .is-selected .service-card-content {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0.25s;
+}
 .service-gallery-controls {
   position: absolute;
   left: 0;

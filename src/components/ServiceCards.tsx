@@ -124,14 +124,21 @@ export default function ServiceCards({
   const [enhanced, setEnhanced] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [rotation, setRotation] = useState(0);
-  const [inView, setInView] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focusPaused, setFocusPaused] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [globalPaused, setGlobalPaused] = useState(false);
+  const [spinning, setSpinning] = useState(false);
   const [width, setWidth] = useState(1100);
   const viewport = useRef<HTMLDivElement>(null);
-  const detail = useRef<HTMLElement>(null);
+  const contents = useRef<(HTMLDivElement | null)[]>([]);
   const triggers = useRef<(HTMLButtonElement | null)[]>([]);
-  const drag = useRef<{ id: number; x: number; rotation: number } | null>(null);
+  const drag = useRef<{
+    id: number;
+    x: number;
+    rotation: number;
+    moved: boolean;
+  } | null>(null);
   const dragged = useRef(false);
 
   useEffect(() => {
@@ -143,8 +150,18 @@ export default function ServiceCards({
     const resize = new ResizeObserver(() => setWidth(element.clientWidth));
     resize.observe(element);
     const visibility = new IntersectionObserver(
-      ([entry]) => setInView(entry.isIntersecting),
-      { threshold: 0.1 },
+      ([entry]) => {
+        // Leaving the section restores the original wheel, including after
+        // following a link from an expanded card. Never retain a hover pause.
+        if (!entry.isIntersecting) {
+          setSelected(null);
+          setHovered(false);
+          setFocusPaused(false);
+          setDragging(false);
+          drag.current = null;
+        }
+      },
+      { threshold: 0 },
     );
     visibility.observe(element);
     const onMotion = (event: Event) =>
@@ -159,34 +176,49 @@ export default function ServiceCards({
   }, []);
 
   useEffect(() => {
-    if (!enhanced || selected === null || !detail.current) return;
-    const panel = detail.current;
-    panel.focus({ preventScroll: true });
-    const bounds = panel.getBoundingClientRect();
-    if (bounds.top < 120 || bounds.bottom > window.innerHeight - 20)
-      panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!enhanced || selected === null) return;
+    const timer = window.setTimeout(
+      () => contents.current[selected]?.focus({ preventScroll: true }),
+      350,
+    );
+    return () => window.clearTimeout(timer);
   }, [selected, enhanced]);
 
   useEffect(() => {
-    if (!enhanced || !inView || globalPaused || dragging) return;
+    setSpinning(false);
+    if (
+      !enhanced ||
+      selected !== null ||
+      globalPaused ||
+      hovered ||
+      focusPaused ||
+      dragging
+    )
+      return;
     let frame = 0;
     let previous = 0;
     const tick = (now: number) => {
       if (previous && now - previous >= 32) {
         const delta = Math.min(now - previous, 64);
-        if (!document.hidden)
-          setRotation((value) => (value + delta * 0.006) % 360);
+        if (!document.hidden) setRotation((value) => value + delta * 0.006);
         previous = now;
       } else if (!previous) previous = now;
       frame = requestAnimationFrame(tick);
     };
-    // Keep the orbit running while a visitor hovers, focuses, or reads a service.
-    // Details have their own stationary surface so the text stays easy to read.
-    frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
-  }, [enhanced, inView, globalPaused, dragging]);
+    // Let the selected card return to the wheel before starting its orbit.
+    const timer = window.setTimeout(() => {
+      setSpinning(true);
+      frame = requestAnimationFrame(tick);
+    }, 1100);
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
+  }, [enhanced, selected, globalPaused, hovered, focusPaused, dragging]);
 
-  const choose = (index: number) => setSelected(index);
+  const choose = (index: number) => {
+    setSelected(index);
+  };
   const back = () => {
     const previous = selected;
     setSelected(null);
@@ -208,11 +240,28 @@ export default function ServiceCards({
       ? 0.13
       : 0.15
     : Math.min(0.29, width * 0.00038);
-  const current = selected === null ? null : services[selected];
 
   return (
     <div
-      className={`service-gallery${enhanced ? " is-enhanced is-spinning" : ""}${selected !== null ? " is-focused" : ""}`}
+      className={`service-gallery${enhanced ? " is-enhanced" : ""}${selected !== null ? " is-focused" : ""}${selected === null && (spinning || dragging) ? " is-spinning" : ""}`}
+      onFocusCapture={(event) =>
+        setFocusPaused(
+          Boolean(
+            (event.target as HTMLElement).closest(
+              ".service-card-trigger:focus-visible",
+            ),
+          ),
+        )
+      }
+      onBlurCapture={(event) =>
+        setFocusPaused(
+          Boolean(
+            (event.relatedTarget as HTMLElement | null)?.closest?.(
+              ".service-card-trigger:focus-visible",
+            ),
+          ),
+        )
+      }
       onKeyDown={(event) => {
         if (!enhanced || event.target instanceof HTMLAnchorElement) return;
         if (event.key === "Escape" && selected !== null) {
@@ -236,25 +285,25 @@ export default function ServiceCards({
         ref={viewport}
         style={{ "--card-width": `${cardWidth}px` } as CSSProperties}
         onPointerDown={(event) => {
-          if (
-            !enhanced ||
-            selected !== null ||
-            event.button !== 0 ||
-            (event.target as HTMLElement).closest(".service-gallery-controls")
-          )
-            return;
+          if (!enhanced || selected !== null || event.button !== 0) return;
           dragged.current = false;
           setDragging(true);
-          drag.current = { id: event.pointerId, x: event.clientX, rotation };
+          drag.current = {
+            id: event.pointerId,
+            x: event.clientX,
+            rotation,
+            moved: false,
+          };
         }}
         onPointerMove={(event) => {
-          const currentDrag = drag.current;
-          if (!currentDrag || currentDrag.id !== event.pointerId) return;
-          const delta = event.clientX - currentDrag.x;
+          const current = drag.current;
+          if (!current || current.id !== event.pointerId) return;
+          const delta = event.clientX - current.x;
           if (Math.abs(delta) > 8) {
+            current.moved = true;
             dragged.current = true;
             event.currentTarget.setPointerCapture(event.pointerId);
-            setRotation(currentDrag.rotation + delta * 0.3);
+            setRotation(current.rotation + delta * 0.3);
           }
         }}
         onPointerUp={(event) => {
@@ -265,10 +314,6 @@ export default function ServiceCards({
           setDragging(false);
         }}
         onPointerCancel={() => {
-          drag.current = null;
-          setDragging(false);
-        }}
-        onLostPointerCapture={() => {
           drag.current = null;
           setDragging(false);
         }}
@@ -289,17 +334,35 @@ export default function ServiceCards({
           aria-label="Octagram service cards"
         >
           {services.map((service, index) => {
-            const radians =
-              ((index * (360 / services.length) + rotation) * Math.PI) / 180;
+            const angle = index * (360 / services.length) + rotation;
+            const radians = (angle * Math.PI) / 180;
+            const delta =
+              selected === null
+                ? 0
+                : ((index - selected + services.length + services.length / 2) %
+                    services.length) -
+                  services.length / 2;
             const active = index === selected;
+            const focusAngle = delta * 0.53;
+            const x =
+              selected === null
+                ? Math.sin(radians) * radius
+                : Math.sin(focusAngle) * (small ? 610 : 880);
+            const y =
+              selected === null
+                ? -Math.cos(radians) * radius
+                : (1 - Math.cos(focusAngle)) * 360;
+            const rotate = 0; // Upright gondolas: orbit changes position, never card orientation.
+            const scale = selected === null ? overviewScale : active ? 1 : 0.82;
             const palette = palettes[index % palettes.length];
             const style = {
               "--card-a": `var(--brand-${palette[0]})`,
               "--card-b": `var(--brand-${palette[1]})`,
               "--card-c": `var(--brand-${palette[2]})`,
               transform: enhanced
-                ? `translate(-50%, -50%) translate3d(${Math.sin(radians) * radius}px, ${-Math.cos(radians) * radius}px, 0) scale(${overviewScale})`
+                ? `translate(-50%, -50%) translate3d(${x}px, ${y}px, ${active ? 60 : 0}px) rotate(${rotate}deg) scale(${scale})`
                 : undefined,
+              zIndex: active ? 12 : 8 - Math.abs(delta),
             } as CSSProperties;
             return (
               <article
@@ -307,6 +370,10 @@ export default function ServiceCards({
                 style={style}
                 key={service.id}
                 data-service={index}
+                onPointerEnter={(event) => {
+                  if (event.pointerType === "mouse") setHovered(true);
+                }}
+                onPointerLeave={() => setHovered(false)}
               >
                 <div className="service-cover">
                   <CardPrint index={index} />
@@ -321,11 +388,9 @@ export default function ServiceCards({
                     triggers.current[index] = element;
                   }}
                   aria-label={`Explore ${service.title}`}
-                  aria-expanded={enhanced && active}
-                  aria-controls={
-                    enhanced ? "service-detail" : `service-${service.id}`
-                  }
-                  tabIndex={enhanced ? 0 : -1}
+                  aria-expanded={active}
+                  aria-controls={`service-${service.id}`}
+                  tabIndex={!enhanced || active ? -1 : 0}
                   onClick={(event) => {
                     if (event.detail === 0 || !dragged.current) choose(index);
                     dragged.current = false;
@@ -335,9 +400,13 @@ export default function ServiceCards({
                 </button>
                 <div
                   className="service-card-content"
+                  tabIndex={-1}
+                  ref={(element) => {
+                    contents.current[index] = element;
+                  }}
                   id={`service-${service.id}`}
-                  aria-hidden={enhanced}
-                  inert={enhanced}
+                  aria-hidden={enhanced && !active}
+                  inert={enhanced && !active}
                 >
                   <h3>{service.title}</h3>
                   <ul>
@@ -354,75 +423,48 @@ export default function ServiceCards({
           })}
         </div>
         {enhanced && (
-          <>
-            <section
-              id="service-detail"
-              className="service-detail-panel"
-              hidden={!current}
-              ref={detail}
-              tabIndex={-1}
-              aria-labelledby={current ? "service-detail-title" : undefined}
-            >
-              {current && (
-                <>
-                  <span className="service-detail-number">
-                    {current.number} / OUR SERVICES
-                  </span>
-                  <h3 id="service-detail-title">{current.title}</h3>
-                  <ul>
-                    {current.offerings.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                  <a href="#contact" className="service-enquire">
-                    Let’s build together <span aria-hidden="true">↗</span>
-                  </a>
-                </>
-              )}
-            </section>
-            <div className="service-gallery-controls">
-              {selected === null ? (
-                <>
-                  <p>Select a card to explore · Drag to rotate</p>
-                  <div className="service-wheel-actions">
-                    <button
-                      type="button"
-                      className="service-explore"
-                      onClick={() => choose(0)}
-                    >
-                      Explore services
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="service-pagination">
-                    <button
-                      type="button"
-                      aria-label="Previous service"
-                      onClick={() => move(-1)}
-                    >
-                      ← Previous
-                    </button>
-                    <span aria-live="polite" aria-atomic="true">
-                      {String(selected + 1).padStart(2, "0")} /{" "}
-                      {String(services.length).padStart(2, "0")}
-                    </span>
-                    <button
-                      type="button"
-                      aria-label="Next service"
-                      onClick={() => move(1)}
-                    >
-                      Next →
-                    </button>
-                  </div>
-                  <button type="button" className="service-back" onClick={back}>
-                    All services
+          <div className="service-gallery-controls">
+            {selected === null ? (
+              <>
+                <p>Select a card to explore · Drag to rotate</p>
+                <div className="service-wheel-actions">
+                  <button
+                    type="button"
+                    className="service-explore"
+                    onClick={() => choose(0)}
+                  >
+                    Explore services
                   </button>
-                </>
-              )}
-            </div>
-          </>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="service-pagination">
+                  <button
+                    type="button"
+                    aria-label="Previous service"
+                    onClick={() => move(-1)}
+                  >
+                    Previous
+                  </button>
+                  <span aria-live="polite" aria-atomic="true">
+                    {String(selected + 1).padStart(2, "0")} /{" "}
+                    {String(services.length).padStart(2, "0")}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Next service"
+                    onClick={() => move(1)}
+                  >
+                    Next
+                  </button>
+                </div>
+                <button type="button" className="service-back" onClick={back}>
+                  All services
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
       <p className="service-gallery-note">
