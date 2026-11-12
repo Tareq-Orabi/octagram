@@ -122,13 +122,6 @@ export default function EyeIntro() {
       aria-label="Opening animation"
     >
       <div ref={art} className="eye-intro-art" aria-hidden="true" />
-      <button
-        className="eye-intro-skip"
-        type="button"
-        onClick={() => window.dispatchEvent(new Event("octagram:intro-skip"))}
-      >
-        Skip intro
-      </button>
     </div>
   );
 }

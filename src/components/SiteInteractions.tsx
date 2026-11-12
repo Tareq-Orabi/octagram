@@ -185,7 +185,6 @@ export default function SiteInteractions() {
         loader.dataset.eyeReady = "true";
     }
     listen(window, "octagram:intro-complete", () => enterExperience());
-    listen(window, "octagram:intro-skip", () => enterExperience(true));
     if (showLoader) {
       root.classList.add("site-loading");
       loader.hidden = false;

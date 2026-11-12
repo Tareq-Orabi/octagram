@@ -33,14 +33,12 @@ test("closed eye opens and enters the pupil before revealing usable content", as
   await page.locator(".header .brand").click();
 });
 
-for (const method of ["button", "Escape", "Tab"]) {
+for (const method of ["Escape", "Tab"]) {
   test(`intro can be bypassed with ${method}`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto("/");
     await expect(page.locator(".eye-intro-canvas")).toBeVisible();
-    if (method === "button")
-      await page.getByRole("button", { name: "Skip intro" }).click();
-    else await page.keyboard.press(method);
+    await page.keyboard.press(method);
     await expect(page.locator(".eye-intro")).toBeHidden();
     await expect(page.locator("html")).not.toHaveClass(
       /site-loading|site-entering/,

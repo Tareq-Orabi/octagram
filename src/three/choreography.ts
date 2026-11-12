@@ -53,17 +53,18 @@ function curve(progress: number, frames: readonly (readonly [number, number])[])
   const a = frames[Math.max(0, end - 1)], b = frames[end];
   return mix(a[1], b[1], ease(ramp(progress, a[0], b[0])));
 }
-// Independent depth paths replace the shared sideways morph. Each shot includes
-// a readable hold, then a spatial handoff; all values depend only on scroll.
+// A readable turn, a dispersed particle field, then the second sculpture.
+// The final logo pose and center passage share the same coordinate space.
 const BRAIN: readonly Shot[] = [
   [0, 3.2, -1, 0, 1, 1], [0.18, 3.2, -1, 0, 1, 1],
   [1.12, -3.3, -0.7, -0.55, 0.96, 1], [1.5, -3.3, -0.7, -0.55, 0.96, 1],
-  [2.15, -0.8, 0.25, -0.8, 0.82, 0.38], [2.45, -0.4, 0.4, -1.8, 0.78, 0.3],
-  [2.98, 0, 0.6, -7, 0.6, 0], [6, 0, 0.6, -7, 0.6, 0],
+  [2.15, 0, 0, 0, 1, 1], [2.98, 0, 0, 0, 1, 1],
+  [3.08, 0, 0, 0, 1, 1], [3.2, 0, 0, 0, 1, 0], [6, 0, 0, 0, 1, 0],
 ];
 const LOGO: readonly Shot[] = [
   [0, -3.4, -0.3, -8, 0.9, 0], [2.18, -3.4, -0.3, -8, 0.9, 0],
-  [2.6, -3.4, -0.3, -3.5, 1.35, 0.18], [3.08, -3.4, -0.3, 0, 1.72, 1],
+  [2.6, -3.4, -0.3, -3.5, 1.35, 0], [2.98, -3.4, -0.3, 0, 1.72, 0],
+  [3.08, -3.4, -0.3, 0, 1.72, 0], [3.2, -3.4, -0.3, 0, 1.72, 1],
   [3.32, -3.4, -0.3, 0, 1.72, 1], [3.53, 0, 0, 0, 1.72, 1],
   [3.75, 0, 0, 0, 1.72, 1], [3.85, 0, 0, 0, 1.72, 0],
   [4.1, 0, 0, 0, 1.72, 0],
@@ -77,9 +78,9 @@ const GLOBE: readonly Shot[] = [
 export function evaluateNarrative(progress: number, mobile = false, portrait = mobile) {
   const p = clamp(progress, 0, 6);
   const brain = track(p, BRAIN), logo = track(p, LOGO), globe = track(p, GLOBE);
-  // Restore the original leftward turn, then continue it gently through the
-  // handoff. Only the parent rotates: the 20,000-particle anatomy stays intact.
-  brain.yaw = curve(p, [[0, 0], [1.12, -Math.PI * 0.5], [2.15, -Math.PI * 0.92], [2.98, -Math.PI * 1.25], [6, -Math.PI * 1.25]]);
+  // Keep the original anatomy through the turn. Complete the rotation while
+  // dispersed so the reassembled mark is upright and matches the solid asset.
+  brain.yaw = curve(p, [[0, 0], [1.12, -Math.PI * 0.5], [1.85, -Math.PI], [2.98, -Math.PI * 2], [6, -Math.PI * 2]]);
   if (mobile) {
     brain.x *= 0.42; brain.y = 0.8 + brain.y * 0.35; brain.scale *= 0.6;
     if (p > 5.7) logo.opacity *= 0.65;
@@ -89,8 +90,13 @@ export function evaluateNarrative(progress: number, mobile = false, portrait = m
     logo.y = (1.55 + logo.y * 0.3) * (1 - ease(ramp(p, 3.32, 3.53)));
     logo.scale *= mobile ? 0.62 : 0.82;
   }
+  const handoff = ease(ramp(p, 2.3, 2.98));
+  for (const axis of ["x", "y", "z", "scale"] as const)
+    brain[axis] = mix(brain[axis], logo[axis], handoff);
   return {
     brain, logo, globe,
+    brainSpread: curve(p, [[0, 0], [1.55, 0], [2.08, 1], [2.3, 1], [2.98, 0], [6, 0]]),
+    brainMorph: ease(ramp(p, 2.18, 2.98)),
     passage: ease(ramp(p, 3.4, 3.86)),
     visionOpacity: 1 - ease(ramp(p, 3.26, 3.43)),
     rootsOpacity: ease(ramp(p, 3.78, 4.0)),

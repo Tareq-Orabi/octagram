@@ -20,6 +20,7 @@ import {
   type ShotPose,
 } from "@/three/choreography";
 import CinematicPost from "./CinematicPost";
+import { sampleLogoSurface } from "@/three/morph-targets";
 
 type Surface = THREE.Material & {
   uniforms?: Record<string, { value: unknown }>;
@@ -130,6 +131,7 @@ function SceneDirector({ quality }: { quality: number }) {
   const [loaded, setLoaded] = useState<ManagedModel[]>([]);
   const models = useRef<Partial<Record<SceneName, ManagedModel>>>({});
   const pending = useRef(new Set<SceneName>());
+  const logoSurface = useRef<Float32Array | null>(null);
   const bounds = useRef<Bounds>({} as Bounds);
   const rootsFrame = useRef({ offset: 0, left: 0, height: 200, width: 1, sticky: false });
   const stageElement = useRef<HTMLElement | null>(null);
@@ -171,6 +173,10 @@ function SceneDirector({ quality }: { quality: number }) {
         if (!alive.current || startedInGeneration !== generation.current) {
           model.dispose?.();
           return;
+        }
+        if (name === "logo") {
+          model.update(0, 1, { x: 0, y: 0 }, true);
+          logoSurface.current = sampleLogoSurface(model.group, undefined, 1);
         }
         model.setViewport?.(
           gl.domElement.clientWidth,
@@ -371,6 +377,7 @@ function SceneDirector({ quality }: { quality: number }) {
         entry?.model.dispose?.(),
       );
       models.current = {};
+      logoSurface.current = null;
       pending.current.clear();
       clearSceneFlags();
       if (stageElement.current) stageElement.current.style.clipPath = "";
@@ -396,13 +403,16 @@ function SceneDirector({ quality }: { quality: number }) {
     const targetProgress = narrativeProgress(actualScroll, b, h);
     // The camera passage follows actual scroll, so fast reversals cannot leave
     // an old logo pose behind already-visible Roots content.
-    const progress = targetProgress >= 3 ? targetProgress : narrativeProgress(y, b, h);
+    const progress = THREE.MathUtils.lerp(
+      narrativeProgress(y, b, h), targetProgress,
+      THREE.MathUtils.smoothstep(targetProgress, 2.65, 3.32),
+    );
     if (actualScroll >= b.team.top && actualScroll + h < b.contact.top) {
       Object.values(models.current).forEach((entry) => fade(entry, 0));
       globeScene.current.visible = false;
       return; // Native scroll/resize/visibility listeners wake the demand loop.
     }
-    if (progress > 1.7 || actualScroll + h * 2 > b.vision.top)
+    if (progress > 0.8 || actualScroll + h * 2 > b.vision.top)
       void ensure("logo");
     if (progress > 2.7 || actualScroll + h * 2 > b.jordan.top)
       void ensure("globe");
@@ -414,6 +424,9 @@ function SceneDirector({ quality }: { quality: number }) {
     const m = models.current;
 
     m.brain?.model.setReveal?.(entrance.current.progress);
+    m.brain?.model.setSpread?.(current.brainSpread);
+    if (logoSurface.current)
+      m.brain?.model.setMorph?.(logoSurface.current, current.brainMorph);
     if (current.brain.opacity > 0.002)
       m.brain?.model.update(
         time,
@@ -494,6 +507,8 @@ function SceneDirector({ quality }: { quality: number }) {
     canvas.dataset.cameraDepth = current.cameraZ.toFixed(3);
     canvas.dataset.logoPassage = current.passage.toFixed(3);
     canvas.dataset.brainYaw = current.brain.yaw.toFixed(3);
+    canvas.dataset.brainSpread = current.brainSpread.toFixed(3);
+    canvas.dataset.brainMorph = current.brainMorph.toFixed(3);
     canvas.dataset.scrollScrub = "native-damped";
     canvas.dataset.logoAssembly = current.assembly.toFixed(3);
     canvas.dataset.brainDepth = current.brain.z.toFixed(3);

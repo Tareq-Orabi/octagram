@@ -57,7 +57,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark" data-octagram-build="octagram-mobile-align-20261112" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" data-octagram-build="octagram-particle-journey-20261112" suppressHydrationWarning>
       <head>
         <link
           rel="preload"
