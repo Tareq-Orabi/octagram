@@ -986,3 +986,11 @@ main > .content-section,
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 600px) {
+  .people-grid,
+  .values-layout,
+  .process-heading {
+    grid-template-columns: 1fr;
+  }
+}

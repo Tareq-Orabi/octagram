@@ -43,6 +43,17 @@ test("server HTML, dark-only styling, responsive layout and reduced-motion fallb
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(
       await page
+        .locator(
+          ".work-card, .person-profile, .profile-workspace, .values-layout, .process-steps, .partnership-layout",
+        )
+        .evaluateAll((elements) =>
+          elements.every(
+            (element) => element.scrollWidth <= element.clientWidth + 1,
+          ),
+        ),
+    ).toBeTruthy();
+    expect(
+      await page
         .locator(".hero-line")
         .evaluateAll((lines) =>
           lines.every((line) => line.scrollWidth <= line.clientWidth + 1),
