@@ -169,9 +169,8 @@ export const companyContent: CompanyContent = {
       {
         "id": "ai-automation",
         "number": "04",
-        "title": "AI & Automation",
+        "title": "AI & AI Agents",
         "offerings": [
-          "AI Chatbots",
           "AI Assistants",
           "Custom AI Solutions",
           "Workflow Automation",

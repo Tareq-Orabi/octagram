@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
 import poster from "@/assets/assembly/machine.webp";
 import film from "@/assets/assembly/machine-loop.mp4";
 import compactFilm from "@/assets/assembly/machine-loop-mobile.mp4";
+import { compactMotionQuery } from "@/lib/experience-preferences";
 import { assemblyReadoutStyle } from "@/three/assembly-layout";
 import { assemblyDuration, assemblyStations, assemblyStep, assemblyTime } from "@/three/assembly-motion";
 
@@ -26,28 +27,27 @@ export default function AssemblyMachine({ clock, onStep }: {
   const [note, setNote] = useState<number | null>(null);
 
   useEffect(() => {
-    const host = stage.current!;
-    const view = viewport.current!;
-    const canvas = surface.current!;
-    const movie = recording.current!;
-    const desk = readout.current!;
+    const host = stage.current!, view = viewport.current!, canvas = surface.current!;
+    const movie = recording.current!, desk = readout.current!;
     const rows = Array.from(desk.querySelectorAll<HTMLElement>(".assembly-readout-row"));
     const state = clock.current;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = matchMedia(compactMotionQuery);
     const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-    const abort = new AbortController();
-    const { signal } = abort;
+    const abort = new AbortController(), { signal } = abort;
+    const decodedFrames = typeof movie.requestVideoFrameCallback === "function";
     let renderer: ReturnType<typeof import("@/three/assembly-renderer").createAssemblyRenderer> | undefined;
-    let loading = false, failed = false, contextLost = false, videoStarted = false, videoFailed = false;
-    let nearby = false, visible = false;
+    let loading = false, failed = false, contextLost = false, videoStarted = false, videoFailed = false, playPending = false;
+    let nearby = false, visible = false, pageHidden = false;
+    let width = 0, height = 0, pixelRatio = 0;
     let writing = false, written = -1, writtenStep = -1;
-    let frame = 0, lastDraw = 0, step = -1;
+    let canvasFrame = 0, videoFrame = 0, lastCanvas = 0, lastVideo = -Infinity, step = -1;
     let lastNote: number | null = null;
 
-    function allowed() {
-      return !reduced.matches && !connection?.saveData &&
-        !document.documentElement.classList.contains("journey-paused");
-    }
+    const allowed = () => !reduced.matches && !connection?.saveData &&
+      !document.documentElement.classList.contains("journey-paused");
+    const foreground = () => !pageHidden && !document.hidden && !document.body.classList.contains("menu-open");
+    const live = () => Boolean(renderer && !contextLost && !compact.matches);
 
     function paintReadout(time: number) {
       const station = assemblyStations[step];
@@ -57,20 +57,21 @@ export default function AssemblyMachine({ clock, onStep }: {
       if (writtenStep === step && written === chars) return;
       writtenStep = step;
       written = chars;
-      let remaining = chars;
-      let cursor = 0;
+      let remaining = chars, cursor = 0;
       station.readout.forEach((line, i) => {
-        rows[i].textContent = line.slice(0, remaining);
+        const text = line.slice(0, remaining);
+        if (rows[i].textContent !== text) rows[i].textContent = text;
         if (remaining > 0) cursor = i;
         remaining = Math.max(0, remaining - line.length - 2);
       });
-      desk.dataset.cursor = String(cursor);
-      desk.dataset.typed = String(remaining > 0);
+      const typed = String(remaining > 0);
+      if (desk.dataset.cursor !== String(cursor)) desk.dataset.cursor = String(cursor);
+      if (desk.dataset.typed !== typed) desk.dataset.typed = typed;
     }
 
-    function draw() {
+    function draw(render = false) {
       const time = assemblyTime(state.time);
-      const next = renderer && !contextLost ? renderer.draw(time) : assemblyStep(time);
+      const next = render && live() ? renderer!.draw(time) : assemblyStep(time);
       if (next !== step) {
         step = next;
         host.dataset.machineStep = String(step);
@@ -84,73 +85,90 @@ export default function AssemblyMachine({ clock, onStep }: {
       }
     }
 
-    function tick(now: number) {
-      frame = requestAnimationFrame(tick);
-      if (lastDraw && now - lastDraw < 32) return;
-      if (renderer && !contextLost) {
-        if (lastDraw) state.time = (state.time + Math.min(.18, (now - lastDraw) / 1000)) % assemblyDuration;
-      } else if (!movie.seeking) {
-        state.time = movie.currentTime;
-      }
-      lastDraw = now;
+    function tickCanvas(now: number) {
+      canvasFrame = requestAnimationFrame(tickCanvas);
+      if (lastCanvas && now - lastCanvas < 31) return;
+      if (lastCanvas) state.time = (state.time + Math.min(.18, (now - lastCanvas) / 1000)) % assemblyDuration;
+      lastCanvas = now;
+      draw(true);
+    }
+
+    function readVideo(time: number) {
+      if (live() || movie.seeking || movie.readyState < 2) return;
+      state.time = time;
       draw();
     }
 
+    function tickVideo(now: number, metadata: VideoFrameCallbackMetadata) {
+      videoFrame = 0;
+      if (movie.paused || live() || !foreground() || !visible || !allowed()) return;
+      // The decoder drives playback. Update the overlay only on decoded frames.
+      if (now - lastVideo >= 46 || assemblyStep(assemblyTime(metadata.mediaTime)) !== step) {
+        lastVideo = now;
+        readVideo(metadata.mediaTime);
+      }
+      videoFrame = movie.requestVideoFrameCallback(tickVideo);
+    }
+
     function sync() {
-      const enabled = allowed();
-      const live = Boolean(renderer && !contextLost);
-      if (nearby && enabled && !live) {
-        if (failed || contextLost) prepareVideo();
+      const enabled = allowed(), hasCanvas = live(), onScreen = foreground() && visible && enabled;
+      if (nearby && enabled && foreground() && !hasCanvas) {
+        if (compact.matches || failed || contextLost) prepareVideo();
         else if (!loading) void prepare();
       }
-      const visibleAndPlaying = visible && enabled && !document.hidden && !document.body.classList.contains("menu-open");
-      const video = enabled && !live && !videoFailed && movie.readyState >= 2;
-      const playingCanvas = visibleAndPlaying && live;
-      const playingVideo = visibleAndPlaying && video;
-      const running = playingCanvas || (playingVideo && !movie.paused);
-      host.dataset.machineMode = live ? "canvas" : video ? "video" : "poster";
-      host.dataset.machineRunning = String(running);
-      const animateReadout = enabled && (live || video);
+      const hasVideo = enabled && !hasCanvas && !videoFailed && movie.readyState >= 2;
+      const playingCanvas = onScreen && hasCanvas;
+      const playingVideo = onScreen && hasVideo;
+      const mode = hasCanvas ? "canvas" : hasVideo ? "video" : "poster";
+      if (host.dataset.machineMode !== mode) host.dataset.machineMode = mode;
+      const running = String(playingCanvas || (playingVideo && !movie.paused));
+      if (host.dataset.machineRunning !== running) host.dataset.machineRunning = running;
+      const animateReadout = enabled && (hasCanvas || hasVideo);
       if (animateReadout !== writing) {
         writing = animateReadout;
         if (step >= 0) paintReadout(assemblyTime(state.time));
       }
 
-      if (running && !frame) frame = requestAnimationFrame(tick);
-      if (!running) {
-        cancelAnimationFrame(frame);
-        frame = 0;
-        lastDraw = 0;
+      if (playingCanvas) {
+        if (!canvasFrame) canvasFrame = requestAnimationFrame(tickCanvas);
+      } else if (canvasFrame) {
+        cancelAnimationFrame(canvasFrame);
+        canvasFrame = 0;
+        lastCanvas = 0;
       }
-      if (playingVideo && movie.paused) {
+      if (playingVideo && !movie.paused && decodedFrames) {
+        if (!videoFrame) videoFrame = movie.requestVideoFrameCallback(tickVideo);
+      } else if (videoFrame) {
+        movie.cancelVideoFrameCallback(videoFrame);
+        videoFrame = 0;
+        lastVideo = -Infinity;
+      }
+      if (playingVideo && movie.paused && !playPending) {
+        playPending = true;
         void movie.play().catch(error => {
-          if (signal.aborted || error?.name === "AbortError") return;
-          videoFailed = true;
-          sync();
+          if (!signal.aborted && error?.name !== "AbortError") videoFailed = true;
+        }).finally(() => {
+          playPending = false;
+          if (!signal.aborted) sync();
         });
-      } else if (!playingVideo && !movie.paused) {
-        movie.pause();
-      }
+      } else if (!playingVideo && !movie.paused) movie.pause();
     }
 
     function resize() {
-      if (!renderer || !nearby || contextLost) return;
-      const { width, height } = view.getBoundingClientRect();
-      if (!width || !height) return;
-      renderer.resize(width, height, Math.min(devicePixelRatio || 1, width > 650 ? 1.35 : 1.5));
-      draw();
+      if (!live() || !nearby || !width || !height) return;
+      const ratio = Math.min(devicePixelRatio || 1, Math.sqrt(1_400_000 / (width * height)), 1.35);
+      renderer!.resize(width, height, ratio);
+      pixelRatio = ratio;
+      if (visible && foreground()) draw(true);
     }
 
     async function prepare() {
       loading = true;
       try {
-        const context = canvas.getContext("webgl2", { alpha: true, antialias: true, powerPreference: "low-power" });
-        if (!context) {
-          failed = true;
-          return;
-        }
         const { createAssemblyRenderer } = await import("@/three/assembly-renderer");
-        if (signal.aborted) return;
+        if (signal.aborted || !nearby || !foreground() || !allowed() || compact.matches) return;
+        const context = canvas.getContext("webgl2", { alpha: true, antialias: true, powerPreference: "low-power" });
+        if (!context) { failed = true; return; }
         renderer = createAssemblyRenderer(canvas, context);
         resize();
       } catch {
@@ -166,53 +184,68 @@ export default function AssemblyMachine({ clock, onStep }: {
     function prepareVideo() {
       if (videoStarted || !movie.canPlayType("video/mp4")) return;
       videoStarted = true;
-      movie.src = matchMedia("(max-width: 720px)").matches ? compactFilm : film;
+      movie.src = compact.matches ? compactFilm : film;
+    }
+
+    function compactChanged() {
+      if (compact.matches && renderer) {
+        const previous = renderer;
+        renderer = undefined;
+        failed = true;
+        previous.dispose();
+        canvas.width = canvas.height = 1;
+      }
+      sync();
     }
 
     state.seek = time => {
       state.time = allowed() ? time : assemblyStations[assemblyStep(time)].done;
-      if ((!renderer || contextLost) && movie.readyState >= 1) movie.currentTime = state.time;
-      draw();
+      if (!live() && movie.readyState >= 1) movie.currentTime = state.time;
+      draw(visible && foreground());
     };
 
     const preload = new IntersectionObserver(([entry]) => {
       nearby = entry.isIntersecting;
-      if (nearby && renderer) resize();
+      if (nearby && live() && !pixelRatio) resize();
       sync();
     }, { rootMargin: "220px 0px" });
     const viewing = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting && entry.intersectionRatio >= .18;
       sync();
     }, { threshold: .18 });
-    const size = new ResizeObserver(resize);
+    const size = new ResizeObserver(([entry]) => {
+      const next = entry.contentRect;
+      if (width === next.width && height === next.height) return;
+      width = next.width;
+      height = next.height;
+      pixelRatio = 0;
+      resize();
+    });
     size.observe(view);
     preload.observe(host);
     viewing.observe(host);
     reduced.addEventListener("change", sync, { signal });
+    compact.addEventListener("change", compactChanged, { signal });
     document.addEventListener("visibilitychange", sync, { signal });
-    movie.addEventListener("loadedmetadata", () => { movie.currentTime = state.time; }, { signal });
-    movie.addEventListener("loadeddata", sync, { signal });
-    movie.addEventListener("playing", sync, { signal });
-    movie.addEventListener("pause", sync, { signal });
-    movie.addEventListener("error", () => {
-      videoFailed = true;
-      sync();
-    }, { signal });
-    movie.addEventListener("seeked", () => {
-      if ((renderer && !contextLost) || movie.seeking || movie.readyState < 2) return;
-      state.time = movie.currentTime;
-      draw();
-    }, { signal });
+    window.addEventListener("pagehide", () => { pageHidden = true; sync(); }, { signal });
+    window.addEventListener("pageshow", () => { pageHidden = false; sync(); }, { signal });
+    movie.addEventListener("loadedmetadata", () => { if (state.time > 0) movie.currentTime = state.time; }, { signal });
+    for (const event of ["loadeddata", "playing", "pause"]) movie.addEventListener(event, sync, { signal });
+    movie.addEventListener("error", () => { videoFailed = true; sync(); }, { signal });
+    movie.addEventListener("seeked", () => readVideo(movie.currentTime), { signal });
+    if (!decodedFrames) movie.addEventListener("timeupdate", () => readVideo(movie.currentTime), { signal });
     canvas.addEventListener("webglcontextlost", event => {
+      if (!renderer) return;
       event.preventDefault();
       contextLost = true;
-      host.dataset.machineMode = "poster";
       sync();
     }, { signal });
     canvas.addEventListener("webglcontextrestored", () => {
+      if (!renderer) return;
       queueMicrotask(() => {
         if (signal.aborted) return;
         contextLost = false;
+        pixelRatio = 0;
         resize();
         sync();
       });
@@ -226,10 +259,12 @@ export default function AssemblyMachine({ clock, onStep }: {
       preload.disconnect();
       viewing.disconnect();
       size.disconnect();
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(canvasFrame);
+      if (videoFrame) movie.cancelVideoFrameCallback(videoFrame);
       renderer?.dispose();
       movie.pause();
       movie.removeAttribute("src");
+      movie.load();
       state.seek = undefined;
     };
   }, [clock, onStep]);

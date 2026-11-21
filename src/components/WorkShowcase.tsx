@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { compactMotionQuery } from "@/lib/experience-preferences";
 
 const route = "M72 58H216V174H489.6V96H950.4V174H1224V58H1368V734H1224V782H1016V724H424V782H216V734H72Z";
 const clamp = (value: number) => Math.min(1, Math.max(0, value));
@@ -16,27 +17,17 @@ export default function WorkShowcase({ children, count }: { children: ReactNode;
     if (!viewport || !aperture) return;
 
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = matchMedia(compactMotionQuery);
     let nearby = false, frame = 0;
     let target = 0, position: number | undefined;
-    let measure = true, lastFrame = 0, previous = -1;
+    let top = 0, height = 1, lastFrame = 0, previous = -1;
+    const animated = () => !compact.matches && !preference.matches && !document.hidden;
 
     function paint(timestamp: number) {
       frame = 0;
       if (!viewport || !aperture) return;
-      if (!nearby) { position = undefined; lastFrame = 0; return; }
-      if (preference.matches) {
-        delete viewport.dataset.workMotion;
-        delete viewport.dataset.workProgress;
-        position = undefined;
-        lastFrame = 0;
-        return;
-      }
-
-      if (measure) {
-        const top = aperture.getBoundingClientRect().top;
-        target = clamp((.68 - top / innerHeight) / .52);
-        measure = false;
-      }
+      if (!nearby || !animated()) { position = undefined; lastFrame = 0; return; }
+      target = clamp((.68 - (top - scrollY) / height) / .52);
 
       const elapsed = lastFrame ? Math.min(timestamp - lastFrame, 90) : 16;
       position = position === undefined ? target : position + (target - position) * (1 - Math.exp(-elapsed / 128));
@@ -56,13 +47,28 @@ export default function WorkShowcase({ children, count }: { children: ReactNode;
     }
 
     function schedule() {
-      measure = true;
-      if (nearby && !frame) frame = requestAnimationFrame(paint);
+      if (nearby && !frame && animated()) frame = requestAnimationFrame(paint);
+    }
+
+    function measure() {
+      if (!aperture || !nearby || !animated()) return;
+      const scroll = window.scrollY;
+      height = window.innerHeight;
+      top = aperture.getBoundingClientRect().top + scroll;
+      schedule();
+    }
+
+    function sync() {
+      if (!animated() && viewport) {
+        delete viewport.dataset.workMotion;
+        delete viewport.dataset.workProgress;
+      }
+      measure();
     }
 
     const proximity = new IntersectionObserver(([entry]) => {
       nearby = entry.isIntersecting;
-      if (nearby) schedule();
+      if (nearby) measure();
       else {
         cancelAnimationFrame(frame);
         frame = 0;
@@ -71,17 +77,26 @@ export default function WorkShowcase({ children, count }: { children: ReactNode;
       }
     }, { rootMargin: "100% 0px 100% 0px" });
     proximity.observe(viewport);
-    const resize = new ResizeObserver(schedule);
+    const reveal = new IntersectionObserver(([entry]) => {
+      if (compact.matches && entry.isIntersecting && !preference.matches) viewport.dataset.workArrived = "true";
+    }, { threshold: .12 });
+    reveal.observe(aperture);
+    const resize = new ResizeObserver(measure);
     resize.observe(aperture);
-    preference.addEventListener("change", schedule);
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
+    const main = document.getElementById("main");
+    if (main) resize.observe(main);
+    const abort = new AbortController(), { signal } = abort;
+    preference.addEventListener("change", sync, { signal });
+    compact.addEventListener("change", sync, { signal });
+    document.addEventListener("visibilitychange", sync, { signal });
+    window.addEventListener("pageshow", measure, { signal });
+    window.addEventListener("scroll", schedule, { passive: true, signal });
+    window.addEventListener("resize", measure, { passive: true, signal });
     return () => {
+      abort.abort();
       proximity.disconnect();
+      reveal.disconnect();
       resize.disconnect();
-      preference.removeEventListener("change", schedule);
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
       cancelAnimationFrame(frame);
     };
   }, []);

@@ -59,15 +59,15 @@ export default function AssemblyProcess({ stages }: { stages: Stage[] }) {
 
   return <div className="assembly-process" ref={containerRef} data-build-step={active}
     style={{ "--assembly-accent": assemblyStations[active].color, "--assembly-progress": active / (stages.length - 1) } as CSSProperties}>
-    {stages.map(item => <span className="assembly-step-anchor" key={item.number} id={`process-step-${item.number}`} aria-hidden="true" />)}
-    <AssemblyMachine clock={clock} onStep={setActive} />
+    {stages.map(item => <span className="assembly-step-anchor" key={item.number} id={`process-step-${item.number}`} aria-hidden="true"/>)}
+    <AssemblyMachine clock={clock} onStep={setActive}/>
     <div className="assembly-controls">
       <div className="assembly-selector" role="group" aria-label="How we work steps" onKeyDown={moveSelection}>
-        <div className="assembly-selector-line" aria-hidden="true" />
+        <div className="assembly-selector-line" aria-hidden="true"/>
         {stages.map((item, index) => <button type="button" key={item.number}
           ref={node => { buttons.current[index] = node; }}
           aria-pressed={index === active} aria-controls="process-current-stage" onClick={() => select(index)}
-        ><i aria-hidden="true" /><span>{item.title}</span></button>)}
+        ><i aria-hidden="true"/><span>{item.title}</span></button>)}
       </div>
     </div>
     <div id="process-current-stage" className="assembly-caption">

@@ -37,6 +37,7 @@ type EyeOptions = {
   background?: string;
   transparent?: boolean;
   maxDpr?: number;
+  columns?: number;
   size?: () => { width: number; height: number };
 };
 
@@ -45,7 +46,7 @@ export function createAsciiEye(
   options: EyeOptions = {},
 ) {
   const background = options.background ?? "#000000";
-  const columns = window.innerWidth < 600 ? 96 : 160;
+  const columns = options.columns ?? (window.innerWidth < 600 ? 96 : 160);
   const rows = Math.round((columns * 96) / 190);
   const context = canvas.getContext("2d", { alpha: options.transparent ?? false });
   if (!context) return null;
@@ -54,6 +55,27 @@ export function createAsciiEye(
   texture.height = rows * cellH;
   const ink = texture.getContext("2d", { alpha: options.transparent ?? false });
   if (!ink) return null;
+  const tones = 32;
+  const atlas = document.createElement("canvas");
+  atlas.width = glyphs.length * cellW;
+  atlas.height = tones * 3 * cellH;
+  const tile = atlas.getContext("2d");
+  if (!tile) return null;
+  tile.font = "bold 12px 'Courier New', monospace";
+  tile.textAlign = "center";
+  tile.textBaseline = "middle";
+  for (let palette = 0; palette < 3; palette++) {
+    for (let tone = 0; tone < tones; tone++) {
+      const light = Math.round(40 + tone / (tones - 1) * 215);
+      const rgb = palette === 2 ? [light, light * .98, light * .92]
+        : palette === 1 ? [Math.min(255, light * 1.22), light * .71, light * .23]
+          : [light * .94, light * .72, light * .52];
+      tile.fillStyle = `rgb(${rgb.map(Math.round).join(",")})`;
+      for (let index = 0; index < glyphs.length; index++) {
+        tile.fillText(glyphs[index], (index + .5) * cellW, (palette * tones + tone + .5) * cellH);
+      }
+    }
+  }
   const cells: Cell[] = [];
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < columns; col++) {
@@ -103,9 +125,6 @@ export function createAsciiEye(
       ink.fillStyle = background;
       ink.fillRect(0, 0, texture.width, texture.height);
     }
-    ink.font = "bold 12px 'Courier New', monospace";
-    ink.textAlign = "center";
-    ink.textBaseline = "middle";
     for (let i = 0; i < cells.length; i++) {
       const c = cells[i];
       if (Math.abs(c.x) >= 1.025) continue;
@@ -176,21 +195,11 @@ export function createAsciiEye(
       if (brightness < 0.025) continue;
       // Every visible mark belongs to the brand name, in repeated readable rows.
       const index = (i % columns) % glyphs.length;
-      const light = Math.min(
-        255,
-        Math.round(40 + Math.pow(brightness, 0.65) * 255),
-      );
-      ink.fillStyle =
-        palette === 2
-          ? `rgb(${light},${Math.round(light * 0.98)},${Math.round(light * 0.92)})`
-          : palette === 1
-            ? `rgb(${Math.min(255, Math.round(light * 1.22))},${Math.round(light * 0.71)},${Math.round(light * 0.23)})`
-            : `rgb(${Math.round(light * 0.94)},${Math.round(light * 0.72)},${Math.round(light * 0.52)})`;
+      const tone = Math.min(tones - 1, Math.round(Math.pow(brightness, .65) * 255 / 215 * (tones - 1)));
       ink.globalAlpha = coverage;
-      ink.fillText(
-        glyphs[index],
-        ((i % columns) + 0.5) * cellW,
-        (Math.floor(i / columns) + 0.5) * cellH,
+      ink.drawImage(
+        atlas, index * cellW, (palette * tones + tone) * cellH, cellW, cellH,
+        (i % columns) * cellW, Math.floor(i / columns) * cellH, cellW, cellH,
       );
     }
   }
@@ -199,6 +208,7 @@ export function createAsciiEye(
     resize,
     dispose() {
       texture.width = texture.height = 1;
+      atlas.width = atlas.height = 1;
       canvas.width = canvas.height = 1;
       canvas.remove();
     },
@@ -228,7 +238,7 @@ export function createAsciiEye(
       const dh = Math.min(height, y + h) - dy;
       if (dw <= 0 || dh <= 0) return;
       context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
+      context.imageSmoothingQuality = options.columns ? "low" : "high";
       context.drawImage(
         texture,
         ((dx - x) / w) * texture.width,

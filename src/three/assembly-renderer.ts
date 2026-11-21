@@ -23,6 +23,7 @@ export function createAssemblyRenderer(canvas: HTMLCanvasElement, context: WebGL
     dispose() {
       rig.dispose();
       renderer.dispose();
+      renderer.forceContextLoss();
     },
   };
 }

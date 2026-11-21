@@ -1,6 +1,6 @@
 "use client";
 import { useEffect } from "react";
-import { readMotionPreference } from "@/lib/experience-preferences";
+import { compactMotionQuery, readMotionPreference } from "@/lib/experience-preferences";
 
 /** Event-driven motion. Layout is read in one batch before any style writes. */
 export default function SurfaceMotion() {
@@ -8,6 +8,7 @@ export default function SurfaceMotion() {
     const abort = new AbortController(),
       { signal } = abort;
     const media = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = matchMedia(compactMotionQuery);
     const cards = [
       ...document.querySelectorAll<HTMLElement>(
         ".team-window, .project-showcase:not(.flip-card), .principle-column:not(.principle-token-item), .engineering-stage, .commitment-card",
@@ -39,13 +40,13 @@ export default function SurfaceMotion() {
       const dt = previous ? Math.min(now - previous, 64) : 16;
       previous = now;
       // All geometry reads precede writes; idle pages schedule no JS frames.
-      const sectionReads = scrollDirty
+      const sectionReads = scrollDirty && !compact.matches
         ? [...visibleSections].map((el) => ({
           el,
           rect: el.getBoundingClientRect(),
         }))
         : [];
-      const stepReads = scrollDirty
+      const stepReads = scrollDirty && !compact.matches
         ? steps.map((el) => ({ el, top: el.getBoundingClientRect().top }))
         : [];
       scrollDirty = false;
@@ -87,15 +88,15 @@ export default function SurfaceMotion() {
       let bounds: DOMRect | undefined;
       el.addEventListener(
         "pointerenter",
-        () => {
-          bounds = el.getBoundingClientRect();
+        (e) => {
+          if (!compact.matches && e.pointerType === "mouse") bounds = el.getBoundingClientRect();
         },
         { passive: true, signal },
       );
       el.addEventListener(
         "pointermove",
         (e) => {
-          if (stopped() || e.pointerType !== "mouse" || !bounds) return;
+          if (stopped() || compact.matches || e.pointerType !== "mouse" || !bounds) return;
           const p = poses.get(el)!;
           p.tx = Math.max(
             -1,
@@ -112,7 +113,8 @@ export default function SurfaceMotion() {
       );
       el.addEventListener(
         "pointerleave",
-        () => {
+        (e) => {
+          if (e.pointerType !== "mouse" || compact.matches) return;
           const p = poses.get(el)!;
           p.tx = p.ty = 0;
           moving.add(el);
@@ -131,10 +133,11 @@ export default function SurfaceMotion() {
         }
       });
       scrollDirty = true;
-      schedule();
+      if (!compact.matches) schedule();
     });
     [...cards, ...sections].forEach((el) => observer.observe(el));
     const onScroll = () => {
+      if (compact.matches) return;
       scrollDirty = true;
       schedule();
     };
@@ -149,8 +152,15 @@ export default function SurfaceMotion() {
         paused || media.matches || document.hidden,
       );
       scrollDirty = true;
-      schedule();
+      if (!compact.matches) schedule();
     };
+    compact.addEventListener("change", () => {
+      if (compact.matches) sections.forEach(section => {
+        section.style.removeProperty("--section-progress");
+        section.style.removeProperty("--section-drift");
+      });
+      sync();
+    }, { signal });
     window.addEventListener(
       "octagram:motion",
       ((e: CustomEvent<boolean>) => {

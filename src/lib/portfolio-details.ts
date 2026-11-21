@@ -1,5 +1,5 @@
 /** Editorial summaries derived from the approved project and team records. */
-export const serviceLabels = ["Websites & platforms", "Mobile experiences", "Tools for your team", "AI & automation", "Interfaces & journeys", "Connected systems", "Launch & hosting", "Care & maintenance"];
+export const serviceLabels = ["Websites & platforms", "Mobile experiences", "Tools for your team", "AI & AI Agents", "Interfaces & journeys", "Connected systems", "Launch & hosting", "Care & maintenance"];
 
 export const projectSummaries = [
   { copy: "One place for appointments, patient records, treatment sessions and clinic finances.", audience: "A healthcare team", work: "Custom clinic software", outcome: "Delivered", module: 2 },

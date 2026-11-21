@@ -35,6 +35,5 @@ export default function RotatingCta() {
   }, []);
   return <a ref={anchor} className="button primary hero-cta rotating-cta" href="#contact" aria-label="Let’s build together — start a project" data-copy-phase={phase}>
     <span className="rotating-cta-window" aria-hidden="true"><span className="rotating-cta-reserve">Start something meaningful</span><span className="rotating-cta-copy" key={index}>{invitations[index]}</span></span>
-    <span className="kinetic-arrow" aria-hidden="true"><svg viewBox="0 0 16 16" width="17" height="17" fill="none"><path d="M3 13 13 3M3 3h10v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg></span>
   </a>;
 }

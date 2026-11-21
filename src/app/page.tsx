@@ -15,8 +15,11 @@ import ServiceCards from "@/components/ServiceCards";
 import EyeIntro from "@/components/EyeIntro";
 import EyeOutro from "@/components/EyeOutro";
 import ExperienceLoader from "@/components/ExperienceLoader";
+import CompactBrain from "@/components/CompactBrain";
 import SiteInteractions from "@/components/SiteInteractions";
 import { companyContent as content } from "@/lib/company-content";
+import { compactMotionQuery } from "@/lib/experience-preferences";
+import compactBrainPoster from "@/assets/brain/hero-compact.webp";
 import {
   MissionSection,
   InnovationSection,
@@ -35,6 +38,7 @@ export default function HomePage() {
         Skip to content
       </a>
       <ExperienceLoader />
+      <CompactBrain />
       <EyeIntro />
       <header className="header" id="top">
         <NavBrand />
@@ -52,15 +56,19 @@ export default function HomePage() {
           aria-labelledby="hero-title"
         >
           <div className="hero-artwork">
-            <img
-              className="stage-fallback brain-poster"
-              data-poster="brain"
-              src="/assets/brain-fallback.webp"
-              alt="A brain formed from thousands of particles"
-              width="1080"
-              height="1020"
-              fetchPriority="high"
-            />
+            <picture>
+              <source media={compactMotionQuery} srcSet={compactBrainPoster.src} />
+              <img
+                className="stage-fallback brain-poster"
+                data-poster="brain"
+                src="/assets/brain-fallback.webp"
+                alt="A brain formed from thousands of particles"
+                width="1080"
+                height="1020"
+                fetchPriority="high"
+                decoding="async"
+              />
+            </picture>
             <HeroPalette />
           </div>
           <div className="hero-content">
@@ -99,15 +107,19 @@ export default function HomePage() {
               </div>
             </details>
           </div>
-          <img
-            className="stage-fallback intro-poster"
-            data-poster="brain"
-            src="/assets/brain-fallback.webp"
-            alt=""
-            width="700"
-            height="700"
-            loading="lazy"
-          />
+          <picture>
+            <source media={compactMotionQuery} srcSet={compactBrainPoster.src} />
+            <img
+              className="stage-fallback intro-poster"
+              data-poster="brain"
+              src="/assets/brain-fallback.webp"
+              alt=""
+              width="1080"
+              height="1020"
+              loading="lazy"
+              decoding="async"
+            />
+          </picture>
         </section>
         <section
           className="manifesto"
@@ -244,7 +256,7 @@ export default function HomePage() {
                       id="name"
                       name="name"
                       autoComplete="name"
-                      placeholder="Alex Morgan"
+                      placeholder="e.g. Mohammed "
                       required
                       maxLength={120}
                     />
@@ -258,7 +270,7 @@ export default function HomePage() {
                       name="email"
                       autoComplete="email"
                       type="email"
-                      placeholder="alex@company.com"
+                      placeholder="[EMAIL_ADDRESS]"
                       required
                       maxLength={254}
                     />
@@ -285,7 +297,7 @@ export default function HomePage() {
                     required
                     minLength={10}
                     maxLength={5000}
-                    placeholder="The ambition, the challenge, the possibilities…"
+                    placeholder="What are you building, and what would you like help with?"
                   ></textarea>
                 </div>
                 <p className="form-note" id="form-note">
@@ -305,7 +317,7 @@ export default function HomePage() {
           </section>
           <footer className="footer clean-footer" role="contentinfo">
             <a className="footer-brand" href="#home" aria-label="Octagram home">
-              <img src="/assets/brand/logo.svg" width="28" height="28" alt="" />
+              <img src="/assets/brand/logo.svg" width="28" height="28" alt="" loading="lazy" />
               <span>OCTAGRAM</span>
             </a>
             <nav aria-label="Octagram links"><a href="https://www.instagram.com/octagram.jo/" target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span></a><a href="https://wa.me/962780668491" target="_blank" rel="noopener noreferrer">WhatsApp <span aria-hidden="true">↗</span></a></nav>

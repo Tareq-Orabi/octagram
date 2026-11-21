@@ -6,3 +6,5 @@
 export function readMotionPreference(): boolean {
   return false;
 }
+
+export const compactMotionQuery = "(max-width: 800px), (hover: none) and (pointer: coarse)";

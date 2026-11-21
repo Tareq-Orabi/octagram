@@ -2,212 +2,163 @@
 
 import { useEffect, useRef } from "react";
 import { createAsciiEye } from "@/lib/ascii-eye";
-import { readMotionPreference } from "@/lib/experience-preferences";
+import { compactMotionQuery, readMotionPreference } from "@/lib/experience-preferences";
+import { clamp01, smooth01 } from "@/lib/scroll-math";
 
-const clamp = (n: number) => Math.max(0, Math.min(1, n));
-const ease = (n: number) => {
-  const t = clamp(n);
-  return t * t * (3 - 2 * t);
-};
-
-/** The opening's camera move in reverse, followed by a living, resting gaze. */
 export default function EyeOutro() {
   const track = useRef<HTMLDivElement>(null);
   const art = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const section = track.current,
-      host = art.current;
-    if (!section || !host) return;
-    const canvas = document.createElement("canvas");
-    canvas.className = "eye-outro-canvas";
-    host.appendChild(canvas);
-    const painter = createAsciiEye(canvas, {
-      background: "#000000",
-      maxDpr: 1.25,
-      size: () => ({ width: host.clientWidth, height: host.clientHeight }),
-    });
-    if (!painter) {
-      canvas.remove();
-      return;
+    if (!track.current || !art.current) return;
+    const section = track.current, host = art.current;
+
+    const closing = section.closest<HTMLElement>(".closing-scene") ?? section;
+    const controller = new AbortController(), { signal } = controller;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = matchMedia(compactMotionQuery).matches;
+    const interval = 1000 / (compact ? 18 : 24);
+    let frame = 0, lastDraw = 0, elapsed = 0;
+    let visible = false, menuOpen = false, paused = readMotionPreference(), failed = false;
+    let progress = 0, camera = 0, start = 0, distance = 1;
+    let gazeX = 0, gazeY = 0, blinkAt = 2600, blinkCount = 0;
+    let pointer: { x: number; y: number } | undefined, pointerBox: DOMRect | undefined;
+    let dimensions = { width: 0, height: 0 };
+    let painter: ReturnType<typeof createAsciiEye>;
+    const resting = () => reduced.matches || paused;
+
+    function measure() {
+      if (!visible) return;
+      const scroll = window.scrollY, height = window.innerHeight;
+      start = closing.getBoundingClientRect().top + scroll - height * .7;
+      distance = Math.max(1, height * .45);
+      progress = clamp01((scroll - start) / distance);
     }
 
-    const controller = new AbortController();
-    const { signal } = controller;
-    const reduced = matchMedia("(prefers-reduced-motion: reduce)");
-    let frame = 0,
-      previous = 0,
-      lastDraw = 0,
-      elapsed = 0;
-    let visible = false,
-      menuOpen = false,
-      globalPaused = readMotionPreference();
-    let progress = 0,
-      camera = 0,
-      start = 0,
-      distance = 1;
-    let pointer = false,
-      pointerX = 0,
-      pointerY = 0,
-      gazeX = 0,
-      gazeY = 0;
-    let blinkAt = 2600,
-      blinkCount = 0;
-
-    const measure = () => {
-      const closing = section.closest<HTMLElement>(".closing-scene") ?? section;
-      const rect = closing.getBoundingClientRect();
-      // Complete the reverse dive on entry, then hold the open eye beside contact.
-      start = rect.top + window.scrollY - window.innerHeight * 0.7;
-      distance = Math.max(1, window.innerHeight * 0.45);
-      progress = clamp((window.scrollY - start) / distance);
-      painter.resize();
-    };
-    const paint = (dt = 0) => {
-      const still = reduced.matches || globalPaused;
-      camera = still
-        ? 1
-        : camera + (progress - camera) * (1 - Math.exp(-dt / 180));
-      if (Math.abs(camera - progress) < 0.0001 && !still) camera = progress;
-      // Exact inverse of EyeIntro's exponential dive. The pupil becomes an eye.
-      const zoom = 1.13 * Math.exp(Math.pow(1 - camera, 2.35) * 4.6);
-      const resting = camera > 0.96 && !still;
-      let opening = 1;
-      if (resting) {
-        elapsed += dt;
-        const gazeTime = elapsed % 12000;
-        const targetX = pointer
-          ? pointerX
-          : 0.18 * ease((gazeTime - 700) / 850) -
-            0.36 * ease((gazeTime - 3700) / 1000) +
-            0.18 * ease((gazeTime - 7700) / 1100);
-        const targetY = pointer ? pointerY : -0.025 * Math.sin(elapsed / 2200);
-        const damping = 1 - Math.exp(-dt / 190);
-        gazeX += (targetX - gazeX) * damping;
-        gazeY += (targetY - gazeY) * damping;
-        const blink = elapsed - blinkAt;
-        if (blink >= 0 && blink < 390) {
-          opening =
-            blink < 140 ? 1 - ease(blink / 140) : ease((blink - 140) / 250);
-        } else if (blink >= 390) {
-          blinkCount++;
-          blinkAt = elapsed + [4300, 5900, 3700, 6700][blinkCount % 4];
-        }
-      } else {
-        gazeX = gazeY = 0;
-      }
-      painter.draw(opening, zoom, gazeX, gazeY);
-      section.dataset.eyePhase = still
-        ? "paused"
-        : camera < 0.96
-          ? "emerging"
-          : opening < 0.95
-            ? "blinking"
-            : "watching";
-    };
-    const tick = (now: number) => {
-      frame = 0;
-      if (!visible || document.hidden || menuOpen) {
-        previous = 0;
-        return;
-      }
-      // The character texture is cached; idle gaze is capped at 24 frames/sec.
-      if (now - lastDraw >= 1000 / 24 || reduced.matches || globalPaused) {
-        const dt = previous ? Math.min(now - previous, 80) : 34;
-        previous = lastDraw = now;
-        paint(dt);
-      }
-      if (!reduced.matches && !globalPaused)
-        frame = requestAnimationFrame(tick);
-    };
-    const wake = () => {
+    function release() {
       cancelAnimationFrame(frame);
       frame = 0;
-      previous = 0;
-      if (visible && !document.hidden && !menuOpen)
-        frame = requestAnimationFrame(tick);
-    };
-    const syncMotion = wake;
-    reduced.addEventListener("change", syncMotion, { signal });
-    window.addEventListener(
-      "octagram:motion",
-      ((event: CustomEvent<boolean>) => {
-        globalPaused = event.detail;
-        syncMotion();
-      }) as EventListener,
-      { signal },
-    );
-    window.addEventListener(
-      "octagram:menu",
-      ((event: CustomEvent<boolean>) => {
-        menuOpen = event.detail;
-        wake();
-      }) as EventListener,
-      { signal },
-    );
-    window.addEventListener(
-      "scroll",
-      () => {
-        progress = clamp((window.scrollY - start) / distance);
-        const bounds = host.getBoundingClientRect();
-        visible = bounds.bottom > 0 && bounds.top < window.innerHeight;
-        if (!frame) wake();
-      },
-      { passive: true, signal },
-    );
-    document.addEventListener("visibilitychange", wake, { signal });
-    host.addEventListener(
-      "pointermove",
-      (event) => {
-        if (event.pointerType !== "mouse") return;
-        const rect = host.getBoundingClientRect();
-        pointer = true;
-        pointerX =
-          (clamp((event.clientX - rect.left) / rect.width) - 0.5) * 0.36;
-        pointerY =
-          (clamp((event.clientY - rect.top) / rect.height) - 0.5) * 0.1;
-      },
-      { passive: true, signal },
-    );
-    host.addEventListener(
-      "pointerleave",
-      () => {
-        pointer = false;
-      },
-      { signal },
-    );
+      lastDraw = 0;
+      painter?.dispose();
+      painter = null;
+      delete section.dataset.eyeReady;
+    }
 
-    const resize = new ResizeObserver(() => {
+    function prepare() {
+      if (painter || failed || !dimensions.width || !dimensions.height) return;
+      const canvas = document.createElement("canvas");
+      canvas.className = "eye-outro-canvas";
+      painter = createAsciiEye(canvas, { size: () => dimensions, maxDpr: compact ? 1 : 1.25, columns: compact ? 76 : undefined });
+      if (!painter) { failed = true; return; }
+      host.appendChild(canvas);
+      section.dataset.eyeReady = "true";
+      camera = progress;
+    }
+
+    function paint(dt: number) {
+      const still = resting();
+      camera = still ? 1 : camera + (progress - camera) * (1 - Math.exp(-dt / 180));
+      if (Math.abs(camera - progress) < .0001 && !still) camera = progress;
+      const zoom = 1.13 * Math.exp((1 - camera) ** 2.35 * 4.6);
+      let opening = 1;
+      if (camera > .96 && !still) {
+        elapsed += dt;
+        const t = elapsed % 12000;
+        const x = pointer?.x ?? .18 * smooth01((t - 700) / 850) - .36 * smooth01((t - 3700) / 1000) + .18 * smooth01((t - 7700) / 1100);
+        const y = pointer?.y ?? -.025 * Math.sin(elapsed / 2200);
+        const settle = 1 - Math.exp(-dt / 190);
+        gazeX += (x - gazeX) * settle;
+        gazeY += (y - gazeY) * settle;
+        const blink = elapsed - blinkAt;
+        if (blink >= 0 && blink < 390) opening = blink < 140 ? 1 - smooth01(blink / 140) : smooth01((blink - 140) / 250);
+        else if (blink >= 390) blinkAt = elapsed + [4300, 5900, 3700, 6700][++blinkCount % 4];
+      } else gazeX = gazeY = 0;
+      painter?.draw(opening, zoom, gazeX, gazeY);
+      const phase = still ? "paused" : camera < .96 ? "emerging" : opening < .95 ? "blinking" : "watching";
+      if (section.dataset.eyePhase !== phase) section.dataset.eyePhase = phase;
+    }
+
+    function tick(now: number) {
+      frame = 0;
+      if (!visible || document.hidden || menuOpen || !painter) { lastDraw = 0; return; }
+      if (!lastDraw || now - lastDraw >= interval - 2 || resting()) {
+        const dt = lastDraw ? Math.min(now - lastDraw, 100) : interval;
+        lastDraw = now;
+        paint(dt);
+      }
+      if (!resting() && (camera > .96 || Math.abs(progress - camera) > .0001)) frame = requestAnimationFrame(tick);
+    }
+
+    function wake() {
+      if (document.hidden || menuOpen || !visible) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+        lastDraw = 0;
+        return;
+      }
+      prepare();
+      if (painter && !frame) frame = requestAnimationFrame(tick);
+    }
+
+    const intersection = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting;
+      if (!visible) { release(); return; }
       measure();
-      const bounds = host.getBoundingClientRect();
-      visible = bounds.bottom > 0 && bounds.top < window.innerHeight;
-      if (visible) paint(34);
+      wake();
+    });
+    intersection.observe(host);
+
+    const resize = new ResizeObserver(entries => {
+      const windowRect = entries.find(entry => entry.target === host)?.contentRect;
+      if (windowRect) dimensions = { width: windowRect.width, height: windowRect.height };
+      if (!visible) return;
+      measure();
+      if (windowRect && painter) { painter.resize(); lastDraw = 0; }
       wake();
     });
     resize.observe(host);
-    // Earlier disclosures change the track's document position without resizing it.
-    resize.observe(document.body);
-    const intersection = new IntersectionObserver(
-      ([entry]) => {
-        visible = entry.isIntersecting;
-        wake();
-      },
-      { threshold: 0 },
-    );
-    intersection.observe(host);
-    section.dataset.eyeReady = "true";
-    measure();
-    camera = progress;
-    paint();
-    syncMotion();
+    resize.observe(closing);
+    const main = document.getElementById("main");
+    if (main) resize.observe(main);
+
+    window.addEventListener("scroll", () => {
+      if (!visible) return;
+      progress = clamp01((window.scrollY - start) / distance);
+      wake();
+    }, { passive: true, signal });
+    window.addEventListener("resize", () => { measure(); wake(); }, { passive: true, signal });
+    window.addEventListener("pagehide", release, { signal });
+    window.addEventListener("pageshow", wake, { signal });
+    window.addEventListener("octagram:motion", event => {
+      paused = Boolean((event as CustomEvent<boolean>).detail);
+      wake();
+    }, { signal });
+    window.addEventListener("octagram:menu", event => {
+      menuOpen = Boolean((event as CustomEvent<boolean>).detail);
+      wake();
+    }, { signal });
+    document.addEventListener("visibilitychange", wake, { signal });
+    reduced.addEventListener("change", wake, { signal });
+
+    if (!compact) {
+      host.addEventListener("pointerenter", event => {
+        if (event.pointerType === "mouse") pointerBox = host.getBoundingClientRect();
+      }, { passive: true, signal });
+      host.addEventListener("pointermove", event => {
+        if (!pointerBox || event.pointerType !== "mouse") return;
+        pointer = {
+          x: (clamp01((event.clientX - pointerBox.left) / pointerBox.width) - .5) * .36,
+          y: (clamp01((event.clientY - pointerBox.top) / pointerBox.height) - .5) * .10,
+        };
+      }, { passive: true, signal });
+      host.addEventListener("pointerleave", () => { pointer = pointerBox = undefined; }, { signal });
+    }
 
     return () => {
       controller.abort();
-      cancelAnimationFrame(frame);
-      resize.disconnect();
       intersection.disconnect();
-      painter.dispose();
-      delete section.dataset.eyeReady;
+      resize.disconnect();
+      release();
       delete section.dataset.eyePhase;
     };
   }, []);

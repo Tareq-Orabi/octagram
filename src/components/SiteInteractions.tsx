@@ -88,6 +88,7 @@ export default function SiteInteractions() {
     let entered = false, entryRequested = false;
     const showLoader =
       !root.dataset.introTimedOut &&
+      !root.dataset.introRecovered &&
       !reduced.matches &&
       !readMotionPreference() &&
       !new URLSearchParams(location.search).has("skiploader") &&
@@ -154,6 +155,7 @@ export default function SiteInteractions() {
     }
     function sceneReady() {
       if (
+        root.dataset.motionProfile === "compact" ||
         root.classList.contains("has-brain") ||
         root.classList.contains("fallback-brain")
       ) {
@@ -174,7 +176,7 @@ export default function SiteInteractions() {
       }
     });
     // Failed resources cannot hold the visitor behind the opening.
-    later(requestEntry, 8500);
+    if (showLoader) later(requestEntry, 8500);
     listen<KeyboardEvent>(document, "keydown", (event) => {
       if (!entered && ["Tab", "Escape"].includes(event.key))
         enterExperience(true);

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createAsciiEye } from "@/lib/ascii-eye";
+import { compactMotionQuery } from "@/lib/experience-preferences";
 
 const smooth = (n: number) => {
   const t = Math.min(1, Math.max(0, n));
@@ -14,7 +15,7 @@ export default function EyeIntro() {
   useEffect(() => {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
     if (
-      preference.matches ||
+      preference.matches || document.documentElement.dataset.introRecovered ||
       (location.hash && location.hash !== "#home") ||
       new URLSearchParams(location.search).has("skiploader")
     )
@@ -24,7 +25,8 @@ export default function EyeIntro() {
     const canvas = document.createElement("canvas");
     canvas.className = "eye-intro-canvas";
     host.append(canvas);
-    const painter = createAsciiEye(canvas);
+    const compact = matchMedia(compactMotionQuery).matches;
+    const painter = createAsciiEye(canvas, compact ? { columns: 76, maxDpr: 1 } : {});
     if (!painter) {
       canvas.remove();
       // The coordinator may mount later in the same commit.
@@ -38,8 +40,12 @@ export default function EyeIntro() {
     let frame = 0;
     let stopped = false;
     let elapsed = 0;
-    let previous = performance.now();
-    const visibility = () => { previous = performance.now(); };
+    let previous = performance.now(), lastPaint = -Infinity;
+    const visibility = () => {
+      cancelAnimationFrame(frame);
+      previous = performance.now();
+      if (!document.hidden && !stopped) frame = requestAnimationFrame(render);
+    };
     let diveStarted = -1;
     let revealed = false;
     let heroPrepared = false;
@@ -48,7 +54,7 @@ export default function EyeIntro() {
       if (lastPose !== name) overlay.dataset.eyePhase = lastPose = name;
     };
     const stop = () => {
-      if (stopped) return;
+      if (stopped || document.hidden) return;
       stopped = true;
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", painter.resize);
@@ -101,7 +107,10 @@ export default function EyeIntro() {
         0.02 * smooth((elapsed - 4050) / 420);
       const gaze = gazeX > 0.15 ? "right" : gazeX < -0.15 ? "left" : "center";
       if (overlay.dataset.eyeGaze !== gaze) overlay.dataset.eyeGaze = gaze;
-      painter.draw(opening, zoom, gazeX, gazeY);
+      if (!compact || now - lastPaint >= 1000 / 24 - 2) {
+        painter.draw(opening, zoom, gazeX, gazeY);
+        lastPaint = now;
+      }
       // The pupil already fills the viewport before the site is revealed.
       if (dive > 0.94 && !revealed) {
         revealed = true;
@@ -113,7 +122,7 @@ export default function EyeIntro() {
     };
     painter.draw(0, 1);
     pose("closed");
-    frame = requestAnimationFrame(render);
+    if (!document.hidden) frame = requestAnimationFrame(render);
     window.addEventListener("resize", painter.resize);
     document.addEventListener("visibilitychange", visibility);
     window.addEventListener("octagram:entered", stop);

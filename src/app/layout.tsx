@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { siteConfig } from "@/lib/site-config";
+import { compactMotionQuery } from "@/lib/experience-preferences";
 import "./globals.css";
 import "./portfolio.css";
 import "./services.css";
@@ -62,9 +63,14 @@ const organization = {
 // Runs before paint; no JavaScript / reduced motion / deep links keep direct access.
 const initializeIntro = `try {
   const r = document.documentElement;
+  const compact = matchMedia('${compactMotionQuery}').matches;
+  const navigation = typeof performance === 'undefined' ? null : performance.getEntriesByType?.('navigation')?.[0];
+  const resumed = compact && (navigation?.type === 'reload' || navigation?.type === 'back_forward' || document.wasDiscarded === true);
   r.classList.add('js-enabled');
+  r.dataset.motionProfile = compact ? 'compact' : 'full';
+  if (resumed) r.dataset.introRecovered = 'true';
   r.classList.toggle('journey-paused', matchMedia('(prefers-reduced-motion: reduce)').matches);
-  if ((location.pathname === '/' || location.pathname === '/index.html') && (!location.hash || location.hash === '#home') && !new URLSearchParams(location.search).has('skiploader') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (!resumed && (location.pathname === '/' || location.pathname === '/index.html') && (!location.hash || location.hash === '#home') && !new URLSearchParams(location.search).has('skiploader') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
     r.classList.add('site-loading');
     setTimeout(function () {
       if (!r.classList.contains('site-loading')) return;
@@ -86,16 +92,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark" data-octagram-build="octagram-cinematic-20261121-34" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" data-octagram-build="octagram-cinematic-20261121-37" suppressHydrationWarning>
       <head>
-        <link
-          rel="preload"
-          href="/assets/fonts/manrope-latin.woff2"
-          as="font"
-          type="font/woff2"
-          crossOrigin="anonymous"
-        />
-        <link rel="preload" href="/assets/fonts/space-grotesk-latin.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <script dangerouslySetInnerHTML={{ __html: initializeIntro }} />
         <script
           type="application/ld+json"

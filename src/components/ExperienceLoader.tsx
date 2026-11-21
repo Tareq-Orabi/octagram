@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { readMotionPreference } from "@/lib/experience-preferences";
+import { compactMotionQuery, readMotionPreference } from "@/lib/experience-preferences";
 
 const Experience = dynamic(() => import("./Experience"), { ssr: false });
 
@@ -13,6 +13,7 @@ export default function ExperienceLoader() {
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = window.matchMedia(compactMotionQuery);
     let userPaused = readMotionPreference();
     let nearScene = false;
     let idle: number | undefined;
@@ -21,7 +22,10 @@ export default function ExperienceLoader() {
     const sync = () => {
       if (idle !== undefined) window.cancelIdleCallback?.(idle);
       if (timer !== undefined) clearTimeout(timer);
-      if (preference.matches || userPaused || !nearScene) {
+      const root = document.documentElement;
+      const profile = compact.matches ? "compact" : "full";
+      if (root.dataset.motionProfile !== profile) root.dataset.motionProfile = profile;
+      if (compact.matches || preference.matches || userPaused || !nearScene) {
         setEnabled(false);
         return;
       }
@@ -52,9 +56,10 @@ export default function ExperienceLoader() {
       { rootMargin: "200px 0px" },
     );
     document
-      .querySelectorAll("main .stage")
+      .querySelectorAll("#home, #about, #manifesto, #vision, #jordan")
       .forEach((el) => observer.observe(el));
     preference.addEventListener("change", sync);
+    compact.addEventListener("change", sync);
     window.addEventListener("octagram:motion", onMotion);
     sync();
     return () => {
@@ -63,6 +68,7 @@ export default function ExperienceLoader() {
       if (idle !== undefined) window.cancelIdleCallback?.(idle);
       if (timer !== undefined) clearTimeout(timer);
       preference.removeEventListener("change", sync);
+      compact.removeEventListener("change", sync);
       window.removeEventListener("octagram:motion", onMotion);
     };
   }, []);

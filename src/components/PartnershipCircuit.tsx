@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, type CSSProperties, type RefObject } from "react";
 import { clamp01, smooth01 } from "@/lib/scroll-math";
+import { compactMotionQuery } from "@/lib/experience-preferences";
 
 type Point = { x: number; y: number };
 type DrawMark = ReturnType<typeof import("@/three/partnership-mark").createPartnershipMark>;
@@ -32,10 +33,11 @@ export default function PartnershipCircuit({ field, spots, connections, complete
     if (!stage || !mark || !canvas || !wires) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
     const narrow = matchMedia("(max-width: 820px)");
+    const compact = matchMedia(compactMotionQuery);
     const abort = new AbortController(), { signal } = abort;
     const branches = Array.from(wires.querySelectorAll<SVGGElement>("g"));
     const motion = () => !reduced.matches && !document.documentElement.classList.contains("journey-paused");
-    let frame = 0, lastPaint = -Infinity, active = false, started = false;
+    let frame = 0, lastPaint = -Infinity, active = false, nearby = false, started = false;
     let draw: DrawMark | undefined;
     let assembled = 0, charge = 0, levels = idle.map(() => 0);
     let markBox = { x: 0, y: 0, size: 0 }, outlets: Point[] = [];
@@ -43,7 +45,7 @@ export default function PartnershipCircuit({ field, spots, connections, complete
 
     function paint(now: number, drift = true) {
       if (!mark || !markBox.size) return;
-      const anchors = draw?.({ levels, assembly: assembled, charge, seconds: drift && motion() ? now / 1000 : null }) ?? idle;
+      const anchors = draw?.({ levels, assembly: assembled, charge, seconds: drift && motion() && !compact.matches ? now / 1000 : null }) ?? idle;
       branches.forEach((branch, index) => {
         const outlet = outlets[index], point = anchors[destinations[index]];
         if (!outlet || !point) return;
@@ -62,7 +64,7 @@ export default function PartnershipCircuit({ field, spots, connections, complete
 
     function tick(now: number) {
       frame = 0;
-      if (now - lastPaint >= 31) {
+      if (now - lastPaint >= (compact.matches ? 50 : 31)) {
         lastPaint = now;
         if (animate?.(now)) animate = undefined;
         paint(now);
@@ -71,17 +73,15 @@ export default function PartnershipCircuit({ field, spots, connections, complete
     }
 
     function schedule() {
-      if (!frame && !document.hidden && (animate || (draw && active && motion())))
+      if (!frame && !document.hidden && (animate || (draw && active && motion() && !compact.matches)))
         frame = requestAnimationFrame(tick);
     }
 
     function measure() {
-      if (!stage || !mark || !canvas || !wires) return;
+      if (!stage || !mark || !canvas || !wires || (!nearby && !active)) return;
       const base = stage.getBoundingClientRect(), plate = mark.getBoundingClientRect();
       if (!base.width || !base.height || !plate.width) return;
 
-      wires.setAttribute("viewBox", `0 0 ${base.width} ${base.height}`);
-      markBox = { x: plate.left - base.left, y: plate.top - base.top, size: plate.width };
       outlets = spots.current.map((spot, index) => {
         const box = spot?.getBoundingClientRect();
         if (!box) return { x: 0, y: 0 };
@@ -91,7 +91,9 @@ export default function PartnershipCircuit({ field, spots, connections, complete
           y: box.top + box.height / 2 - base.top,
         };
       });
-      const pixels = Math.max(1, Math.round(plate.width * Math.min(devicePixelRatio || 1, narrow.matches ? 1.4 : 1.65)));
+      wires.setAttribute("viewBox", `0 0 ${base.width} ${base.height}`);
+      markBox = { x: plate.left - base.left, y: plate.top - base.top, size: plate.width };
+      const pixels = Math.max(1, Math.round(plate.width * Math.min(devicePixelRatio || 1, compact.matches ? 1 : 1.65)));
       if (canvas.width !== pixels) canvas.width = canvas.height = pixels;
       paint(performance.now());
     }
@@ -99,7 +101,6 @@ export default function PartnershipCircuit({ field, spots, connections, complete
     function prepare() {
       if (started || !canvas || !mark) return;
       started = true;
-      near.disconnect();
       void import("@/three/partnership-mark").then(({ createPartnershipMark }) => {
         if (signal.aborted) return;
         draw = createPartnershipMark(canvas);
@@ -141,24 +142,22 @@ export default function PartnershipCircuit({ field, spots, connections, complete
     }
 
     const near = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) prepare();
+      nearby = entry.isIntersecting;
+      if (nearby) { measure(); prepare(); }
     }, { rootMargin: "180px 0px" });
     const inView = new IntersectionObserver(([entry]) => {
       active = entry.isIntersecting;
-      if (active) schedule();
+      if (active) { if (!markBox.size) measure(); schedule(); }
     });
     near.observe(mark);
     inView.observe(mark);
-
-    const initial = mark.getBoundingClientRect();
-    active = initial.bottom >= 0 && initial.top <= innerHeight;
-    if (location.hash === "#why-octagram" || (initial.bottom >= -180 && initial.top <= innerHeight + 180)) prepare();
 
     const resize = new ResizeObserver(measure);
     resize.observe(stage);
     resize.observe(mark);
     refresh.current = change;
     reduced.addEventListener("change", change, { signal });
+    compact.addEventListener("change", measure, { signal });
     addEventListener("octagram:motion", change, { signal });
     document.addEventListener("visibilitychange", schedule, { signal });
     measure();

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { clamp01 } from "@/lib/scroll-math";
+import { compactMotionQuery } from "@/lib/experience-preferences";
 import type { TitledDescription } from "@/lib/company-content";
 import PartnershipCircuit from "./PartnershipCircuit";
 
@@ -68,9 +69,10 @@ export default function PartnershipScene({ points }: { points: TitledDescription
     const bounds = area.getBoundingClientRect();
     const x = Math.min(bounds.right - home.width, Math.max(bounds.left, active.x - active.gripX));
     const y = Math.min(bounds.bottom - home.height, Math.max(bounds.top, active.y - active.gripY));
+    const destination = spotAt(active.x, active.y);
     cover.style.setProperty("--drag-x", `${x - home.left}px`);
     cover.style.setProperty("--drag-y", `${y - home.top}px`);
-    hover(spotAt(active.x, active.y));
+    hover(destination);
   }
 
   function clearCover(index: number) {
@@ -208,6 +210,7 @@ export default function PartnershipScene({ points }: { points: TitledDescription
     if (!surface || !section || !title) return;
     const fine = matchMedia("(hover: hover) and (pointer: fine)");
     const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = matchMedia(compactMotionQuery);
     const abort = new AbortController(), { signal } = abort;
     let pointer: { x: number; y: number } | undefined;
     let frame = 0;
@@ -244,7 +247,7 @@ export default function PartnershipScene({ points }: { points: TitledDescription
     }
 
     function aim(event: PointerEvent) {
-      if (!fine.matches || reduced.matches || event.pointerType === "touch" ||
+      if (!fine.matches || compact.matches || reduced.matches || event.pointerType === "touch" ||
           document.documentElement.classList.contains("journey-paused")) return;
       pointer = { x: event.clientX, y: event.clientY };
       if (!frame) frame = requestAnimationFrame(paintEdges);

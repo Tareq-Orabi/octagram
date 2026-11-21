@@ -75,7 +75,7 @@ export default function SpotlightNav() {
       if (!element.contains(event.relatedTarget as Node | null)) { preview = ""; draw(); }
     }, { signal });
     window.addEventListener("scroll", schedule, { passive: true, signal });
-    window.addEventListener("resize", measure, { passive: true, signal });
+    window.addEventListener("resize", schedule, { passive: true, signal });
     compact.addEventListener("change", () => { lockedUntil = 0; measure(); }, { signal });
     window.addEventListener("wheel", () => { lockedUntil = 0; }, { passive: true, signal });
     window.addEventListener("touchstart", () => { lockedUntil = 0; }, { passive: true, signal });

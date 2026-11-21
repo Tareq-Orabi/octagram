@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { evaluateNarrative, narrativeProgress, type NarrativeBounds } from "@/three/choreography";
 import { PassagePlayback, publishPassageFrame, type PassageFrame } from "@/lib/chapter-playback";
 import { createPassageScrollGate } from "@/lib/passage-scroll";
-import { readMotionPreference } from "@/lib/experience-preferences";
+import { compactMotionQuery, readMotionPreference } from "@/lib/experience-preferences";
 export default function JourneyInteractions() {
   const skipControl = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -12,6 +12,7 @@ export default function JourneyInteractions() {
     const controller = new AbortController(),
       { signal } = controller;
     const media = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = matchMedia(compactMotionQuery);
     // Fonts and measured line wraps can move an initial hash target after the
     // browser's first anchor scroll. Correct it once, unless the visitor acts.
     const initialHash = location.hash;
@@ -27,7 +28,7 @@ export default function JourneyInteractions() {
       );
     void document.fonts.ready.then(() => {
       // Home is already at the document origin; correcting it can undo an early scroll.
-      if (signal.aborted || !initialHash || initialHash === "#home") return;
+      if (signal.aborted || compact.matches || root.dataset.introRecovered || !initialHash || initialHash === "#home") return;
       anchorFrame = requestAnimationFrame(() => {
         anchorFrame = requestAnimationFrame(() => {
           if (signal.aborted || interacted || location.hash !== initialHash)
@@ -88,9 +89,10 @@ export default function JourneyInteractions() {
     let measured: NarrativeBounds | undefined;
     let sceneFrame = 0, headingVisible = false;
     const playback = new PassagePlayback();
-    const gate = createPassageScrollGate({
+    let gate: ReturnType<typeof createPassageScrollGate> | undefined;
+    const connectGate = () => createPassageScrollGate({
       bounds: () => measured ? { vision: measured.vision.top, roots: measured.jordan.top, height: innerHeight } : undefined,
-      enabled: () => !media.matches && !root.classList.contains("journey-paused") && root.classList.contains("experience-entered") && !root.classList.contains("site-entering") && !document.body.classList.contains("menu-open"),
+      enabled: () => !compact.matches && !media.matches && !root.classList.contains("journey-paused") && root.classList.contains("experience-entered") && !root.classList.contains("site-entering") && !document.body.classList.contains("menu-open"),
       start: keyboard => {
         passRequested = true; directEntry = false; lastTick = 0;
         const fullScene = root.classList.contains("has-webgl") && root.classList.contains("has-logo");
@@ -114,7 +116,7 @@ export default function JourneyInteractions() {
         playback.settleVision();
         passRequested = false;
       }
-      hideSkip(arrive); gate.release(arrive);
+      hideSkip(arrive); gate?.release(arrive);
       lastTick = 0; scheduleScene();
     }
     let headingAnimation: Animation | undefined;
@@ -146,21 +148,22 @@ export default function JourneyInteractions() {
     }
     function paintScene(now: number) {
       sceneFrame = 0;
-      if (signal.aborted || !measured) return;
+      if (signal.aborted || compact.matches || !measured) return;
       const scroll = window.scrollY, height = innerHeight;
       const raw = narrativeProgress(scroll, measured, height);
       // Hysteresis chooses a complete clip, not a frame for every scroll pixel.
       const goingUp = scroll < lastScroll;
       lastScroll = scroll;
-      if (gate.locked || scroll >= measured.jordan.top - height * .28) passRequested = true;
+      const locked = gate?.locked ?? false;
+      if (locked || scroll >= measured.jordan.top - height * .28) passRequested = true;
       else if (scroll <= measured.jordan.top - height * .65) passRequested = false;
       const paused = document.hidden || menuOpen;
       const frame = playback.update({
         raw, delta: paused || !lastTick ? 0 : (now - lastTick) / 1000,
         // Native momentum and a resize can briefly report the previous scroll
         // position. The gate owns this clip until it finishes or is skipped.
-        active: gate.locked || (scroll >= measured.vision.top - height * .12 && scroll < measured.team.top),
-        pass: passRequested, direct: directEntry || (!gate.locked && goingUp),
+        active: locked || (scroll >= measured.vision.top - height * .12 && scroll < measured.team.top),
+        pass: passRequested, direct: directEntry || (!locked && goingUp),
         enabled: !media.matches && !root.classList.contains("journey-paused"),
       });
       directEntry = false;
@@ -187,19 +190,19 @@ export default function JourneyInteractions() {
       cueHeading(progress);
       vision?.style.setProperty("--vision-copy-opacity", scene.visionOpacity.toFixed(4));
       roots?.style.setProperty("--roots-copy-opacity", scene.rootsOpacity.toFixed(4));
-      if (gate.locked && (!frame.running || media.matches || root.classList.contains("journey-paused"))) {
+      if (locked && (!frame.running || media.matches || root.classList.contains("journey-paused"))) {
         hideSkip();
-        gate.release();
+        gate?.release();
       }
       const playing = (frame.running || returning) && !paused;
       lastTick = playing ? now : 0;
       if (playing) scheduleScene();
     }
     function scheduleScene() {
-      if (!sceneFrame && !signal.aborted) sceneFrame = requestAnimationFrame(paintScene);
+      if (!sceneFrame && !signal.aborted && !compact.matches) sceneFrame = requestAnimationFrame(paintScene);
     }
     function measureScene() {
-      if (signal.aborted) return;
+      if (signal.aborted || compact.matches) return;
       const result = {} as NarrativeBounds;
       for (const id of ["home", "about", "manifesto", "vision", "jordan", "team", "contact"] as const) {
         const section = id === "jordan" ? roots : document.getElementById(id);
@@ -211,7 +214,7 @@ export default function JourneyInteractions() {
       }
       result.vision.readHeight = visionFrame?.offsetHeight;
       measured = result;
-      gate.refresh();
+      gate?.refresh();
       scheduleScene();
     }
     const headingObserver = new IntersectionObserver((entries) => {
@@ -219,7 +222,8 @@ export default function JourneyInteractions() {
         headingVisible = entry.isIntersecting && entry.intersectionRatio >= .65;
         if (!headingVisible) settleHeading();
       }
-      scheduleScene();
+      if (compact.matches) cueHeading(4.08);
+      else scheduleScene();
     }, { threshold: [.0, .65], rootMargin: "0px 0px -8% 0px" });
     if (heading) headingObserver.observe(heading);
     const geometryObserver = new ResizeObserver(measureScene);
@@ -240,15 +244,34 @@ export default function JourneyInteractions() {
     window.addEventListener("octagram:motion", motionChanged, { signal });
     window.addEventListener("octagram:passage-skip", () => finishPassage(), { signal });
     media.addEventListener("change", motionChanged, { signal });
+    const syncPassage = () => {
+      if (compact.matches) {
+        gate?.dispose();
+        gate = undefined;
+        hideSkip(false);
+        cancelAnimationFrame(sceneFrame);
+        sceneFrame = lastTick = 0;
+        delete root.dataset.passagePhase;
+        delete root.dataset.passageProgress;
+        root.style.removeProperty("--passage-amount");
+        vision?.removeAttribute("data-vision-return");
+        vision?.style.removeProperty("--vision-return-opacity");
+        publishPassageFrame(undefined);
+      } else {
+        gate ??= connectGate();
+        measureScene();
+      }
+    };
+    compact.addEventListener("change", syncPassage, { signal });
     document.addEventListener("visibilitychange", () => {
       lastTick = 0;
       if (document.hidden) settleHeading(); else scheduleScene();
     }, { signal });
     void document.fonts.ready.then(measureScene);
-    measureScene();
+    syncPassage();
     return () => {
       controller.abort();
-      gate.dispose();
+      gate?.dispose();
       observer.disconnect();
       cancelAnimationFrame(anchorFrame);
       cancelAnimationFrame(sceneFrame);
@@ -272,7 +295,7 @@ export default function JourneyInteractions() {
     };
   }, []);
   return <>
-    <div className="passage-fallback" aria-hidden="true"><img src="/assets/brand/logo.svg" width="480" height="480" alt="" /></div>
+    <div className="passage-fallback" aria-hidden="true"><img src="/assets/brand/logo.svg" width="480" height="480" alt="" loading="lazy" /></div>
     <button ref={skipControl} className="passage-skip" type="button" hidden onClick={() => window.dispatchEvent(new Event("octagram:passage-skip"))}>Skip transition <span aria-hidden="true">↠</span></button>
   </>;
 }

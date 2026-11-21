@@ -11,13 +11,14 @@ export default function BinaryHeadline({ lines, id }: { lines: string[]; id: str
     const abort = new AbortController(), { signal } = abort;
     const root = document.documentElement;
     const media = matchMedia("(prefers-reduced-motion: reduce)");
+    const compact = root.dataset.motionProfile === "compact";
     const rows = [...element.querySelectorAll<HTMLElement>(".decode-row")];
     const codes = rows.map(row => row.querySelector<HTMLElement>(".decode-code"));
     let visible = false, played = false, fontsReady = false, menuOpen = false;
     let heroVisible = root.dataset.heroVisible === "true";
     let frame = 0, started = 0, lastCode = -1;
     const staticMotion = () => media.matches || root.classList.contains("journey-paused");
-    const syncLetters = () => { element.dataset.letterMotion = String(visible && played && element.dataset.decode === "settled" && !document.hidden && !menuOpen && !staticMotion()); };
+    const syncLetters = () => { element.dataset.letterMotion = String(!compact && visible && played && element.dataset.decode === "settled" && !document.hidden && !menuOpen && !staticMotion()); };
     element.querySelectorAll<HTMLElement>(".hero-glyph").forEach(glyph => {
       glyph.style.setProperty("--glyph-duration", `${9 + Math.random() * 10}s`);
       glyph.style.setProperty("--glyph-delay", `${-Math.random() * 18}s`);
@@ -47,7 +48,7 @@ export default function BinaryHeadline({ lines, id }: { lines: string[]; id: str
     const start = () => {
       if (signal.aborted || played || !fontsReady || !visible || !heroVisible || document.hidden) return;
       played = true;
-      if (staticMotion() || root.dataset.introTimedOut) { finish(); return; }
+      if (staticMotion() || root.dataset.introTimedOut || root.dataset.introRecovered) { finish(); return; }
       started = performance.now(); element.dataset.decode = "decoding";
       rows.forEach(row => { row.dataset.signal = "decoding"; });
       frame = requestAnimationFrame(tick);
@@ -57,7 +58,7 @@ export default function BinaryHeadline({ lines, id }: { lines: string[]; id: str
       if (visible) start(); else if (played) finish();
       syncLetters();
     }, { threshold: .2 });
-    if (staticMotion() || root.dataset.introTimedOut) { played = true; finish(); }
+    if (staticMotion() || root.dataset.introTimedOut || root.dataset.introRecovered) { played = true; finish(); }
     void document.fonts.ready.then(() => {
       if (signal.aborted) return;
       fontsReady = true;

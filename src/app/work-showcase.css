@@ -76,6 +76,9 @@
 .work-grid-route { stroke: #ffffff14; }
 
 @media (prefers-reduced-motion: no-preference) {
+  .work-showcase-scene[data-work-arrived="true"]:not([data-work-motion]) .work-showcase-deck {
+    animation: work-compact-arrival 400ms cubic-bezier(.2,.7,.3,1) both;
+  }
   .work-showcase-scene[data-work-motion] .work-showcase-deck {
     transform: translateY(calc(-.75svh + 5svh * var(--work-arrival,0)))
       scale(calc(1 + var(--work-entry-gain) * var(--work-arrival,0)));
@@ -89,6 +92,10 @@
     opacity: var(--work-outline-reveal,1);
     transform: translate(-50%,calc(-50% + 10svh * var(--work-arrival,0)));
   }
+}
+@keyframes work-compact-arrival {
+  from { opacity: .65; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
 }
 @media (max-width: 1099px) {
   .work-showcase-aperture { width: 82%; --work-entry-gain: .15; }
@@ -120,8 +127,9 @@
 }
 .menu-open .portfolio-bottom-blur,
 :root:has(.work-portfolio-field :focus-visible) .portfolio-bottom-blur { opacity: 0; visibility: hidden; }
-@media (max-width: 767px) {
+@media (max-width: 800px), (hover: none) and (pointer: coarse) {
   .portfolio-bottom-blur { height: clamp(45px,9svh,76px); }
+  .portfolio-bottom-blur::before { backdrop-filter: none; mask-image: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .portfolio-bottom-blur { transition: none; }

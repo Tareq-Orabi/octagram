@@ -49,7 +49,7 @@ export default function NavBrand() {
   }, []);
 
   return <a ref={link} className="brand nav-brand" data-brand-phase="waiting" href="#home" aria-label="Octagram home">
-    <span className="nav-brand-icon" aria-hidden="true"><img src="/assets/brand/logo.svg" width="34" height="34" alt="" /></span>
+    <span className="nav-brand-icon" aria-hidden="true"><img src="/assets/brand/logo.svg" width="34" height="34" alt="" loading="lazy" /></span>
     <span className="nav-brand-word" aria-hidden="true">{[..."OCTAGRAM"].map((letter, index) => <span className="nav-brand-letter" key={index}>{letter}</span>)}</span>
   </a>;
 }
