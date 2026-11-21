@@ -1,5 +1,6 @@
 "use client";
 import { useEffect } from "react";
+import { readMotionPreference } from "@/lib/experience-preferences";
 
 /** Event-driven motion. Layout is read in one batch before any style writes. */
 export default function SurfaceMotion() {
@@ -9,7 +10,7 @@ export default function SurfaceMotion() {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const cards = [
       ...document.querySelectorAll<HTMLElement>(
-        ".team-window, .project-showcase:not(.flip-card), .principle-column, .engineering-stage, .commitment-card",
+        ".team-window, .project-showcase:not(.flip-card), .principle-column:not(.principle-token-item), .engineering-stage, .commitment-card",
       ),
     ];
     const sections = [
@@ -23,7 +24,7 @@ export default function SurfaceMotion() {
     const poses = new Map(
       cards.map((el) => [el, { x: 0, y: 0, tx: 0, ty: 0 }]),
     );
-    let paused = false,
+    let paused = readMotionPreference(),
       menu = false,
       frame = 0,
       scrollDirty = true,

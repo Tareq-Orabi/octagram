@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createAsciiEye } from "@/lib/ascii-eye";
+import { readMotionPreference } from "@/lib/experience-preferences";
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 const ease = (n: number) => {
@@ -22,7 +23,7 @@ export default function EyeOutro() {
     canvas.className = "eye-outro-canvas";
     host.appendChild(canvas);
     const painter = createAsciiEye(canvas, {
-      background: "#080909",
+      background: "#000000",
       maxDpr: 1.25,
       size: () => ({ width: host.clientWidth, height: host.clientHeight }),
     });
@@ -40,7 +41,7 @@ export default function EyeOutro() {
       elapsed = 0;
     let visible = false,
       menuOpen = false,
-      globalPaused = false;
+      globalPaused = readMotionPreference();
     let progress = 0,
       camera = 0,
       start = 0,
@@ -54,18 +55,11 @@ export default function EyeOutro() {
       blinkCount = 0;
 
     const measure = () => {
-      const rect = section.getBoundingClientRect();
-      const lead = window.innerHeight * 0.45;
-      start = rect.top + window.scrollY - lead;
-      const end = Math.min(
-        rect.top +
-          window.scrollY +
-          section.offsetHeight -
-          host.offsetHeight -
-          90,
-        document.documentElement.scrollHeight - window.innerHeight,
-      );
-      distance = Math.max(1, end - start);
+      const closing = section.closest<HTMLElement>(".closing-scene") ?? section;
+      const rect = closing.getBoundingClientRect();
+      // Complete the reverse dive on entry, then hold the open eye beside contact.
+      start = rect.top + window.scrollY - window.innerHeight * 0.7;
+      distance = Math.max(1, window.innerHeight * 0.45);
       progress = clamp((window.scrollY - start) / distance);
       painter.resize();
     };

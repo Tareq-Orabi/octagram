@@ -340,9 +340,6 @@ main > .content-section,
   font-size: 25px;
   margin-top: 48px;
 }
-.service-gallery {
-  max-width: 1280px;
-}
 .service-gallery-topline {
   margin-bottom: 0;
 }
@@ -550,7 +547,7 @@ main > .content-section,
   position: relative;
 }
 
-/* Vision has a reading frame and at most one viewport of camera travel. */
+/* The reading frame leads into a short trigger corridor for the finite passage. */
 .logo-story {
   display: block;
   min-height: 0;
@@ -573,11 +570,11 @@ main > .content-section,
   width: min(44vw, 560px);
 }
 .logo-passage-distance {
-  height: min(85svh, 800px);
+  height: min(36svh, 360px);
   pointer-events: none;
 }
 .has-webgl .vision-copy {
-  opacity: var(--vision-copy-opacity, 1);
+  opacity: calc(var(--vision-copy-opacity, 1) * var(--vision-return-opacity, 1));
   transform: translateY(calc((1 - var(--vision-copy-opacity, 1)) * -24px));
 }
 .has-webgl .roots-copy {

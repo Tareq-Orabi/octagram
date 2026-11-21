@@ -1,0 +1,49 @@
+/* The body supplies black. The fixed WebGL canvas must remain visible through
+   these narrative windows; an opaque main used to cover it after posters hid. */
+main, .roots-handoff, .roots-handoff > .jordan,
+#home, #about, #manifesto, #vision, #roots-scene { background:transparent; }
+html, body { background:#000; }
+
+/* A shared interaction language, with quiet prose and expressive headings. */
+.explore-text,.explore-word { display:inline; }
+.explore-word { display:inline-block;white-space:nowrap; }
+.explore-letter { display:inline-block;transform-origin:50% 80%; }
+:is(h2,h3,button,summary):hover .explore-letter,
+:is(button,summary):focus-visible .explore-letter { animation:discovery-letter 700ms calc(var(--hover-letter)*14ms) cubic-bezier(.2,.7,.2,1) both; }
+@keyframes discovery-letter { 0%,100%{translate:0 0;rotate:0deg}40%{translate:0 -.09em;rotate:-3deg;color:var(--hover-accent,var(--brand-peach))}65%{translate:0 .025em;rotate:1deg} }
+.hero-glyph { transition:color 350ms,translate 450ms; }
+.hero-glyph-cell:hover .hero-glyph { color:var(--brand-peach);translate:0 -.055em; }
+:where(.side-copy>p,.portfolio-prose p,.principle-copy p) { transition:color 450ms; }
+:where(.side-copy>p,.portfolio-prose p,.principle-copy p):hover { color:#f3ece3; }
+:where(.manifesto-copy em,.contact-context strong,.roots-copy strong) { transition:filter 450ms,text-decoration-color 450ms; }
+:where(.manifesto-copy em,.contact-context strong,.roots-copy strong):hover { filter:brightness(1.25);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:.16em; }
+.clean-footer nav a,.lab-idea-copy summary { position:relative; }
+.clean-footer nav a::after { content:"";position:absolute;left:0;right:14px;bottom:6px;height:1px;background:var(--brand-peach);scale:0 1;transform-origin:right;transition:scale 450ms cubic-bezier(.16,1,.3,1); }
+.clean-footer nav a:hover::after,.clean-footer nav a:focus-visible::after { scale:1;transform-origin:left; }
+.clean-footer nav a>span { transition:translate 400ms,rotate 400ms; }.clean-footer nav a:hover>span{translate:2px -2px;rotate:10deg}
+:where(.contact-panel input,.contact-panel textarea,.contact-panel select):focus { border-color:var(--brand-peach);box-shadow:0 0 0 3px #fdaa7d10; }
+
+/* The whole side surface responds, not just each little tile. */
+.role-prototype-strip { transform:perspective(1100px) rotateY(calc(12deg + var(--tilt-y,0deg))) rotateX(var(--tilt-x,0deg)) rotateZ(-2deg);transition:transform 650ms cubic-bezier(.16,1,.3,1); }
+.role-tech-panel { transform:translateY(-50%) perspective(1000px) rotateY(calc(-11deg - var(--tilt-y,0deg))) rotateX(var(--tilt-x,0deg)) rotateZ(2deg);transition:transform 650ms cubic-bezier(.16,1,.3,1),filter 500ms; }
+.role-tech-panel:hover { filter:brightness(1.14); }
+.role-tech-window { background:#000; }
+
+/* Black project surfaces. Color is confined to a soft inner rim. */
+.project-deck .product-chapter { background:#000!important; }
+.project-deck .project-stage-light { display:none; }
+.project-deck .product-chapter::after { content:"";position:absolute;z-index:5;inset:0;border-radius:28px;pointer-events:none;box-shadow:inset 0 0 2px color-mix(in srgb,var(--project-color) 45%,transparent),inset 0 0 34px color-mix(in srgb,var(--project-color) 13%,transparent); }
+.project-deck .project-stage-dots { background-image:radial-gradient(circle,#ffffff28 .7px,transparent 1px);opacity:.4; }
+
+/* Services keep their useful selector, but explain each discipline visually. */
+@media(max-width:767px) {
+  .role-prototype-strip{transform:rotate(-4deg)}.role-tech-panel{transform:translateY(-50%) rotate(3deg)}
+}
+@media(prefers-reduced-motion:reduce) {
+  .explore-letter{animation:none!important}
+  .role-prototype-strip,.role-tech-panel{transition:none}
+  .hero-glyph-cell:hover .hero-glyph{translate:0 0}
+}
+.project-title-silver,.project-title-color{transition:filter 500ms,translate 600ms}
+.project-deck h3:hover :is(.project-title-silver,.project-title-color){filter:brightness(1.2);translate:0 -.025em}
+.team-name-cell{transition:translate 450ms}.team-name-cell:hover{translate:0 -.045em}

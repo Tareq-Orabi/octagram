@@ -8,6 +8,7 @@ export interface TextSection {
 export interface TitledDescription {
   title: string;
   description: string;
+  example?: string;
 }
 export interface CompanyService {
   id: string;
@@ -28,6 +29,8 @@ export interface ProductInitiative {
 }
 export interface EngineeringStage extends TitledDescription {
   number: string;
+  deliverable: string;
+  clientDecision: string;
 }
 export interface CompanyContent {
   brand: {
@@ -69,7 +72,7 @@ export const companyContent: CompanyContent = {
     "portfolioLabel": "INDEPENDENT TEAM · JORDAN",
     "year": 2026,
     "disciplineLine": "Software · Design · AI",
-    "heroTitle": "We turn complex ideas into software people enjoy using."
+    "heroTitle": "Websites, platforms and AI tools for healthcare, learning and the way people work."
   },
   "about": {
     "label": "ABOUT US",
@@ -227,10 +230,10 @@ export const companyContent: CompanyContent = {
     ]
   },
   "projectsIntro": {
-    "label": "OUR PROJECTS",
+    "label": "SELECTED WORK",
     "title": "Built for the real world.",
     "paragraphs": [
-      "Client work and products in development, across healthcare, learning, and coaching. Explore a card to see what goes into it."
+      "Software for a working clinic. A digital home for a coaching brand. Explore the work and the thinking behind it."
     ]
   },
   "products": {
@@ -293,27 +296,37 @@ export const companyContent: CompanyContent = {
       {
         "number": "01",
         "title": "Listen & understand",
-        "description": "Your goals, your users, and the problem to solve."
+        "description": "Your goals, your users, and the problem to solve.",
+        "deliverable": "A clear project brief.",
+        "clientDecision": "What should success look like?"
       },
       {
         "number": "02",
         "title": "Plan the system",
-        "description": "Workflows, architecture, and a practical order of work."
+        "description": "Workflows, architecture, and a practical order of work.",
+        "deliverable": "A practical scope and delivery plan.",
+        "clientDecision": "What needs to be built first?"
       },
       {
         "number": "03",
         "title": "Design & build",
-        "description": "Interfaces and engineering developed together, one step at a time."
+        "description": "Interfaces and engineering developed together, one step at a time.",
+        "deliverable": "Working designs and product increments.",
+        "clientDecision": "Does this feel right for your users?"
       },
       {
         "number": "04",
         "title": "Test & refine",
-        "description": "Check the important journeys, performance, and reliability."
+        "description": "Check the important journeys, performance, and reliability.",
+        "deliverable": "A reviewed release checklist.",
+        "clientDecision": "What should we refine before launch?"
       },
       {
         "number": "05",
         "title": "Launch & improve",
-        "description": "Prepare for real use, then plan the next improvements together."
+        "description": "Prepare for real use, then plan the next improvements together.",
+        "deliverable": "A launch plan and next steps.",
+        "clientDecision": "What should improve next?"
       }
     ],
     "closing": "Understand it. Build it. Keep improving it."
@@ -335,27 +348,33 @@ export const companyContent: CompanyContent = {
     "reasons": [
       {
         "title": "Solid foundations",
-        "description": "We think about structure, reliability, and the person maintaining the code later."
+        "description": "We think about structure, reliability, and the person maintaining the code later.",
+        "example": "Plan the roles, data and integrations before adding screens."
       },
       {
         "title": "Built around your work",
-        "description": "Your workflows shape the software and the priorities."
+        "description": "Your workflows shape the software and the priorities.",
+        "example": "Map a real appointment or order from start to finish."
       },
       {
         "title": "One connected team",
-        "description": "Design, frontend, backend, and AI expertise work together."
+        "description": "Design, frontend, backend, and AI expertise work together.",
+        "example": "Review a feature as one journey across the interface and system."
       },
       {
         "title": "The whole experience",
-        "description": "We connect the small details to the bigger picture."
+        "description": "We connect the small details to the bigger picture.",
+        "example": "Check the empty state, the loading state and the next step."
       },
       {
         "title": "Direct conversations",
-        "description": "Clear questions, honest feedback, and decisions you can follow."
+        "description": "Clear questions, honest feedback, and decisions you can follow.",
+        "example": "Explain a tradeoff, agree a priority and keep the next step clear."
       },
       {
         "title": "Curiosity with purpose",
-        "description": "We explore new ideas when they can make the product better."
+        "description": "We explore new ideas when they can make the product better.",
+        "example": "Try an AI feature against a real task before committing to it."
       }
     ],
     "closing": "Let's build something worth using."

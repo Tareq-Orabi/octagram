@@ -15,7 +15,7 @@ export default function EyeIntro() {
     const preference = matchMedia("(prefers-reduced-motion: reduce)");
     if (
       preference.matches ||
-      location.hash ||
+      (location.hash && location.hash !== "#home") ||
       new URLSearchParams(location.search).has("skiploader")
     )
       return;
@@ -39,16 +39,20 @@ export default function EyeIntro() {
     let stopped = false;
     let elapsed = 0;
     let previous = performance.now();
+    const visibility = () => { previous = performance.now(); };
     let diveStarted = -1;
     let revealed = false;
+    let heroPrepared = false;
     let lastPose = "";
     const pose = (name: string) => {
       if (lastPose !== name) overlay.dataset.eyePhase = lastPose = name;
     };
     const stop = () => {
+      if (stopped) return;
       stopped = true;
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", painter.resize);
+      document.removeEventListener("visibilitychange", visibility);
       painter.dispose();
     };
     const complete = () => {
@@ -58,7 +62,7 @@ export default function EyeIntro() {
     const render = (now: number) => {
       if (stopped) return;
       // Do not skip the opening when switching back from a background tab.
-      if (!document.hidden) elapsed += Math.min(now - previous, 64);
+      if (!document.hidden) elapsed += Math.max(0, now - previous);
       previous = now;
       const opening = smooth((elapsed - 750) / 1900);
       if (
@@ -69,6 +73,11 @@ export default function EyeIntro() {
         diveStarted = elapsed;
       const dive =
         diveStarted < 0 ? 0 : Math.min(1, (elapsed - diveStarted) / 2300);
+      if (elapsed > 3500 && !heroPrepared) {
+        heroPrepared = true;
+        document.documentElement.dataset.heroPrepared = "true";
+        window.dispatchEvent(new Event("octagram:hero-prepare"));
+      }
       // A slow dolly gives the opened eye weight before the accelerating plunge.
       const approach = 1 + smooth((elapsed - 1700) / 2200) * 0.13;
       const zoom = approach * Math.exp(Math.pow(dive, 2.35) * 4.6);
@@ -106,6 +115,7 @@ export default function EyeIntro() {
     pose("closed");
     frame = requestAnimationFrame(render);
     window.addEventListener("resize", painter.resize);
+    document.addEventListener("visibilitychange", visibility);
     window.addEventListener("octagram:entered", stop);
     return () => {
       stop();
@@ -122,6 +132,13 @@ export default function EyeIntro() {
       aria-label="Opening animation"
     >
       <div ref={art} className="eye-intro-art" aria-hidden="true" />
+      <button
+        className="eye-intro-skip"
+        type="button"
+        onClick={() => window.dispatchEvent(new Event("octagram:intro-skip"))}
+      >
+        Skip intro
+      </button>
     </div>
   );
 }

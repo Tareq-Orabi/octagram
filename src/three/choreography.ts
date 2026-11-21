@@ -53,18 +53,18 @@ function curve(progress: number, frames: readonly (readonly [number, number])[])
   const a = frames[Math.max(0, end - 1)], b = frames[end];
   return mix(a[1], b[1], ease(ramp(progress, a[0], b[0])));
 }
-// A readable turn, a dispersed particle field, then the second sculpture.
-// The final logo pose and center passage share the same coordinate space.
+// Independent depth paths replace the shared sideways morph. Each shot includes
+// a readable hold, then a spatial handoff; all values depend only on scroll.
 const BRAIN: readonly Shot[] = [
   [0, 3.2, -1, 0, 1, 1], [0.18, 3.2, -1, 0, 1, 1],
   [1.12, -3.3, -0.7, -0.55, 0.96, 1], [1.5, -3.3, -0.7, -0.55, 0.96, 1],
   [2.15, 0, 0, 0, 1, 1], [2.98, 0, 0, 0, 1, 1],
-  [3.08, 0, 0, 0, 1, 1], [3.2, 0, 0, 0, 1, 0], [6, 0, 0, 0, 1, 0],
+  [2.99, 0, 0, 0, 1, 1], [3.18, 0, 0, 0, 1, 0], [6, 0, 0, 0, 1, 0],
 ];
 const LOGO: readonly Shot[] = [
   [0, -3.4, -0.3, -8, 0.9, 0], [2.18, -3.4, -0.3, -8, 0.9, 0],
   [2.6, -3.4, -0.3, -3.5, 1.35, 0], [2.98, -3.4, -0.3, 0, 1.72, 0],
-  [3.08, -3.4, -0.3, 0, 1.72, 0], [3.2, -3.4, -0.3, 0, 1.72, 1],
+  [2.99, -3.4, -0.3, 0, 1.72, 0], [3.18, -3.4, -0.3, 0, 1.72, 1],
   [3.32, -3.4, -0.3, 0, 1.72, 1], [3.53, 0, 0, 0, 1.72, 1],
   [3.75, 0, 0, 0, 1.72, 1], [3.85, 0, 0, 0, 1.72, 0],
   [4.1, 0, 0, 0, 1.72, 0],
@@ -78,8 +78,8 @@ const GLOBE: readonly Shot[] = [
 export function evaluateNarrative(progress: number, mobile = false, portrait = mobile) {
   const p = clamp(progress, 0, 6);
   const brain = track(p, BRAIN), logo = track(p, LOGO), globe = track(p, GLOBE);
-  // Keep the original anatomy through the turn. Complete the rotation while
-  // dispersed so the reassembled mark is upright and matches the solid asset.
+  // The deployed brain disperses and reforms upright before the solid mark.
+  // Keep our later camera passage, module flight and Roots framing unchanged.
   brain.yaw = curve(p, [[0, 0], [1.12, -Math.PI * 0.5], [1.85, -Math.PI], [2.98, -Math.PI * 2], [6, -Math.PI * 2]]);
   if (mobile) {
     brain.x *= 0.42; brain.y = 0.8 + brain.y * 0.35; brain.scale *= 0.6;
@@ -90,9 +90,9 @@ export function evaluateNarrative(progress: number, mobile = false, portrait = m
     logo.y = (1.55 + logo.y * 0.3) * (1 - ease(ramp(p, 3.32, 3.53)));
     logo.scale *= mobile ? 0.62 : 0.82;
   }
-  const handoff = ease(ramp(p, 2.3, 2.98));
+  const logoAlignment = ease(ramp(p, 2.3, 2.98));
   for (const axis of ["x", "y", "z", "scale"] as const)
-    brain[axis] = mix(brain[axis], logo[axis], handoff);
+    brain[axis] = mix(brain[axis], logo[axis], logoAlignment);
   return {
     brain, logo, globe,
     brainSpread: curve(p, [[0, 0], [1.55, 0], [2.08, 1], [2.3, 1], [2.98, 0], [6, 0]]),
@@ -100,12 +100,32 @@ export function evaluateNarrative(progress: number, mobile = false, portrait = m
     passage: ease(ramp(p, 3.4, 3.86)),
     visionOpacity: 1 - ease(ramp(p, 3.26, 3.43)),
     rootsOpacity: ease(ramp(p, 3.78, 4.0)),
-    assembly: curve(p, [[0, 0], [2.18, 0], [3.08, 1], [4.1, 1], [4.2, 0.2], [5.7, 0], [6, 1]]),
+    assembly: curve(p, [[0, 0], [2.18, 0], [2.98, 1], [4.1, 1], [4.2, 0.2], [5.7, 0], [6, 1]]),
     tunnel: curve(p, [[0, 0], [1.5, 0], [2.35, 0.65], [3.18, 0], [4.5, 0], [5.04, 0.6], [5.4, 0.15], [5.7, 0], [6, 0.65]]),
-    ambientOpacity: curve(p, [[0, 0.55], [2.35, 0.5], [3.18, 0.4], [3.5, 0.09], [3.86, 0.07], [4.08, 0], [5.7, 0], [6, 0.35]]),
+    ambientOpacity: curve(p, [[0, 0.55], [2.35, 0.5], [3.08, 0.24], [3.32, 0.19], [3.53, 0.16], [3.73, 0.08], [3.85, 0], [5.7, 0], [6, 0.35]]),
     // The camera genuinely crosses the logo's z=0 plane. The Roots globe is
     // positioned relative to the new camera depth, so there is no camera reset.
-    cameraZ: curve(p, [[0, 10], [0.65, 10.45], [1.12, 10], [2.35, 10.2], [3.32, 10], [3.53, 7.8], [3.73, 2.4], [3.86, -0.8], [4.08, -4], [5.7, -4], [6, 10]]),
+    cameraZ: p >= 3.32 && p <= 4.08
+      ? mix(10, -4, ease(ramp(p, 3.32, 4.08)))
+      : curve(p, [[0, 10], [0.65, 10.45], [1.12, 10], [2.35, 10.2], [3.32, 10], [4.08, -4], [5.7, -4], [6, 10]]),
+  };
+}
+
+/** Shared chapter playhead supplies the travel; a quiet orbit keeps the hold alive. */
+export function ambientFlowPose(progress: number, index: number, aspect: number, focus: { x: number; y: number }, time = 0) {
+  const blend = ease(ramp(progress, 2.6, 3.08)) * (1 - ease(ramp(progress, 3.85, 4.08)));
+  const travel = ease(ramp(progress, 3.32, 3.85));
+  const angle = index * Math.PI * (3 - Math.sqrt(5)) + (progress - 2.6) * 1.15 + time * .06;
+  const radius = 3.21 + (index % 3) * .29 + travel * .32;
+  return {
+    blend,
+    x: focus.x + Math.cos(angle) * radius * Math.min(aspect, 1.5),
+    y: focus.y + Math.sin(angle) * radius,
+    z: -3.65 + (index % 3) * .48 + travel * 6,
+    pitch: Math.sin(angle) * .26,
+    yaw: Math.cos(angle) * .32,
+    roll: (angle + index * .15) * .18,
+    scale: .57 + travel * .24,
   };
 }
 /** Alternating straight rails assemble the eight original logo modules. */

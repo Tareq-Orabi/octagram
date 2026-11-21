@@ -30,7 +30,7 @@
 .journey-ready .commitment-card.journey-revealed {
   animation: commitment-arrival 900ms cubic-bezier(.18,.8,.2,1) var(--arrival-delay, 0ms) both;
 }
-.journey-ready :is(.service-gallery, .product-showcase, .contact-context, .contact-panel).journey-revealed {
+.journey-ready :is(.product-showcase, .contact-context, .contact-panel).journey-revealed {
   animation: surface-arrival 900ms cubic-bezier(.2,.8,.2,1) both;
 }
 @keyframes editorial-reveal {

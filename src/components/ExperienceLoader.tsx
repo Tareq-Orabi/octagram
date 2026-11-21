@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { readMotionPreference } from "@/lib/experience-preferences";
 
 const Experience = dynamic(() => import("./Experience"), { ssr: false });
 
@@ -12,7 +13,7 @@ export default function ExperienceLoader() {
 
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let userPaused = false;
+    let userPaused = readMotionPreference();
     let nearScene = false;
     let idle: number | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;

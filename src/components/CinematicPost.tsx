@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
 /** One adaptive optical pass. HTML stays untouched, and alpha preserves the dark page background. */
 export default function CinematicPost({ quality }: { quality: number }) {
   const { gl, size, viewport } = useThree();
+  const cleared = useRef(false);
   const optics = useMemo(() => {
     const target = new THREE.WebGLRenderTarget(1, 1, {
       minFilter: THREE.LinearFilter,
@@ -81,8 +82,9 @@ export default function CinematicPost({ quality }: { quality: number }) {
   }, []);
 
   useEffect(() => {
-    const width = Math.max(1, Math.round(size.width * viewport.dpr));
-    const height = Math.max(1, Math.round(size.height * viewport.dpr));
+    const active = size.width >= 800 && quality >= .68;
+    const width = active ? Math.max(1, Math.round(size.width * viewport.dpr)) : 1;
+    const height = active ? Math.max(1, Math.round(size.height * viewport.dpr)) : 1;
     const samples =
       quality >= 0.8 && size.width >= 800
         ? Math.min(2, gl.capabilities.maxSamples)
@@ -106,8 +108,14 @@ export default function CinematicPost({ quality }: { quality: number }) {
   );
 
   useFrame(({ scene, camera, clock }) => {
+    if (camera.userData.sceneIdle) {
+      if (!cleared.current) gl.clear();
+      cleared.current = true;
+      return;
+    }
+    cleared.current = false;
     // This frame is requested by the scene director. No independent render loop.
-    if (size.width < 800 || quality < 0.68) {
+    if (size.width < 800 || quality < .68 || camera.userData.brandHold) {
       gl.render(scene, camera);
       return;
     }

@@ -4,7 +4,7 @@ import { useEffect, useRef, type ReactNode } from "react";
 import { gsap } from "gsap";
 
 /** One finite arrival per card. The grid and the independent flip never move. */
-export default function ProjectArrival({ children, id = "project-list" }: { children: ReactNode; id?: string }) {
+export default function ProjectArrival({ children, id = "project-list", className = "" }: { children: ReactNode; id?: string; className?: string }) {
   const gallery = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -70,12 +70,20 @@ export default function ProjectArrival({ children, id = "project-list" }: { chil
       card.dataset.arrival = paused() ? "settled" : "waiting";
       // Keyboard and pointer access always win over the decorative entrance.
       card.addEventListener("focusin", () => settle(card), { signal });
-      card.addEventListener("pointerdown", () => settle(card), { passive: true, signal });
+      card.addEventListener("pointerdown", event => {
+        const trigger = (event.target as Element).closest<HTMLButtonElement>(".flip-card__open");
+        const arriving = card.dataset.arrival === "flying";
+        // Settling moves the flying target. Complete this first press before its
+        // screen position changes, rather than requiring the visitor to retry.
+        if (arriving && trigger && event.button === 0) {
+          event.preventDefault(); settle(card); trigger.click();
+        } else settle(card);
+      }, { signal });
     });
     const watch = () => {
       observer?.disconnect();
       const tallest = Math.max(1, ...cards.map((card) => card.offsetHeight));
-      const threshold = innerWidth < 768 ? .12 : Math.min(.36, innerHeight / tallest * .55);
+      const threshold = Math.min(.36, innerHeight / tallest * .55);
       observer = new IntersectionObserver((entries) => {
         if (signal.aborted) return;
         for (const entry of entries) {
@@ -110,5 +118,5 @@ export default function ProjectArrival({ children, id = "project-list" }: { chil
     };
   }, []);
 
-  return <div ref={gallery} id={id} className="project-gallery project-arrivals">{children}</div>;
+  return <div ref={gallery} id={id} className={`project-gallery project-arrivals ${className}`}>{children}</div>;
 }

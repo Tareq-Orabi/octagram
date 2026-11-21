@@ -1,4 +1,5 @@
 import type { Group } from "three";
+import type { PaletteColors } from "./palette-shader";
 
 export interface ScenePointer {
   x: number;
@@ -15,6 +16,7 @@ export interface SceneModel {
   ) => void;
   dispose?: () => void;
   ready?: Promise<unknown>;
+  setPalette?: (colors: PaletteColors, weight: number) => void;
   setOpacity?: (opacity: number) => void;
   setSpread?: (spread: number) => void;
   setTunnel?: (amount: number) => void;

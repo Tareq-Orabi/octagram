@@ -56,14 +56,14 @@ export const siteConfig: SiteConfig = {
   ],
   projects: [
     {
-      title: "SIX SENSES",
+      title: "OCTACARE",
       subtitle: "Clinic Management System",
       industry: "Healthcare",
       category: "Custom Software Development",
       description:
-        "Six Senses is a specialized clinic management system developed to support the administrative, clinical, and financial operations of a healthcare facility.",
+        "OctaCare is a clinic management system built for Six Senses, supporting the administrative, clinical, and financial work of the healthcare team.",
       overview: [
-        "Six Senses is a specialized clinic management system developed to support the administrative, clinical, and financial operations of a healthcare facility.",
+        "OctaCare is a clinic management system built for Six Senses, supporting the administrative, clinical, and financial work of the healthcare team.",
         "The solution brings essential operational workflows into a unified digital environment, enabling more structured management of appointments, patient information, treatment sessions, and financial activities.",
       ],
       status: "Delivered",
@@ -87,7 +87,6 @@ export const siteConfig: SiteConfig = {
     },
     {
       title: "OCTACLUB",
-      status: "In development",
       subtitle: "Learning Platform · THINK AI",
       industry: "Medical & Technical Education",
       category: "Learning Platform",
@@ -107,14 +106,14 @@ export const siteConfig: SiteConfig = {
       ],
     },
     {
-      title: "THAAERFIT",
+      title: "OCTAFITNESS",
       subtitle: "Online Fitness Coaching Website",
       industry: "Fitness & Wellness",
       category: "Web Development & Digital Experience",
       description:
-        "ThaaerFit is a digital presence for an online fitness coaching service focused on strength training and nutrition planning.",
+        "OctaFitness is the digital experience built for ThaaerFit, an online fitness coaching service focused on strength training and nutrition planning.",
       overview: [
-        "ThaaerFit is a digital presence for an online fitness coaching service focused on strength training and nutrition planning.",
+        "OctaFitness is the digital experience built for ThaaerFit, an online fitness coaching service focused on strength training and nutrition planning.",
         "The website presents the coaching brand and its services through an accessible online experience, helping prospective clients discover its fitness and coaching offerings.",
       ],
       value: [

@@ -7,13 +7,14 @@ const directions: readonly Direction[] = ["left", "right", "up", "down"];
 
 /** The front alone establishes the card's intrinsic responsive dimensions. */
 export default function ProjectFlipCard({
-  id, className, title, front, children,
+  id, className, title, front, children, projectHref,
 }: {
   id?: string;
   className: string;
   title: string;
   front: ReactNode;
   children: ReactNode;
+  projectHref?: string;
 }) {
   const uid = useId();
   const [open, setOpen] = useState(false);
@@ -37,7 +38,9 @@ export default function ProjectFlipCard({
     const sync = () => { reduced.current = media.matches; if (media.matches) unlock(); };
     sync();
     media.addEventListener("change", sync);
-    return () => { media.removeEventListener("change", sync); window.clearTimeout(timer.current); };
+    const motion = (event: Event) => { if ((event as CustomEvent<boolean>).detail) unlock(); };
+    window.addEventListener("octagram:motion", motion);
+    return () => { media.removeEventListener("change", sync); window.removeEventListener("octagram:motion", motion); window.clearTimeout(timer.current); };
   }, []);
 
   useLayoutEffect(() => {
@@ -122,8 +125,9 @@ export default function ProjectFlipCard({
           ><span aria-hidden="true">+</span></button>
         </div>
         <div className="flip-card__face flip-card__back" aria-hidden={!open} inert={!open}>
-          <header ref={backHeader} className="flip-card__back-header">
+          <header ref={backHeader} className={`flip-card__back-header${projectHref ? " flip-card__back-header--linked" : ""}`}>
             <h3 id={`${uid}-title`}>{title}</h3>
+            <div className="flip-card__back-actions">
             <button
               ref={backButton}
               type="button"
@@ -132,6 +136,14 @@ export default function ProjectFlipCard({
               aria-disabled={busy || undefined}
               onClick={() => turn(false)}
             ><span aria-hidden="true">↶</span> Back</button>
+            {projectHref && <a
+              className="flip-card__visit"
+              href={projectHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Visit ${title} website (opens in a new tab)`}
+            >Visit site <span aria-hidden="true">↗</span></a>}
+            </div>
           </header>
           <div
             ref={scrollArea}

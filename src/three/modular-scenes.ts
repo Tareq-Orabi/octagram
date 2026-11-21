@@ -1,4 +1,4 @@
-import { assemblyOffset, logoPassagePose } from "./choreography";
+import { assemblyOffset, logoPassagePose, ambientFlowPose, evaluateNarrative } from "./choreography";
 import * as Three from "three";
 import { SVGLoader } from "three/addons/loaders/SVGLoader.js";
 import {
@@ -8,6 +8,7 @@ import {
   type LogoGradient,
 } from "./brand-paths";
 import type { SceneModel, ScenePointer } from "./types";
+import { createPaletteUniforms, paletteShader, setPaletteUniforms } from "./palette-shader";
 // All outlines and gradient placements come from the owner's original PDF.
 // The four small internal pieces stay attached to their respective outer module.
 const clamp = (value: number, low = 0, high = 1) =>
@@ -48,8 +49,8 @@ function gradientTexture(THREE: typeof Three, definition: LogoGradient) {
   texture.needsUpdate = true;
   return texture;
 }
-function createSurfaceFactory(THREE: typeof Three) {
-  const materials: Three.MeshPhysicalMaterial[] = [];
+function createSurfaceFactory(THREE: typeof Three, palette?: ReturnType<typeof createPaletteUniforms>) {
+  const materials: Three.Material[] = [];
   const textures = new Map<string, Three.DataTexture>();
   function materialFor(path: LogoPath) {
     const definition = LOGO_GRADIENTS[path.gradientId];
@@ -74,17 +75,17 @@ function createSurfaceFactory(THREE: typeof Three) {
       octagramRadial: { value: isRadial ? 1 : 0 },
       octagramEdgeShade: { value: 0.82 },
     };
-    const material = new THREE.MeshPhysicalMaterial({
+    const material = palette ? new THREE.MeshPhysicalMaterial({
       color: 0xffffff,
       roughness: 0.46,
       metalness: 0.12,
       clearcoat: 0.15,
       clearcoatRoughness: 0.55,
-    });
+    }) : new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
     // Evaluate the gradient per fragment; the source radial fills must not be
     // approximated by a few vertex colors across the large triangulated faces.
     material.onBeforeCompile = (shader) => {
-      Object.assign(shader.uniforms, shaderUniforms);
+      Object.assign(shader.uniforms, shaderUniforms, palette);
       shader.vertexShader = `attribute vec2 brandPosition;
 attribute float brandFace;
 varying vec2 vBrandPosition;
@@ -95,7 +96,8 @@ ${shader.vertexShader}`.replace(
 vBrandPosition = brandPosition;
 vBrandFace = brandFace;`,
       );
-      shader.fragmentShader = `uniform sampler2D octagramGradient;
+      shader.fragmentShader = `${palette ? paletteShader : ""}
+uniform sampler2D octagramGradient;
 uniform vec2 octagramStart;
 uniform vec2 octagramDirection;
 uniform float octagramRadial;
@@ -110,10 +112,11 @@ float octagramLinearT = dot(octagramDelta, octagramDirection) / dot(octagramDire
 float octagramRadialT = length(octagramDelta) / length(octagramDirection);
 float octagramT = clamp(mix(octagramLinearT, octagramRadialT, octagramRadial), 0.0, 1.0);
 vec3 octagramColor = texture2D(octagramGradient, vec2(octagramT, 0.5)).rgb;
-diffuseColor.rgb *= octagramColor * mix(octagramEdgeShade, 1.0, vBrandFace);`,
+diffuseColor.rgb *= octagramColor * mix(octagramEdgeShade, 1.0, vBrandFace);
+${palette ? "diffuseColor.rgb = octagramTint(diffuseColor.rgb);" : ""}`,
       );
     };
-    material.customProgramCacheKey = () => "octagram-source-gradient-v1";
+    material.customProgramCacheKey = () => palette ? "octagram-ambient-gradient" : "octagram-source-gradient-v1";
     materials.push(material);
     return material;
   }
@@ -248,7 +251,8 @@ export async function createModules(
 ): Promise<SceneModel> {
   const group = new THREE.Group();
   group.name = "Octagram — three depths of floating source modules";
-  const surfaces = createSurfaceFactory(THREE);
+  const palette = createPaletteUniforms(THREE);
+  const surfaces = createSurfaceFactory(THREE, palette);
   const materials: Three.LineBasicMaterial[] = [];
   const count = 250,
     goldenAngle = Math.PI * (3 - Math.sqrt(5));
@@ -271,7 +275,7 @@ export async function createModules(
   type SolidBatch = {
     object: Three.InstancedMesh<
       Three.ExtrudeGeometry,
-      Three.MeshPhysicalMaterial
+      Three.MeshPhysicalMaterial | Three.MeshBasicMaterial
     >;
   };
   type Unit = {
@@ -425,6 +429,7 @@ export async function createModules(
     });
     material.userData.sourceColor = source.color;
     material.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, palette);
       shader.vertexShader = `attribute vec3 instanceTranslation;
 attribute vec4 instanceQuaternion;
 attribute float instanceScale;
@@ -436,10 +441,11 @@ ${shader.vertexShader}`.replace(
 vec3 transformed = p + 2.0 * cross(instanceQuaternion.xyz, cross(instanceQuaternion.xyz, p) + instanceQuaternion.w * p) + instanceTranslation;
 vAmbientOpacity = instanceOpacity;`,
       );
-      shader.fragmentShader = `varying float vAmbientOpacity;
+      shader.fragmentShader = `${paletteShader}
+varying float vAmbientOpacity;
 ${shader.fragmentShader}`.replace(
         "#include <color_fragment>",
-        "#include <color_fragment>\ndiffuseColor.a *= vAmbientOpacity;",
+        "#include <color_fragment>\ndiffuseColor.a *= vAmbientOpacity;\ndiffuseColor.rgb = octagramTint(diffuseColor.rgb);",
       );
     };
     material.customProgramCacheKey = () => "octagram-instanced-contour-v1";
@@ -555,7 +561,7 @@ ${shader.fragmentShader}`.replace(
       }
     }
   }
-  let tunnel = 0;
+  let tunnel = 0, flowTime = 0;
   const tunnelPosition = new THREE.Vector3();
   const target = new THREE.Vector3(),
     rotation = new THREE.Euler(),
@@ -572,6 +578,7 @@ ${shader.fragmentShader}`.replace(
     const delta =
       previousTime === null ? 1 / 60 : clamp(time - previousTime, 0, 0.05);
     previousTime = time;
+    if (!reduced) flowTime += delta;
     transitionElapsed = reduced
       ? 1
       : Math.min(1, transitionElapsed + delta / 0.9);
@@ -580,6 +587,7 @@ ${shader.fragmentShader}`.replace(
     const pointerX = reduced ? 0 : clamp(pointer.x || 0, -1, 1),
       pointerY = reduced ? 0 : clamp(pointer.y || 0, -1, 1);
     const visibleCount = Math.round(count * (0.48 + quality * 0.52));
+    const story = evaluateNarrative(_progress, mobile, aspect < 1);
     for (const unit of units) {
       const { index, phase, depth } = unit;
       let targetScale: number;
@@ -605,6 +613,16 @@ ${shader.fragmentShader}`.replace(
         rotation.set(0, 0, 0);
         targetScale =
           index < visibleCount ? unit.width * (mobile ? 0.7 : 1) : 0;
+        const flow = ambientFlowPose(_progress, index, aspect, story.logo, flowTime);
+        if (!reduced && flow.blend > 0) {
+          tunnelPosition.set(flow.x, flow.y, flow.z);
+          target.lerp(tunnelPosition, flow.blend);
+          rotation.set(flow.pitch * flow.blend, flow.yaw * flow.blend, flow.roll * flow.blend);
+          const haloPiece = unit.solid && index % 3 === 1 && (!mobile || index % 2 === 0);
+          const copyClearance = smooth(2.85, 3.44, flow.x - story.logo.x);
+          const haloScale = haloPiece ? flow.scale * (mobile ? .57 : 1 - .82 * copyClearance) : 0;
+          targetScale *= 1 + (haloScale - 1) * flow.blend;
+        }
       }
       quaternion.setFromEuler(rotation);
       unit.position.lerpVectors(unit.fromPosition, target, transition);
@@ -668,6 +686,9 @@ ${shader.fragmentShader}`.replace(
     group,
     update,
     setService,
+    setPalette(colors, weight) {
+      setPaletteUniforms(palette, colors, weight);
+    },
     setTunnel(value: number) {
       tunnel = clamp(value);
     },

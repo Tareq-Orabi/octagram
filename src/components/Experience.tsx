@@ -20,7 +20,13 @@ import {
   type ShotPose,
 } from "@/three/choreography";
 import CinematicPost from "./CinematicPost";
+import { readPassageFrame, subscribePassageFrame } from "@/lib/chapter-playback";
 import { sampleLogoSurface } from "@/three/morph-targets";
+import { heroPalettes, heroPaletteEvent } from "@/lib/hero-palettes";
+
+const paletteColors = heroPalettes.map(({ tint }) => tint && ({
+  shadow: new THREE.Color(tint[0]), mid: new THREE.Color(tint[1]), light: new THREE.Color(tint[2]),
+}));
 
 type Surface = THREE.Material & {
   uniforms?: Record<string, { value: unknown }>;
@@ -130,9 +136,16 @@ function SceneDirector({ quality }: { quality: number }) {
   const { gl, camera, invalidate, size } = useThree();
   const [loaded, setLoaded] = useState<ManagedModel[]>([]);
   const models = useRef<Partial<Record<SceneName, ManagedModel>>>({});
+  const logoTargets = useRef<Float32Array | null>(null);
+  const solidMix = useRef(0);
+  const paletteIndex = useRef(0);
+  const paletteMix = useRef(0);
+  const [tint] = useState(() => ({
+    shadow: new THREE.Color(), mid: new THREE.Color(), light: new THREE.Color(),
+  }));
   const pending = useRef(new Set<SceneName>());
-  const logoSurface = useRef<Float32Array | null>(null);
   const bounds = useRef<Bounds>({} as Bounds);
+  const heroFrame = useRef<{ top: number; left: number; height: number; width: number } | null>(null);
   const rootsFrame = useRef({ offset: 0, left: 0, height: 200, width: 1, sticky: false });
   const stageElement = useRef<HTMLElement | null>(null);
   const clip = useRef("");
@@ -175,8 +188,10 @@ function SceneDirector({ quality }: { quality: number }) {
           return;
         }
         if (name === "logo") {
+          // Sample the original, fully assembled extrusion once. Both particle
+          // and solid representations then share the same local coordinates.
           model.update(0, 1, { x: 0, y: 0 }, true);
-          logoSurface.current = sampleLogoSurface(model.group, undefined, 1);
+          logoTargets.current = sampleLogoSurface(model.group, undefined, 1);
         }
         model.setViewport?.(
           gl.domElement.clientWidth,
@@ -199,10 +214,7 @@ function SceneDirector({ quality }: { quality: number }) {
         document.documentElement.classList.remove(`fallback-${name}`);
         if (models.current.brain && !lost.current)
           document.documentElement.classList.add("has-webgl");
-        if (name === "brain")
-          window.dispatchEvent(
-            new CustomEvent("octagram:ready", { detail: "brain" }),
-          );
+        window.dispatchEvent(new CustomEvent("octagram:ready", { detail: name }));
         invalidate();
       } catch (error) {
         model?.dispose?.();
@@ -234,6 +246,21 @@ function SceneDirector({ quality }: { quality: number }) {
     invalidate();
   }, [size.width, size.height, invalidate]);
 
+  useEffect(() => subscribePassageFrame(invalidate), [invalidate]);
+
+  useEffect(() => {
+    function setPalette(id: string | undefined) {
+      paletteIndex.current = Math.max(0, heroPalettes.findIndex(item => item.id === id));
+      invalidate();
+    }
+    function receivePalette(event: Event) {
+      setPalette((event as CustomEvent<string>).detail);
+    }
+    setPalette(document.getElementById("home")?.dataset.heroPalette);
+    window.addEventListener(heroPaletteEvent, receivePalette);
+    return () => window.removeEventListener(heroPaletteEvent, receivePalette);
+  }, [invalidate]);
+
   useEffect(() => {
     generation.current += 1;
     alive.current = true;
@@ -257,6 +284,13 @@ function SceneDirector({ quality }: { quality: number }) {
           readHeight: id === "vision" ? section?.querySelector<HTMLElement>(".vision-frame")?.offsetHeight : undefined,
         };
       }
+      const brainWindow = window.matchMedia("(max-width: 800px)").matches
+        ? document.querySelector(".hero-artwork")?.getBoundingClientRect()
+        : null;
+      heroFrame.current = brainWindow ? {
+        top: brainWindow.top + window.scrollY, left: brainWindow.left,
+        height: brainWindow.height, width: brainWindow.width,
+      } : null;
       const roots = document.querySelector<HTMLElement>(".roots-handoff > .jordan");
       const planetWindow = roots?.querySelector<HTMLElement>(".roots-planet-window");
       if (roots && planetWindow) {
@@ -280,11 +314,12 @@ function SceneDirector({ quality }: { quality: number }) {
       ? 1
       : 0;
     const enter = () => {
+      if (entrance.current.progress >= 1 || gsap.isTweening(entrance.current)) return;
       gsap.killTweensOf(entrance.current);
       gsap.to(entrance.current, {
         progress: 1,
-        duration: 3,
-        ease: "none",
+        duration: 1.4,
+        ease: "power2.out",
         onUpdate: invalidate,
       });
       invalidate();
@@ -349,6 +384,8 @@ function SceneDirector({ quality }: { quality: number }) {
     window.addEventListener("resize", measure, { passive: true });
     document.addEventListener("pointerleave", onPointerLeave);
     window.addEventListener("octagram:entered", enter);
+    window.addEventListener("octagram:hero-prepare", enter);
+    if (document.documentElement.dataset.heroPrepared) enter();
     window.addEventListener("octagram:menu", onMenu);
     window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisibility);
@@ -368,6 +405,7 @@ function SceneDirector({ quality }: { quality: number }) {
       window.removeEventListener("resize", measure);
       document.removeEventListener("pointerleave", onPointerLeave);
       window.removeEventListener("octagram:entered", enter);
+      window.removeEventListener("octagram:hero-prepare", enter);
       window.removeEventListener("octagram:menu", onMenu);
       window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisibility);
@@ -377,7 +415,7 @@ function SceneDirector({ quality }: { quality: number }) {
         entry?.model.dispose?.(),
       );
       models.current = {};
-      logoSurface.current = null;
+      logoTargets.current = null;
       pending.current.clear();
       clearSceneFlags();
       if (stageElement.current) stageElement.current.style.clipPath = "";
@@ -401,33 +439,69 @@ function SceneDirector({ quality }: { quality: number }) {
       time = clock.elapsedTime * 0.65;
     const actualScroll = window.scrollY;
     const targetProgress = narrativeProgress(actualScroll, b, h);
-    // The camera passage follows actual scroll, so fast reversals cannot leave
-    // an old logo pose behind already-visible Roots content.
-    const progress = THREE.MathUtils.lerp(
-      narrativeProgress(y, b, h), targetProgress,
-      THREE.MathUtils.smoothstep(targetProgress, 2.65, 3.32),
-    );
+    // Copy, camera, mark and flying pieces share one finite chapter playhead.
+    const playback = readPassageFrame();
+    const progress = playback?.owns && (playback.running || (targetProgress >= 2.7 && targetProgress < 5))
+      ? playback.progress : targetProgress >= 3 ? targetProgress : narrativeProgress(y, b, h);
     if (actualScroll >= b.team.top && actualScroll + h < b.contact.top) {
-      Object.values(models.current).forEach((entry) => fade(entry, 0));
-      globeScene.current.visible = false;
+      if (!camera.userData.sceneIdle) {
+        Object.values(models.current).forEach((entry) => fade(entry, 0));
+        globeScene.current.visible = false;
+        camera.userData.sceneIdle = true;
+      }
       return; // Native scroll/resize/visibility listeners wake the demand loop.
     }
-    if (progress > 0.8 || actualScroll + h * 2 > b.vision.top)
+    camera.userData.sceneIdle = false;
+    if (progress > .8 || actualScroll + h * 2 > b.vision.top)
       void ensure("logo");
     if (progress > 2.7 || actualScroll + h * 2 > b.jordan.top)
       void ensure("globe");
     const current = evaluateNarrative(progress, mobile, size.width < 1024 && size.height > size.width);
+    const brainWindow = heroFrame.current;
+    const framing = brainWindow ? 1 - THREE.MathUtils.smoothstep(progress, .16, .77) : 0;
+    if (framing && brainWindow) {
+      const focal = h / (2 * Math.tan(25 * Math.PI / 180));
+      const worldPerPixel = (current.cameraZ - current.brain.z) / focal;
+      const centerX = brainWindow.left + brainWindow.width / 2 - size.width / 2;
+      const centerY = h / 2 - (brainWindow.top - actualScroll + brainWindow.height / 2);
+      const portraitWidth = Math.min(brainWindow.width, brainWindow.height * 1080 / 1020);
+      current.brain.x = THREE.MathUtils.lerp(current.brain.x, centerX * worldPerPixel, framing);
+      current.brain.y = THREE.MathUtils.lerp(current.brain.y, centerY * worldPerPixel, framing);
+      current.brain.scale = THREE.MathUtils.lerp(current.brain.scale, portraitWidth * worldPerPixel / 9.5, framing);
+    }
     const damping = 1 - Math.exp(-4 * Math.min(delta, 0.06));
     const input = smoothedPointer.current;
     input.x += (pointer.current.x - input.x) * damping;
     input.y += (pointer.current.y - input.y) * damping;
     const m = models.current;
+    const nextTint = paletteColors[paletteIndex.current];
+    if (nextTint) {
+      if (paletteMix.current < .001) {
+        tint.shadow.copy(nextTint.shadow);
+        tint.mid.copy(nextTint.mid);
+        tint.light.copy(nextTint.light);
+      } else {
+        tint.shadow.lerp(nextTint.shadow, damping);
+        tint.mid.lerp(nextTint.mid, damping);
+        tint.light.lerp(nextTint.light, damping);
+      }
+    }
+    paletteMix.current += ((nextTint ? 1 : 0) - paletteMix.current) * damping;
+    const paletteWeight = paletteMix.current;
+    m.brain?.model.setPalette?.(tint, paletteWeight);
+    m.modules?.model.setPalette?.(tint, paletteWeight * (1 - current.brainMorph));
+    // A timed dissolve survives a quick scroll or direct entry into the reading
+    // hold. Both representations keep the same world transform throughout it.
+    const materializing = Boolean(logoTargets.current) && progress >= 2.94 && progress <= 3.32;
+    if (materializing) solidMix.current = THREE.MathUtils.damp(solidMix.current, current.logo.opacity, 3.2, Math.min(delta, .1));
+    else solidMix.current = progress < 2.94 ? 0 : 1;
+    const brainOpacity = materializing ? 1 - solidMix.current : current.brain.opacity;
+    const logoOpacity = (materializing ? solidMix.current : current.logo.opacity) * (playback?.visionReveal ?? 1);
 
     m.brain?.model.setReveal?.(entrance.current.progress);
-    m.brain?.model.setSpread?.(current.brainSpread);
-    if (logoSurface.current)
-      m.brain?.model.setMorph?.(logoSurface.current, current.brainMorph);
-    if (current.brain.opacity > 0.002)
+    m.brain?.model.setSpread?.(logoTargets.current ? current.brainSpread : 0);
+    if (logoTargets.current) m.brain?.model.setMorph?.(logoTargets.current, current.brainMorph);
+    if (brainOpacity > 0.002)
       m.brain?.model.update(
         time,
         progress,
@@ -435,12 +509,12 @@ function SceneDirector({ quality }: { quality: number }) {
         false,
       );
     pose(m.brain, current.brain);
-    fade(m.brain, current.brain.opacity);
+    fade(m.brain, brainOpacity);
 
     m.logo?.model.setPassage?.(current.passage);
-    if (current.logo.opacity > 0.002) m.logo?.model.update(time, current.assembly, input, false);
+    if (logoOpacity > 0.002) m.logo?.model.update(time, current.assembly, input, false);
     pose(m.logo, current.logo);
-    fade(m.logo, current.logo.opacity * (actualScroll < b.team.top ? 1 : 0));
+    fade(m.logo, logoOpacity * (actualScroll < b.team.top ? 1 : 0));
 
     const frame = rootsFrame.current;
     const sectionTop = frame.sticky ? Math.max(0, b.jordan.top - actualScroll) : b.jordan.top - actualScroll;
@@ -477,7 +551,8 @@ function SceneDirector({ quality }: { quality: number }) {
       m.modules.model.group.position.set(0, 0, 0);
       fade(
         m.modules,
-        current.ambientOpacity *
+        current.ambientOpacity * (1 + .22 * paletteWeight) *
+        (1 - framing * .5) *
         entrance.current.progress *
         (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
       );
@@ -490,6 +565,7 @@ function SceneDirector({ quality }: { quality: number }) {
     camera.rotation.x +=
       (-0.018 * input.y * cameraMotion - camera.rotation.x) * damping;
     camera.position.z = current.cameraZ;
+    camera.userData.brandHold = progress >= 2.96 && progress <= 3.33 && logoOpacity > .7;
     camera.userData.opticalFocus = progress >= 3.86 && progress < 5.7
       ? 10 : Math.max(.25, current.cameraZ);
     if (preciseCamera) camera.rotation.set(0, 0, 0);
@@ -498,6 +574,8 @@ function SceneDirector({ quality }: { quality: number }) {
     canvas.dataset.brainParticles = String(
       m.brain?.model.group.userData.particleCount ?? 0,
     );
+    canvas.dataset.brainMorph = (logoTargets.current ? current.brainMorph : 0).toFixed(3);
+    canvas.dataset.brainSpread = (logoTargets.current ? current.brainSpread : 0).toFixed(3);
     if (m.logo)
       canvas.dataset.logoRotation = m.logo.model.group.rotation
         .toArray()
@@ -506,10 +584,10 @@ function SceneDirector({ quality }: { quality: number }) {
     canvas.dataset.choreography = "logo-passage-roots";
     canvas.dataset.cameraDepth = current.cameraZ.toFixed(3);
     canvas.dataset.logoPassage = current.passage.toFixed(3);
+    canvas.dataset.ambientFlow = progress >= 2.6 && progress < 3.85 ? "logo-axis" : "ambient";
     canvas.dataset.brainYaw = current.brain.yaw.toFixed(3);
-    canvas.dataset.brainSpread = current.brainSpread.toFixed(3);
-    canvas.dataset.brainMorph = current.brainMorph.toFixed(3);
-    canvas.dataset.scrollScrub = "native-damped";
+    canvas.dataset.scrollScrub = playback?.owns ? "chapter-playback" : "native-damped";
+    canvas.dataset.passagePhase = playback?.phase ?? "native";
     canvas.dataset.logoAssembly = current.assembly.toFixed(3);
     canvas.dataset.brainDepth = current.brain.z.toFixed(3);
     canvas.dataset.globeDepth = current.globe.z.toFixed(3);

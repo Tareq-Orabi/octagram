@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { contactEmail } from "@/lib/site-config";
+import { readMotionPreference } from "@/lib/experience-preferences";
 
 /** Progressive enhancement for the server-rendered content. Every subscription is scoped to this mount. */
 export default function SiteInteractions() {
@@ -10,8 +11,7 @@ export default function SiteInteractions() {
     const { signal } = controller;
     const root = document.documentElement;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    root.classList.toggle("js-motion", !reduced.matches);
-    const desktop = window.matchMedia("(min-width: 801px)");
+    root.classList.toggle("js-motion", !reduced.matches && !readMotionPreference());
     const timers = new Set<number>();
     const objectUrls = new Set<string>();
     const frames = new Set<number>();
@@ -47,77 +47,6 @@ export default function SiteInteractions() {
         signal,
       });
     }
-    const menuButton = query<HTMLButtonElement>(".menu-toggle");
-    const menu = query<HTMLDivElement>("#mobile-menu");
-    const main = query<HTMLElement>("main");
-    const footer = query<HTMLElement>("footer");
-    function setMenu(open: boolean, restoreFocus = true) {
-      menu.hidden = !open;
-      menuButton.setAttribute("aria-expanded", String(open));
-      menuButton.setAttribute("aria-label", open ? "Close menu" : "Open menu");
-      document.body.classList.toggle("menu-open", open);
-      window.dispatchEvent(
-        new CustomEvent<boolean>("octagram:menu", { detail: open }),
-      );
-      main.inert = open;
-      footer.inert = open;
-      if (open) menu.querySelector<HTMLAnchorElement>("a")?.focus();
-      else if (restoreFocus) menuButton.focus();
-    }
-    listen(menuButton, "click", () => setMenu(menu.hidden));
-    document
-      .querySelectorAll<HTMLAnchorElement>(".mobile-menu a, .header a")
-      .forEach((link) =>
-        listen(link, "click", () => {
-          if (!menu.hidden) setMenu(false, false);
-        }),
-      );
-    listen<KeyboardEvent>(document, "keydown", (event) => {
-      if (menu.hidden) return;
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setMenu(false);
-      }
-      if (event.key === "Tab") {
-        const focusable = [
-          ...document.querySelectorAll<HTMLElement>(
-            ".header a, .header button, .mobile-menu a, .mobile-menu button",
-          ),
-        ].filter((element) => element.getClientRects().length);
-        const first = focusable[0],
-          last = focusable.at(-1);
-        if (event.shiftKey && document.activeElement === first && last) {
-          event.preventDefault();
-          last.focus();
-        }
-        if (!event.shiftKey && document.activeElement === last && first) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    });
-    listen<MediaQueryListEvent>(desktop, "change", (event) => {
-      if (event.matches && !menu.hidden) setMenu(false, false);
-    });
-
-    const sectionObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          document
-            .querySelectorAll<HTMLAnchorElement>(".desktop-nav a")
-            .forEach((link) => {
-              if (link.hash === `#${entry.target.id}`)
-                link.setAttribute("aria-current", "location");
-              else link.removeAttribute("aria-current");
-            });
-        });
-      },
-      { rootMargin: "-15% 0px -60% 0px" },
-    );
-    document
-      .querySelectorAll("main section[id]")
-      .forEach((element) => sectionObserver.observe(element));
     const revealObserver = new IntersectionObserver(
       (entries) =>
         entries.forEach((entry) => {
@@ -145,22 +74,24 @@ export default function SiteInteractions() {
     }
     prepareText();
     listen<MediaQueryListEvent>(reduced, "change", (event) => {
-      root.classList.toggle("js-motion", !event.matches);
+      root.classList.toggle("js-motion", !event.matches && !readMotionPreference());
       if (event.matches) enterExperience(true);
       else prepareText();
       window.dispatchEvent(
-        new CustomEvent<boolean>("octagram:motion", { detail: event.matches }),
+        new CustomEvent<boolean>("octagram:motion", { detail: event.matches || readMotionPreference() }),
       );
     });
 
     // Resource readiness releases the eye's final camera move; the eye owns timing.
     const loader = query<HTMLDivElement>(".site-loader");
     const ready = { font: false, image: false, scene: false };
-    let entered = false;
+    let entered = false, entryRequested = false;
     const showLoader =
+      !root.dataset.introTimedOut &&
       !reduced.matches &&
+      !readMotionPreference() &&
       !new URLSearchParams(location.search).has("skiploader") &&
-      !location.hash;
+      (!location.hash || location.hash === "#home");
     delete loader.dataset.eyeReady;
     function enterExperience(immediate = false) {
       if (entered || signal.aborted) return;
@@ -176,15 +107,31 @@ export default function SiteInteractions() {
         () => {
           root.classList.remove("site-entering");
           loader.hidden = true;
+          root.dataset.heroVisible = "true";
+          window.dispatchEvent(new Event("octagram:hero-visible"));
         },
-        immediate ? 0 : 850,
+        immediate ? 0 : 450,
       );
     }
     function updateReadiness() {
       if (!entered && !signal.aborted && Object.values(ready).every(Boolean))
         loader.dataset.eyeReady = "true";
     }
-    listen(window, "octagram:intro-complete", () => enterExperience());
+    function requestEntry() {
+      if (entered || entryRequested) return;
+      entryRequested = true;
+      if (root.dataset.heroLayoutReady) { enterExperience(); return; }
+      if (!root.dataset.heroPrepared) {
+        root.dataset.heroPrepared = "true";
+        window.dispatchEvent(new Event("octagram:hero-prepare"));
+      }
+      // Wait for stable typography, then let the visible hero perform its decode.
+      later(enterExperience, 1300);
+    }
+    listen(window, "octagram:hero-layout-ready", () => { if (entryRequested) enterExperience(); });
+    listen(window, "octagram:intro-complete", requestEntry);
+    listen(window, "octagram:intro-skip", () => enterExperience(true));
+    root.dataset.introCoordinated = "true";
     if (showLoader) {
       root.classList.add("site-loading");
       loader.hidden = false;
@@ -227,7 +174,7 @@ export default function SiteInteractions() {
       }
     });
     // Failed resources cannot hold the visitor behind the opening.
-    later(() => enterExperience(true), 8500);
+    later(requestEntry, 8500);
     listen<KeyboardEvent>(document, "keydown", (event) => {
       if (!entered && ["Tab", "Escape"].includes(event.key))
         enterExperience(true);
@@ -235,9 +182,26 @@ export default function SiteInteractions() {
 
     const header = query<HTMLElement>(".header");
     let scrollFrame = 0;
+    let scrollLimit = Math.max(0, root.scrollHeight - root.clientHeight);
+    let lastScroll = Math.max(0, Math.min(scrollLimit, window.scrollY));
+    let travel = 0, compactHeader = false;
+    function measureScrollLimit() {
+      scrollLimit = Math.max(0, root.scrollHeight - root.clientHeight);
+      lastScroll = Math.min(lastScroll, scrollLimit);
+    }
     function updateScrollUI() {
       scrollFrame = 0;
-      header.classList.toggle("is-scrolled", window.scrollY > 1);
+      const position = Math.max(0, Math.min(scrollLimit, window.scrollY));
+      const delta = position - lastScroll;
+      lastScroll = position;
+      // Keep the dock stable through tiny reversals and viewport rubber-banding.
+      if (delta) travel = Math.sign(delta) === Math.sign(travel) ? travel + delta : delta;
+      const next = position <= 4 ? false : Math.abs(travel) >= 9 ? travel > 0 : compactHeader;
+      if (position <= 4 || Math.abs(travel) >= 9) travel = 0;
+      if (next !== compactHeader) {
+        compactHeader = next;
+        header.classList.toggle("is-compact", next);
+      }
     }
     listen(
       window,
@@ -247,7 +211,9 @@ export default function SiteInteractions() {
       },
       { passive: true },
     );
-    updateScrollUI();
+    const headerLayout = new ResizeObserver(measureScrollLimit);
+    headerLayout.observe(query("main"));
+    listen(window, "resize", measureScrollLimit, { passive: true });
 
     const dialog = query<HTMLDialogElement>("#brief-dialog");
     const form = query<HTMLFormElement>("#contact-form");
@@ -260,6 +226,11 @@ export default function SiteInteractions() {
       const value = (key: string) => String(data.get(key) || "").trim();
       briefText = `OCTAGRAM — PROJECT BRIEF\n\nName: ${value("name")}\nEmail: ${value("email")}\nInterest: ${value("interest")}\n\nTHE IDEA\n${value("message")}`;
       preview.textContent = briefText;
+      query<HTMLElement>("#brief-person").textContent = value("name");
+      query<HTMLElement>("#brief-email").textContent = value("email");
+      query<HTMLElement>("#brief-interest").textContent = value("interest");
+      query<HTMLElement>("#brief-idea").textContent = value("message");
+      query<HTMLAnchorElement>("#whatsapp-brief").href = `https://wa.me/962780668491?text=${encodeURIComponent(briefText)}`;
       status.textContent = "";
       if (contactEmail) {
         const link = query<HTMLAnchorElement>("#email-brief");
@@ -289,6 +260,7 @@ export default function SiteInteractions() {
           status.textContent = "Brief copied. Ready when you are.";
       } catch {
         if (signal.aborted) return;
+        preview.closest("details")?.setAttribute("open", "");
         const range = document.createRange();
         range.selectNodeContents(preview);
         const selection = window.getSelection();
@@ -321,9 +293,10 @@ export default function SiteInteractions() {
 
     return () => {
       controller.abort();
-      sectionObserver.disconnect();
       revealObserver.disconnect();
       readyObserver.disconnect();
+      headerLayout.disconnect();
+      header.classList.remove("is-compact");
       frames.forEach(cancelAnimationFrame);
       timers.forEach(clearTimeout);
       objectUrls.forEach((url) => URL.revokeObjectURL(url));
@@ -335,7 +308,6 @@ export default function SiteInteractions() {
         "experience-entered",
       );
       loader.hidden = true;
-      setMenu(false, false);
       if (dialog.open) dialog.close();
     };
   }, []);

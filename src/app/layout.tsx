@@ -7,9 +7,19 @@ import "./journey.css";
 import "./eye-outro.css";
 import "./surface-motion.css";
 import "./cinematic.css";
-import "./team-profiles.css";
-import "./project-partnership.css";
-import "./mobile.css";
+import "./chapter-motion.css";
+import "./polish.css";
+import "./refinements.css";
+import "./studios.css";
+import "./team-stage.css";
+import "./v14.css";
+import "./discovery.css";
+import "./stage-refinements.css";
+import "./team-workshops.css";
+import "./work-showcase.css";
+import "./portfolio-studio.css";
+import "./interaction-polish.css";
+import "./working-together.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.siteUrl),
@@ -32,8 +42,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#080909",
+  themeColor: "#000000",
   colorScheme: "dark",
+  viewportFit: "cover",
 };
 
 const organization = {
@@ -49,7 +60,25 @@ const organization = {
 };
 
 // Runs before paint; no JavaScript / reduced motion / deep links keep direct access.
-const initializeIntro = `try{document.documentElement.classList.add("js-enabled");if((location.pathname==='/'||location.pathname==='/index.html')&&!location.hash&&!new URLSearchParams(location.search).has('skiploader')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){document.documentElement.classList.add('site-loading');setTimeout(function(){var r=document.documentElement;if(r.classList.contains('site-loading')){r.classList.remove('site-loading','site-entering');r.classList.add('experience-entered');var l=document.querySelector('.site-loader');if(l)l.hidden=true;dispatchEvent(new Event('octagram:entered'))}},10000)}}catch(e){}`;
+const initializeIntro = `try {
+  const r = document.documentElement;
+  r.classList.add('js-enabled');
+  r.classList.toggle('journey-paused', matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if ((location.pathname === '/' || location.pathname === '/index.html') && (!location.hash || location.hash === '#home') && !new URLSearchParams(location.search).has('skiploader') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    r.classList.add('site-loading');
+    setTimeout(function () {
+      if (!r.classList.contains('site-loading')) return;
+      if (r.dataset.introCoordinated === 'true') { dispatchEvent(new Event('octagram:intro-complete')); return; }
+      r.dataset.introTimedOut = 'true'; r.dataset.heroLayoutReady = 'true'; r.dataset.heroTextReady = 'true'; r.dataset.heroVisible = 'true';
+      document.querySelectorAll('.decode-row').forEach(function (e) { e.style.setProperty('--decode-reveal','1'); });
+      const h = document.querySelector('.binary-headline'); if (h) h.dataset.decode = 'settled';
+      const b = document.querySelector('.nav-brand'); if (b) b.dataset.brandPhase = 'settled';
+      r.classList.remove('site-loading','site-entering'); r.classList.add('experience-entered');
+      const l = document.querySelector('.site-loader'); if (l) l.hidden = true;
+      dispatchEvent(new Event('octagram:entered'));
+    }, 10000);
+  }
+} catch (e) {}`;
 
 export default function RootLayout({
   children,
@@ -57,7 +86,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark" data-octagram-build="octagram-contact-20261112" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" data-octagram-build="octagram-cinematic-20261121-34" suppressHydrationWarning>
       <head>
         <link
           rel="preload"

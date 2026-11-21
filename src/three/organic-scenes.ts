@@ -1,5 +1,6 @@
 import type * as Three from "three";
 import { clamp, disposeGroup } from "./scene-utils";
+import { createPaletteUniforms, paletteShader, setPaletteUniforms, type PaletteColors } from "./palette-shader";
 type ThreeModule = typeof Three;
 import {
   BRAIN_PARTICLE_COUNT as PARTICLE_COUNT,
@@ -65,17 +66,21 @@ export function createBrain(THREE: ThreeModule) {
     reveal = 1,
     spread = 0,
     morph = 0;
-  let previousX = POINTER_OFF,
+  let previousTime = 0,
+    previousX = POINTER_OFF,
     previousY = POINTER_OFF;
   let source = new Float32Array(0),
     sourceColors = new Float32Array(0),
     centers = new Float32Array(0);
-  let randoms = new Float32Array(0),
+  let velocities = new Float32Array(0),
+    randoms = new Float32Array(0),
     targets: Float32Array | null = null;
   let geometry: Three.InstancedBufferGeometry | null = null;
   let centerAttribute: Three.InstancedBufferAttribute | null = null;
   const viewport = new THREE.Vector2(1, 1);
+  const palette = createPaletteUniforms(THREE);
   const uniforms = {
+    ...palette,
     uTime: { value: 0 },
     uOpacity: { value: 1 },
     uReveal: { value: 1 },
@@ -122,14 +127,15 @@ export function createBrain(THREE: ThreeModule) {
         vDepth=view\.z+10.;
         vReveal=show;
       }`,
-    fragmentShader: `uniform float uOpacity;
+    fragmentShader: `${paletteShader}
+      uniform float uOpacity;
       varying vec3 vColor;
       varying float vDepth, vReveal;
       void main(){
         float depthFade=smoothstep(-4.5,4.,vDepth);
         float alpha=depthFade*uOpacity*vReveal;
         if(alpha<.008)discard;
-        gl_FragColor=vec4(vColor,alpha);
+        gl_FragColor=vec4(octagramTint(vColor),alpha);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,
@@ -208,6 +214,7 @@ export function createBrain(THREE: ThreeModule) {
     offset += vertexCount * 12;
     const indices = new Uint16Array(buffer, offset, indexCount);
     centers = source.slice();
+    velocities = new Float32Array(count * 3);
     randoms = new Float32Array(count * 3);
     const random = seededRandom();
     for (let i = 0; i < randoms.length; i++) randoms[i] = random();
@@ -250,7 +257,7 @@ export function createBrain(THREE: ThreeModule) {
     reduced = false,
   ) {
     uniforms.uTime.value = reduced ? 0 : time;
-    uniforms.uInteractive.value = reduced ? 0 : 1;
+    uniforms.uInteractive.value = reduced ? 0 : 1 - morph;
     uniforms.uReveal.value = reduced ? 1 : reveal;
     uniforms.uSpread.value = spread;
     const px = reduced ? POINTER_OFF : pointer.x,
@@ -266,21 +273,38 @@ export function createBrain(THREE: ThreeModule) {
     uniforms.uPointer.value.set(px, py);
     previousX = px;
     previousY = py;
+    const frame = Math.min(2, Math.max(0.1, (time - previousTime) * 60 || 1));
+    previousTime = time;
     if (!centerAttribute) return;
+    const friction = Math.pow(0.892, frame),
+      spring = 0.006 * frame;
     const targetLength = targets?.length ?? 0;
-    // Scroll determines positions directly: reversing or jumping to a section
-    // must reconstruct the same sculpture without a spring chasing old targets.
-    // Pointer interaction and the living particle rotation remain in the shader.
+    const lock = Math.pow(morph, 8) * .16;
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const p = i * 3;
-      const enter = reduced ? 1 : clamp(reveal * 1.5 - randoms[p] * 0.5);
+      const p = i * 3,
+        order = randoms[p],
+        scatter = 1 + spread * (1 + randoms[p + 1] * 4);
+      const enter = reduced ? 1 : clamp(reveal * 1.5 - order * 0.5);
       const radius = 1 + (1 - enter) * (randoms[p + 2] * 1.4 - 0.7);
       for (let k = 0; k < 3; k++) {
         const index = p + k;
-        const target = targets && targetLength ? targets[index % targetLength] : source[index];
+        const target =
+          targets && targetLength
+            ? targets[index % targetLength]
+            : source[index];
         const base = source[index] + (target - source[index]) * morph;
-        const cloud = (randoms[index] - 0.5) * (k === 0 ? 22 : k === 1 ? 14 : 12);
-        centers[index] = (base + (cloud - base) * spread) * radius;
+        const desired = base * scatter * radius;
+        if (reduced) {
+          centers[index] = desired;
+          velocities[index] = 0;
+        } else {
+          velocities[index] =
+            (velocities[index] + (desired - centers[index]) * spring) *
+            friction;
+          centers[index] += velocities[index] * frame;
+          // Settle precisely on the sampled extrusion before the material handoff.
+          centers[index] += (desired - centers[index]) * lock;
+        }
       }
     }
     centerAttribute.needsUpdate = true;
@@ -294,6 +318,7 @@ export function createBrain(THREE: ThreeModule) {
     ready,
     update,
     setQuality,
+    setPalette: (colors: PaletteColors, weight: number) => setPaletteUniforms(palette, colors, weight),
     setReveal: (value: number) => {
       reveal = clamp(value);
     },
