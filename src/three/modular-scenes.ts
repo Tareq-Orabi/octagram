@@ -135,6 +135,7 @@ function extrudePath(
   scale: number,
   depth: number,
   bevel = 0.012,
+  compact = false,
 ) {
   const svg = `<svg xmlns="http\://www\.w3.org/2000/svg" viewBox="0 0 300 300"><path fill="#ffffff" d="${path.d}"/></svg>`;
   const parsed = new SVGLoader().parse(svg);
@@ -142,11 +143,11 @@ function extrudePath(
   const geometry = new THREE.ExtrudeGeometry(shapes, {
     depth: depth / scale,
     bevelEnabled: true,
-    bevelSegments: 3,
+    bevelSegments: compact ? 1 : 3,
     steps: 1,
     bevelSize: bevel / scale,
     bevelThickness: bevel / scale,
-    curveSegments: 12,
+    curveSegments: compact ? 5 : 12,
   });
   const position = geometry.getAttribute("position");
   const normal = geometry.getAttribute("normal");
@@ -190,6 +191,7 @@ function sceneDisposer(
 }
 export async function createLogo(
   THREE: typeof Three = Three,
+  compact = false,
 ): Promise<SceneModel> {
   const group = new THREE.Group();
   group.name = "Octagram — eight exact brand modules";
@@ -203,7 +205,7 @@ export async function createLogo(
     module.name = `Octagram ${source.id}`;
     for (const path of source.paths) {
       const mesh = new THREE.Mesh(
-        extrudePath(THREE, path, source.centroid, scale, 0.22),
+        extrudePath(THREE, path, source.centroid, scale, 0.22, .012, compact),
         surfaces.materialFor(path),
       );
       module.add(mesh);
@@ -248,13 +250,14 @@ export async function createLogo(
 /** 250 ambient units share 16 draw calls: eight satin batches and eight contours. */
 export async function createModules(
   THREE: typeof Three = Three,
+  compact = false,
 ): Promise<SceneModel> {
   const group = new THREE.Group();
   group.name = "Octagram — three depths of floating source modules";
   const palette = createPaletteUniforms(THREE);
   const surfaces = createSurfaceFactory(THREE, palette);
   const materials: Three.LineBasicMaterial[] = [];
-  const count = 250,
+  const count = compact ? 128 : 250,
     goldenAngle = Math.PI * (3 - Math.sqrt(5));
   const fraction = (value: number) => value - Math.floor(value);
   let selectedService = -1,
@@ -349,7 +352,7 @@ export async function createModules(
         back,
       );
     for (const shape of shapes) {
-      const contour = shape.getPoints(10);
+      const contour = shape.getPoints(compact ? 4 : 10);
       for (let index = 0; index < contour.length; index++) {
         const a = contour[index],
           b = contour[(index + 1) % contour.length];
@@ -470,6 +473,7 @@ ${shader.fragmentShader}`.replace(
       scale,
       0.24,
       0.018,
+      compact,
     );
     const solidObject = new THREE.InstancedMesh(
       solidGeometry,

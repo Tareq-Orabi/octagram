@@ -109,6 +109,7 @@ export default function SiteInteractions() {
           root.classList.remove("site-entering");
           loader.hidden = true;
           root.dataset.heroVisible = "true";
+          if (root.dataset.heroIntro) root.dataset.heroIntro = immediate ? "skipped" : "finished";
           window.dispatchEvent(new Event("octagram:hero-visible"));
         },
         immediate ? 0 : 450,
@@ -134,6 +135,7 @@ export default function SiteInteractions() {
     listen(window, "octagram:intro-skip", () => enterExperience(true));
     root.dataset.introCoordinated = "true";
     if (showLoader) {
+      root.dataset.heroIntro ??= "pending";
       root.classList.add("site-loading");
       loader.hidden = false;
     } else enterExperience(true);

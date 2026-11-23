@@ -1,11 +1,5 @@
-import Image, { type StaticImageData } from "next/image";
-import cartierCurtain from "@/assets/team/cartier-curtain.webp";
-import cartierWatch from "@/assets/team/cartier-watch-object.webp";
-import diorCampaign from "@/assets/team/gris-dior-campaign.webp";
-import lipStylo from "@/assets/team/lip-stylo-collection.webp";
-import hotelsArchive from "@/assets/team/the-real-hotels-archive.webp";
-import watchStudio from "@/assets/team/watch-studio.webp";
 import type { ReactNode } from "react";
+import RoleHeroGallery from "./RoleHeroGallery";
 import RoleReel from "./RoleReel";
 
 function PilotRoadmap() {
@@ -45,18 +39,6 @@ function ClientBrief() {
     <strong>Intake &amp; scheduling</strong>
     <span>Confirm the pilot owner</span>
   </div>;
-}
-
-function WebsiteReference({ image, name, alt, motion = "still" }: {
-  image: StaticImageData;
-  name: string;
-  alt: string;
-  motion?: "still" | "pan" | "object";
-}) {
-  return <figure className="role-study-surface role-site-reference" data-camera={motion}>
-    <Image src={image} alt={alt} draggable={false} sizes="(max-width: 767px) 25vw, 14vw"/>
-    <figcaption>{name}</figcaption>
-  </figure>;
 }
 
 function AgentRouter() {
@@ -125,32 +107,20 @@ function RelationStudy() {
   </div>;
 }
 
-const studies: { title: string; columns: [ReactNode[], ReactNode[]] }[] = [
-  { title: "Example project delivery studies", columns: [[<PilotRoadmap/>, <RiskReview/>], [<DeliveryBoard/>, <ClientBrief/>]] },
-  { title: "Design references", columns: [
-    [
-      <WebsiteReference image={diorCampaign} name="Gris Dior" alt="Gris Dior’s virtual campaign in a rose-colored landscape" motion="pan"/>,
-      <WebsiteReference image={hotelsArchive} name="The Real Hotels" alt="The Real Hotels homepage with oversized cream lettering on black"/>,
-      <WebsiteReference image={cartierWatch} name="Cartier" alt="A sculptural Cartier watch suspended above pale blue clouds" motion="object"/>,
-    ],
-    [
-      <WebsiteReference image={watchStudio} name="Prägen Hätlen" alt="A sculptural watch study from Prägen Hätlen’s product showcase" motion="object"/>,
-      <WebsiteReference image={cartierCurtain} name="Cartier" alt="The minimal Cartier Watches and Wonders landing page with a warm gold curtain"/>,
-      <WebsiteReference image={lipStylo} name="Lip Stylo" alt="A red and coral display of individual lipstick shades on a dark luxury product site" motion="pan"/>,
-    ],
-  ] },
-  { title: "Example AI agent workflow", columns: [[<AgentRouter/>, <AgentTool/>], [<AgentSources/>, <AgentChecks/>]] },
-  { title: "Data model", columns: [
+const studies: Record<number, { title: string; columns: [ReactNode[], ReactNode[]] }> = {
+  0: { title: "Example project delivery studies", columns: [[<PilotRoadmap/>, <RiskReview/>], [<DeliveryBoard/>, <ClientBrief/>]] },
+  2: { title: "Example AI agent workflow", columns: [[<AgentRouter/>, <AgentTool/>], [<AgentSources/>, <AgentChecks/>]] },
+  3: { title: "Data model", columns: [
     [<SchemaTable name="patients" fields={[["id", "PK"], ["name", "text"]]}/>, <RelationStudy/>],
     [<SchemaTable name="appointments" fields={[["id", "PK"], ["patient_id", "FK"], ["starts_at", "time"]]}/>, <QueryStudy/>],
   ] },
-];
+};
 
 export default function RolePrototypes({ index }: { index: number }) {
+  if (index === 1) return <RoleHeroGallery />;
   const study = studies[index];
 
   return <aside className="team-role-wing team-role-wing--left" aria-label={study.title}>
-    {index === 1 && <span className="role-reference-credit">Design references · Landing.love</span>}
     <div className="role-gallery">
       {study.columns.map((frames, column) => <div className="role-gallery-column" key={column}>
         <RoleReel frames={frames}/>

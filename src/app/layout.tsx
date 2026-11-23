@@ -71,10 +71,11 @@ const initializeIntro = `try {
   if (resumed) r.dataset.introRecovered = 'true';
   r.classList.toggle('journey-paused', matchMedia('(prefers-reduced-motion: reduce)').matches);
   if (!resumed && (location.pathname === '/' || location.pathname === '/index.html') && (!location.hash || location.hash === '#home') && !new URLSearchParams(location.search).has('skiploader') && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    r.classList.add('site-loading');
+    r.classList.add('site-loading'); r.dataset.heroIntro = 'pending';
     setTimeout(function () {
       if (!r.classList.contains('site-loading')) return;
       if (r.dataset.introCoordinated === 'true') { dispatchEvent(new Event('octagram:intro-complete')); return; }
+      delete r.dataset.heroIntro;
       r.dataset.introTimedOut = 'true'; r.dataset.heroLayoutReady = 'true'; r.dataset.heroTextReady = 'true'; r.dataset.heroVisible = 'true';
       document.querySelectorAll('.decode-row').forEach(function (e) { e.style.setProperty('--decode-reveal','1'); });
       const h = document.querySelector('.binary-headline'); if (h) h.dataset.decode = 'settled';
@@ -92,7 +93,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" data-theme="dark" data-octagram-build="octagram-cinematic-20261121-37" suppressHydrationWarning>
+    <html lang="en" data-theme="dark" data-octagram-build="octagram-cinematic-20261123-41" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: initializeIntro }} />
         <script

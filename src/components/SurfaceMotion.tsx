@@ -21,6 +21,7 @@ export default function SurfaceMotion() {
       ...document.querySelectorAll<HTMLElement>(".engineering-stage"),
     ];
     const visibleSections = new Set<HTMLElement>();
+    const fixedBounds = new Map<HTMLElement, { top: number; height: number }>();
     const moving = new Set<HTMLElement>();
     const poses = new Map(
       cards.map((el) => [el, { x: 0, y: 0, tx: 0, ty: 0 }]),
@@ -39,34 +40,21 @@ export default function SurfaceMotion() {
       if (stopped()) return;
       const dt = previous ? Math.min(now - previous, 64) : 16;
       previous = now;
-      // All geometry reads precede writes; idle pages schedule no JS frames.
-      const sectionReads = scrollDirty && !compact.matches
-        ? [...visibleSections].map((el) => ({
-          el,
-          rect: el.getBoundingClientRect(),
-        }))
-        : [];
-      const stepReads = scrollDirty && !compact.matches
-        ? steps.map((el) => ({ el, top: el.getBoundingClientRect().top }))
-        : [];
+      if (scrollDirty && !compact.matches) {
+        const scroll = window.scrollY, height = innerHeight;
+        for (const el of visibleSections) {
+          const box = fixedBounds.get(el);
+          if (!box) continue;
+          const t = Math.max(0, Math.min(1, (height * .8 + scroll - box.top) / (box.height + height * .5)));
+          el.style.setProperty("--section-progress", t.toFixed(3));
+          el.style.setProperty("--section-drift", `${((t - .5) * 22).toFixed(2)}px`);
+        }
+        for (const el of steps) {
+          const box = fixedBounds.get(el);
+          if (box) el.classList.toggle("stage-current", box.top - scroll < height * .65);
+        }
+      }
       scrollDirty = false;
-      sectionReads.forEach(({ el, rect }) => {
-        const t = Math.max(
-          0,
-          Math.min(
-            1,
-            (innerHeight * 0.8 - rect.top) / (rect.height + innerHeight * 0.5),
-          ),
-        );
-        el.style.setProperty("--section-progress", t.toFixed(3));
-        el.style.setProperty(
-          "--section-drift",
-          `${((t - 0.5) * 22).toFixed(2)}px`,
-        );
-      });
-      stepReads.forEach(({ el, top }) =>
-        el.classList.toggle("stage-current", top < innerHeight * 0.65),
-      );
       moving.forEach((el) => {
         const p = poses.get(el)!;
         const d = 1 - Math.exp(-dt / 110);
@@ -136,13 +124,26 @@ export default function SurfaceMotion() {
       if (!compact.matches) schedule();
     });
     [...cards, ...sections].forEach((el) => observer.observe(el));
+    function measure() {
+      if (signal.aborted || compact.matches) return;
+      const scroll = window.scrollY;
+      for (const element of [...sections, ...steps]) {
+        const rect = element.getBoundingClientRect();
+        fixedBounds.set(element, { top: rect.top + scroll, height: rect.height });
+      }
+      scrollDirty = true;
+      schedule();
+    }
+    const geometry = new ResizeObserver(measure);
+    [...sections, ...steps].forEach(element => geometry.observe(element));
+    void document.fonts.ready.then(measure);
     const onScroll = () => {
       if (compact.matches) return;
       scrollDirty = true;
       schedule();
     };
     window.addEventListener("scroll", onScroll, { passive: true, signal });
-    window.addEventListener("resize", onScroll, { passive: true, signal });
+    window.addEventListener("resize", measure, { passive: true, signal });
     const sync = () => {
       cancelAnimationFrame(frame);
       frame = 0;
@@ -159,6 +160,7 @@ export default function SurfaceMotion() {
         section.style.removeProperty("--section-progress");
         section.style.removeProperty("--section-drift");
       });
+      if (!compact.matches) measure();
       sync();
     }, { signal });
     window.addEventListener(
@@ -183,6 +185,7 @@ export default function SurfaceMotion() {
     return () => {
       abort.abort();
       observer.disconnect();
+      geometry.disconnect();
       cancelAnimationFrame(frame);
       document.documentElement.classList.remove("surfaces-paused");
       [...cards, ...sections].forEach((el) => {

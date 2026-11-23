@@ -11,12 +11,15 @@ import {
   type ReactNode,
 } from "react";
 import * as THREE from "three";
-import { gsap } from "gsap";
+import { measureArtwork } from "@/lib/scene-layout";
+import { brainRevealSeconds, initialBrainRevealTime } from "@/lib/experience-preferences";
 import type { SceneModel, SceneName, ScenePointer } from "@/three/types";
 import {
-  evaluateNarrative,
-  narrativeProgress,
+  framedNarrative,
+  sceneProgress,
   rootsGlobePose,
+  type ArtworkFrame,
+  type VisionWindow,
   type ShotPose,
 } from "@/three/choreography";
 import CinematicPost from "./CinematicPost";
@@ -132,7 +135,7 @@ class SceneBoundary extends Component<
   }
 }
 
-function SceneDirector({ quality }: { quality: number }) {
+function SceneDirector({ quality, compact, onFailure }: { quality: number; compact: boolean; onFailure: () => void }) {
   const { gl, camera, invalidate, size } = useThree();
   const [loaded, setLoaded] = useState<ManagedModel[]>([]);
   const models = useRef<Partial<Record<SceneName, ManagedModel>>>({});
@@ -145,7 +148,8 @@ function SceneDirector({ quality }: { quality: number }) {
   }));
   const pending = useRef(new Set<SceneName>());
   const bounds = useRef<Bounds>({} as Bounds);
-  const heroFrame = useRef<{ top: number; left: number; height: number; width: number } | null>(null);
+  const heroFrame = useRef<ArtworkFrame>(undefined);
+  const visionWindow = useRef<VisionWindow>(undefined);
   const rootsFrame = useRef({ offset: 0, left: 0, height: 200, width: 1, sticky: false });
   const stageElement = useRef<HTMLElement | null>(null);
   const clip = useRef("");
@@ -153,7 +157,10 @@ function SceneDirector({ quality }: { quality: number }) {
   const pointer = useRef<ScenePointer>({ x: 0, y: 0 });
   const smoothedPointer = useRef<ScenePointer>({ x: 0, y: 0 });
   const pointerActive = useRef(false);
-  const entrance = useRef({ progress: 0 });
+  const entrance = useRef({ elapsed: 0, progress: 0, started: false });
+  const heroVisible = useRef(false);
+  const nextFrame = useRef(0);
+  const debug = useRef(false);
   const globeScene = useRef({ elapsed: 0, visible: false });
   const menuOpen = useRef(false);
   const hidden = useRef(false);
@@ -173,15 +180,15 @@ function SceneDirector({ quality }: { quality: number }) {
       let model: SceneModel | undefined;
       try {
         if (name === "brain")
-          model = (await import("@/three/organic-scenes")).createBrain(THREE);
+          model = (await import("@/three/organic-scenes")).createBrain(THREE, compact);
         else if (name === "globe")
           model = (await import("@/three/globe-scene")).createGlobe(THREE);
         else if (name === "logo")
-          model = await (await import("@/three/logo-scene")).createLogoAsset();
+          model = await (await import("@/three/logo-scene")).createLogoAsset(THREE, compact);
         else
           model = await (
             await import("@/three/modular-scenes")
-          ).createModules(THREE);
+          ).createModules(THREE, compact);
         if (model.ready) await model.ready;
         if (!alive.current || startedInGeneration !== generation.current) {
           model.dispose?.();
@@ -191,12 +198,10 @@ function SceneDirector({ quality }: { quality: number }) {
           // Sample the original, fully assembled extrusion once. Both particle
           // and solid representations then share the same local coordinates.
           model.update(0, 1, { x: 0, y: 0 }, true);
-          logoTargets.current = sampleLogoSurface(model.group, undefined, 1);
+          logoTargets.current = sampleLogoSurface(model.group, compact ? 10_000 : undefined, 1);
         }
-        model.setViewport?.(
-          gl.domElement.clientWidth,
-          gl.domElement.clientHeight,
-        );
+        const viewport = gl.getSize(new THREE.Vector2());
+        model.setViewport?.(viewport.x, viewport.y);
         model.group.visible = false;
         model.setQuality?.(qualityRef.current);
         const entry: ManagedModel = {
@@ -212,8 +217,6 @@ function SceneDirector({ quality }: { quality: number }) {
         );
         document.documentElement.classList.add(`has-${name}`);
         document.documentElement.classList.remove(`fallback-${name}`);
-        if (models.current.brain && !lost.current)
-          document.documentElement.classList.add("has-webgl");
         window.dispatchEvent(new CustomEvent("octagram:ready", { detail: name }));
         invalidate();
       } catch (error) {
@@ -221,14 +224,14 @@ function SceneDirector({ quality }: { quality: number }) {
         if (!alive.current || startedInGeneration !== generation.current)
           return;
         document.documentElement.classList.add(`fallback-${name}`);
-        if (name === "brain")
-          window.dispatchEvent(
-            new CustomEvent("octagram:ready", { detail: "fallback" }),
-          );
+        if (name === "brain") {
+          window.dispatchEvent(new CustomEvent("octagram:ready", { detail: "fallback" }));
+          if (compact) onFailure();
+        }
         console.warn(`Octagram: ${name} uses its static artwork.`, error);
       }
     },
-    [gl, invalidate],
+    [compact, gl, invalidate, onFailure],
   );
 
   useEffect(() => {
@@ -284,13 +287,18 @@ function SceneDirector({ quality }: { quality: number }) {
           readHeight: id === "vision" ? section?.querySelector<HTMLElement>(".vision-frame")?.offsetHeight : undefined,
         };
       }
-      const brainWindow = window.matchMedia("(max-width: 800px)").matches
-        ? document.querySelector(".hero-artwork")?.getBoundingClientRect()
-        : null;
-      heroFrame.current = brainWindow ? {
-        top: brainWindow.top + window.scrollY, left: brainWindow.left,
-        height: brainWindow.height, width: brainWindow.width,
-      } : null;
+      if (compact) {
+        const heroPoster = document.querySelector<HTMLElement>(".brain-poster");
+        const vision = document.querySelector<HTMLElement>(".vision-frame");
+        const poster = vision?.querySelector<HTMLElement>(".logo-poster");
+        heroFrame.current = heroPoster ? measureArtwork(heroPoster, -window.scrollY, 108 / 102) : undefined;
+        visionWindow.current = vision && poster ? {
+          ...measureArtwork(poster, vision.getBoundingClientRect().top),
+          ...bounds.current.vision,
+          readingHeight: bounds.current.vision.readHeight ?? innerHeight,
+          sticky: getComputedStyle(vision).position === "sticky",
+        } : undefined;
+      }
       const roots = document.querySelector<HTMLElement>(".roots-handoff > .jordan");
       const planetWindow = roots?.querySelector<HTMLElement>(".roots-planet-window");
       if (roots && planetWindow) {
@@ -308,20 +316,11 @@ function SceneDirector({ quality }: { quality: number }) {
     stageElement.current = gl.domElement.closest<HTMLElement>(".experience-stage");
     measure();
     scrolling.current.position = window.scrollY;
-    entrance.current.progress = document.documentElement.classList.contains(
-      "experience-entered",
-    )
-      ? 1
-      : 0;
-    const enter = () => {
-      if (entrance.current.progress >= 1 || gsap.isTweening(entrance.current)) return;
-      gsap.killTweensOf(entrance.current);
-      gsap.to(entrance.current, {
-        progress: 1,
-        duration: 1.4,
-        ease: "power2.out",
-        onUpdate: invalidate,
-      });
+    const root = document.documentElement;
+    debug.current = new URLSearchParams(location.search).has("debugmotion");
+    heroVisible.current = root.dataset.heroVisible === "true";
+    const revealHero = () => {
+      heroVisible.current = true;
       invalidate();
     };
     // Native scrolling owns document position. Only the sculpture camera is damped;
@@ -345,20 +344,21 @@ function SceneDirector({ quality }: { quality: number }) {
       if (!hidden.current) invalidate();
     };
     const onLost = (event: Event) => {
-      event.preventDefault();
+      if (!compact) event.preventDefault();
       lost.current = true;
       clearSceneFlags();
       window.dispatchEvent(
         new CustomEvent("octagram:ready", { detail: "fallback" }),
       );
+      if (compact) onFailure();
     };
     const onRestored = () => {
       lost.current = false;
       Object.keys(models.current).forEach((name) =>
         document.documentElement.classList.add(`has-${name}`),
       );
-      if (models.current.brain)
-        document.documentElement.classList.add("has-webgl");
+      if (heroVisible.current && entrance.current.started && models.current.brain)
+        root.classList.add("has-webgl");
       gl.toneMappingExposure = 1.12;
       invalidate();
     };
@@ -367,7 +367,11 @@ function SceneDirector({ quality }: { quality: number }) {
       measure();
       invalidate();
     };
-    const onScroll = () => invalidate();
+    const onScroll = () => {
+      clearTimeout(nextFrame.current);
+      nextFrame.current = 0;
+      if (heroVisible.current) invalidate();
+    };
     // Re-measure geometry only; never write scroll position during layout changes.
     let refreshTimer: ReturnType<typeof setTimeout>;
     const resizeObserver = new ResizeObserver(() => {
@@ -383,9 +387,7 @@ function SceneDirector({ quality }: { quality: number }) {
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", measure, { passive: true });
     document.addEventListener("pointerleave", onPointerLeave);
-    window.addEventListener("octagram:entered", enter);
-    window.addEventListener("octagram:hero-prepare", enter);
-    if (document.documentElement.dataset.heroPrepared) enter();
+    window.addEventListener("octagram:hero-visible", revealHero);
     window.addEventListener("octagram:menu", onMenu);
     window.addEventListener("pageshow", onPageShow);
     document.addEventListener("visibilitychange", onVisibility);
@@ -397,15 +399,14 @@ function SceneDirector({ quality }: { quality: number }) {
     return () => {
       alive.current = false;
       generation.current += 1;
-      gsap.killTweensOf(entrance.current);
+      clearTimeout(nextFrame.current);
       resizeObserver.disconnect();
       clearTimeout(refreshTimer);
       window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", measure);
       document.removeEventListener("pointerleave", onPointerLeave);
-      window.removeEventListener("octagram:entered", enter);
-      window.removeEventListener("octagram:hero-prepare", enter);
+      window.removeEventListener("octagram:hero-visible", revealHero);
       window.removeEventListener("octagram:menu", onMenu);
       window.removeEventListener("pageshow", onPageShow);
       document.removeEventListener("visibilitychange", onVisibility);
@@ -421,28 +422,19 @@ function SceneDirector({ quality }: { quality: number }) {
       if (stageElement.current) stageElement.current.style.clipPath = "";
       setLoaded([]);
     };
-  }, [ensure, gl, invalidate]);
+  }, [compact, ensure, gl, invalidate, onFailure]);
 
   useFrame(({ clock }, delta) => {
-    if (hidden.current || lost.current || menuOpen.current) return;
+    if (!heroVisible.current || hidden.current || lost.current || menuOpen.current) return;
     const b = bounds.current;
     if (!b.vision) return;
-    const h = size.height,
-      mobile = size.width < 768;
+    const h = size.height, actualScroll = Math.max(0, window.scrollY);
+    const dt = Math.min(delta, .12), time = clock.elapsedTime * .65;
     scrolling.current.position = THREE.MathUtils.damp(
-      scrolling.current.position,
-      window.scrollY,
-      2.4,
-      Math.min(delta, 0.06),
+      scrolling.current.position, actualScroll, compact ? 8 : 2.4, dt,
     );
-    const y = scrolling.current.position,
-      time = clock.elapsedTime * 0.65;
-    const actualScroll = window.scrollY;
-    const targetProgress = narrativeProgress(actualScroll, b, h);
-    // Copy, camera, mark and flying pieces share one finite chapter playhead.
     const playback = readPassageFrame();
-    const progress = playback?.owns && (playback.running || (targetProgress >= 2.7 && targetProgress < 5))
-      ? playback.progress : targetProgress >= 3 ? targetProgress : narrativeProgress(y, b, h);
+    const progress = sceneProgress(actualScroll, scrolling.current.position, b, h, playback);
     if (actualScroll >= b.team.top && actualScroll + h < b.contact.top) {
       if (!camera.userData.sceneIdle) {
         Object.values(models.current).forEach((entry) => fade(entry, 0));
@@ -456,18 +448,23 @@ function SceneDirector({ quality }: { quality: number }) {
       void ensure("logo");
     if (progress > 2.7 || actualScroll + h * 2 > b.jordan.top)
       void ensure("globe");
-    const current = evaluateNarrative(progress, mobile, size.width < 1024 && size.height > size.width);
-    const brainWindow = heroFrame.current;
-    const framing = brainWindow ? 1 - THREE.MathUtils.smoothstep(progress, .16, .77) : 0;
-    if (framing && brainWindow) {
-      const focal = h / (2 * Math.tan(25 * Math.PI / 180));
-      const worldPerPixel = (current.cameraZ - current.brain.z) / focal;
-      const centerX = brainWindow.left + brainWindow.width / 2 - size.width / 2;
-      const centerY = h / 2 - (brainWindow.top - actualScroll + brainWindow.height / 2);
-      const portraitWidth = Math.min(brainWindow.width, brainWindow.height * 1080 / 1020);
-      current.brain.x = THREE.MathUtils.lerp(current.brain.x, centerX * worldPerPixel, framing);
-      current.brain.y = THREE.MathUtils.lerp(current.brain.y, centerY * worldPerPixel, framing);
-      current.brain.scale = THREE.MathUtils.lerp(current.brain.scale, portraitWidth * worldPerPixel / 9.5, framing);
+    const current = framedNarrative(progress, actualScroll, {
+      ...size, hero: heroFrame.current, vision: visionWindow.current,
+    }, scrolling.current.position);
+    const root = document.documentElement;
+    const reveal = entrance.current;
+    if (models.current.brain) {
+      if (!reveal.started) {
+        reveal.started = true;
+        reveal.elapsed = initialBrainRevealTime(root.dataset, progress);
+        root.classList.add("has-webgl");
+      }
+      if (reveal.progress < 1) {
+        reveal.elapsed = Math.min(brainRevealSeconds, reveal.elapsed + Math.min(dt, .065));
+        const t = reveal.elapsed / brainRevealSeconds;
+        reveal.progress = t * t * (3 - 2 * t);
+        if (t === 1) root.dataset.brainRevealed = "true";
+      }
     }
     const damping = 1 - Math.exp(-4 * Math.min(delta, 0.06));
     const input = smoothedPointer.current;
@@ -552,7 +549,7 @@ function SceneDirector({ quality }: { quality: number }) {
       fade(
         m.modules,
         current.ambientOpacity * (1 + .22 * paletteWeight) *
-        (1 - framing * .5) *
+        (1 - current.framing * .5) *
         entrance.current.progress *
         (actualScroll >= b.team.top - h * 0.3 ? 0.16 : 1),
       );
@@ -569,33 +566,41 @@ function SceneDirector({ quality }: { quality: number }) {
     camera.userData.opticalFocus = progress >= 3.86 && progress < 5.7
       ? 10 : Math.max(.25, current.cameraZ);
     if (preciseCamera) camera.rotation.set(0, 0, 0);
-    const canvas = gl.domElement;
-    canvas.dataset.progress = progress.toFixed(3);
-    canvas.dataset.brainParticles = String(
-      m.brain?.model.group.userData.particleCount ?? 0,
-    );
-    canvas.dataset.brainMorph = (logoTargets.current ? current.brainMorph : 0).toFixed(3);
-    canvas.dataset.brainSpread = (logoTargets.current ? current.brainSpread : 0).toFixed(3);
-    if (m.logo)
-      canvas.dataset.logoRotation = m.logo.model.group.rotation
-        .toArray()
-        .slice(0, 3)
-        .join(",");
-    canvas.dataset.choreography = "logo-passage-roots";
-    canvas.dataset.cameraDepth = current.cameraZ.toFixed(3);
-    canvas.dataset.logoPassage = current.passage.toFixed(3);
-    canvas.dataset.ambientFlow = progress >= 2.6 && progress < 3.85 ? "logo-axis" : "ambient";
-    canvas.dataset.brainYaw = current.brain.yaw.toFixed(3);
-    canvas.dataset.scrollScrub = playback?.owns ? "chapter-playback" : "native-damped";
-    canvas.dataset.passagePhase = playback?.phase ?? "native";
-    canvas.dataset.logoAssembly = current.assembly.toFixed(3);
-    canvas.dataset.brainDepth = current.brain.z.toFixed(3);
-    canvas.dataset.globeDepth = current.globe.z.toFixed(3);
-    canvas.dataset.globeReveal = Math.min(1, scene.elapsed / 3.2).toFixed(3);
-    canvas.dataset.globeActive = String(globeVisible);
-    // Keep the existing living materials and ambient pieces animated. Pausing,
-    // reduced motion, hidden documents and the menu still suspend this loop.
-    invalidate();
+    if (debug.current) {
+      const canvas = gl.domElement;
+      canvas.dataset.progress = progress.toFixed(3);
+      canvas.dataset.brainParticles = String(
+        m.brain?.model.group.userData.particleCount ?? 0,
+      );
+      canvas.dataset.brainMorph = (logoTargets.current ? current.brainMorph : 0).toFixed(3);
+      canvas.dataset.brainSpread = (logoTargets.current ? current.brainSpread : 0).toFixed(3);
+      if (m.logo)
+        canvas.dataset.logoRotation = m.logo.model.group.rotation
+          .toArray()
+          .slice(0, 3)
+          .join(",");
+      canvas.dataset.choreography = "logo-passage-roots";
+      canvas.dataset.cameraDepth = current.cameraZ.toFixed(3);
+      canvas.dataset.logoPassage = current.passage.toFixed(3);
+      canvas.dataset.ambientFlow = progress >= 2.6 && progress < 3.85 ? "logo-axis" : "ambient";
+      canvas.dataset.brainYaw = current.brain.yaw.toFixed(3);
+      canvas.dataset.scrollScrub = playback?.owns ? "chapter-playback" : "native-damped";
+      canvas.dataset.passagePhase = playback?.phase ?? "native";
+      canvas.dataset.logoAssembly = current.assembly.toFixed(3);
+      canvas.dataset.brainDepth = current.brain.z.toFixed(3);
+      canvas.dataset.globeDepth = current.globe.z.toFixed(3);
+      canvas.dataset.globeReveal = Math.min(1, scene.elapsed / 3.2).toFixed(3);
+      canvas.dataset.globeActive = String(globeVisible);
+      canvas.dataset.brainReveal = reveal.progress.toFixed(3);
+    }
+    if (!models.current.brain && !models.current.globe) return;
+    if (compact && Math.abs(actualScroll - scrolling.current.position) < 1 && !playback?.running && reveal.progress === 1) {
+      clearTimeout(nextFrame.current);
+      nextFrame.current = window.setTimeout(() => {
+        nextFrame.current = 0;
+        invalidate();
+      }, 30);
+    } else invalidate();
   });
 
   return (
@@ -634,10 +639,10 @@ function FrameMetrics({ onSample }: { onSample: (fps: number) => void }) {
   return null;
 }
 
-export default function Experience({ onFailure }: { onFailure: () => void }) {
+export default function Experience({ compact, onFailure }: { compact: boolean; onFailure: () => void }) {
   const maximumDpr = Math.min(
     window.devicePixelRatio || 1,
-    innerWidth < 600 ? 1.35 : 1.75,
+    compact ? Math.min(1.1, Math.sqrt(625_000 / (innerWidth * innerHeight))) : 1.75,
   );
   const [dpr, setDpr] = useState(maximumDpr);
   const [quality, setQuality] = useState(1);
@@ -670,9 +675,8 @@ export default function Experience({ onFailure }: { onFailure: () => void }) {
           camera={{ fov: 50, near: 0.1, far: 80, position: [0, 0, 10] }}
           gl={{
             alpha: true,
-            antialias: innerWidth > 600,
-            powerPreference:
-              innerWidth < 768 ? "low-power" : "high-performance",
+            antialias: !compact && innerWidth > 600,
+            powerPreference: compact ? "low-power" : "high-performance",
           }}
           fallback={<span />}
           onCreated={({ gl }) => {
@@ -682,24 +686,24 @@ export default function Experience({ onFailure }: { onFailure: () => void }) {
           }}
         >
           <PerformanceMonitor
-            bounds={() => [36, 55]}
+            bounds={() => compact ? [18, 35] : [36, 55]}
             flipflops={3}
             onIncline={performance}
             onDecline={performance}
             onChange={(api) => {
               performance(api);
               setQuality(0.55 + api.factor * 0.45);
-              setDpr(Math.min(maximumDpr, 0.9 + api.factor * 0.85));
+              setDpr(Math.min(maximumDpr, compact ? 0.7 + api.factor * .4 : .9 + api.factor * .85));
             }}
             onFallback={(api) => {
               performance(api);
               setQuality(0.5);
-              setDpr(1);
+              setDpr(compact ? .75 : 1);
             }}
           >
-            <SceneDirector quality={quality} />
-            <FrameMetrics onSample={sample} />
-            <CinematicPost quality={quality} />
+            <SceneDirector quality={quality} compact={compact} onFailure={onFailure} />
+            {new URLSearchParams(location.search).has("debugmotion") && <FrameMetrics onSample={sample} />}
+            {!compact && <CinematicPost quality={quality} />}
           </PerformanceMonitor>
         </Canvas>
       </SceneBoundary>

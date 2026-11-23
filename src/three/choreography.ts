@@ -34,6 +34,28 @@ export function narrativeProgress(scroll: number, bounds: NarrativeBounds, heigh
   if (scroll < teamEnd) return 5 + 0.7 * ramp(scroll, bounds.team.top, teamEnd);
   return 5.7 + 0.3 * ramp(scroll, bounds.contact.top - height * 0.8, bounds.contact.top);
 }
+export type ArtworkFrame = { x: number; y: number; size: number };
+export type VisionWindow = ArtworkFrame & {
+  top: number; height: number; readingHeight: number; sticky: boolean;
+};
+export type SceneViewport = {
+  width: number; height: number;
+  hero?: ArtworkFrame;
+  vision?: VisionWindow;
+};
+
+export function sceneProgress(
+  scroll: number,
+  easedScroll: number,
+  bounds: NarrativeBounds,
+  height: number,
+  passage?: { progress: number; owns: boolean; running: boolean },
+) {
+  const target = narrativeProgress(scroll, bounds, height);
+  if (passage?.owns && (passage.running || (target >= 2.7 && target < 5))) return passage.progress;
+  return target >= 3 ? target : narrativeProgress(easedScroll, bounds, height);
+}
+
 export interface ShotPose {
   x: number; y: number; z: number; scale: number; opacity: number; yaw: number; pitch: number;
 }
@@ -109,6 +131,42 @@ export function evaluateNarrative(progress: number, mobile = false, portrait = m
       ? mix(10, -4, ease(ramp(p, 3.32, 4.08)))
       : curve(p, [[0, 10], [0.65, 10.45], [1.12, 10], [2.35, 10.2], [3.32, 10], [4.08, -4], [5.7, -4], [6, 10]]),
   };
+}
+
+/** Both renderers use the same camera poses and the same artwork framing. */
+export function framedNarrative(
+  progress: number, scroll: number, viewport: SceneViewport, easedScroll = scroll,
+) {
+  const { width, height, hero, vision } = viewport;
+  const scene = evaluateNarrative(progress, width < 768, width < 1024 && height > width);
+  const focal = height / (2 * Math.tan(25 * Math.PI / 180));
+  const framing = hero ? 1 - ease(ramp(progress, .16, .77)) : 0;
+  if (framing && hero) {
+    const units = (scene.cameraZ - scene.brain.z) / focal;
+    scene.brain.x = mix(scene.brain.x, (hero.x - width / 2) * units, framing);
+    scene.brain.y = mix(scene.brain.y, (height / 2 - (hero.y - easedScroll)) * units, framing);
+    scene.brain.scale = mix(scene.brain.scale, hero.size * units / 9.5, framing);
+  }
+  if (vision && progress < 3.53) {
+    const offset = vision.top - scroll;
+    const frameTop = vision.sticky
+      ? Math.min(Math.max(0, offset), offset + Math.max(0, vision.height - vision.readingHeight))
+      : offset;
+    const centerY = vision.y + Math.min(frameTop, height * .12);
+    const fit = 1 - ease(ramp(progress, 3.32, 3.53));
+    const units = (scene.cameraZ - scene.logo.z) / focal;
+    const alignment = ease(ramp(progress, 2.3, 2.98));
+    const targetX = (vision.x - width / 2) * units;
+    const targetY = (height / 2 - centerY) * units;
+    // The mark occupies 3.5 of the 3.7 units that represent the SVG view box.
+    const targetScale = vision.size * units / 3.7;
+    for (const [axis, target] of [["x", targetX], ["y", targetY], ["scale", targetScale]] as const) {
+      const shift = (target - scene.logo[axis]) * fit;
+      scene.logo[axis] += shift;
+      scene.brain[axis] += shift * alignment;
+    }
+  }
+  return { ...scene, framing };
 }
 
 /** Shared chapter playhead supplies the travel; a quiet orbit keeps the hold alive. */

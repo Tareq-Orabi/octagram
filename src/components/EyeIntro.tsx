@@ -54,7 +54,7 @@ export default function EyeIntro() {
       if (lastPose !== name) overlay.dataset.eyePhase = lastPose = name;
     };
     const stop = () => {
-      if (stopped || document.hidden) return;
+      if (stopped) return;
       stopped = true;
       cancelAnimationFrame(frame);
       window.removeEventListener("resize", painter.resize);

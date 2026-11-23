@@ -11,8 +11,23 @@ html, body { background:#000; }
 :is(h2,h3,button,summary):hover .explore-letter,
 :is(button,summary):focus-visible .explore-letter { animation:discovery-letter 700ms calc(var(--hover-letter)*14ms) cubic-bezier(.2,.7,.2,1) both; }
 @keyframes discovery-letter { 0%,100%{translate:0 0;rotate:0deg}40%{translate:0 -.09em;rotate:-3deg;color:var(--hover-accent,var(--brand-peach))}65%{translate:0 .025em;rotate:1deg} }
-.hero-glyph { transition:color 350ms,translate 450ms; }
-.hero-glyph-cell:hover .hero-glyph { color:var(--brand-peach);translate:0 -.055em; }
+.hero-glyph-bit {
+  color: #d8f9eb; text-shadow: 0 0 .2em #86e7be90;
+  font: 650 .73em/1 ui-monospace, Consolas, monospace;
+  letter-spacing: 0; opacity: 0; pointer-events: none;
+}
+.hero-glyph-cell[data-glyph-spark] .hero-glyph-face { animation: hero-letter-flip 460ms both; }
+.hero-glyph-cell[data-glyph-spark] .hero-glyph-bit { animation: hero-bit-flicker 460ms both; }
+@keyframes hero-letter-flip {
+  0%,100% { opacity: 1; transform: perspective(3em) rotateX(0); }
+  18%,72% { opacity: 0; transform: perspective(3em) rotateX(-86deg); }
+}
+@keyframes hero-bit-flicker {
+  0%,100% { opacity: 0; transform: perspective(3em) rotateX(82deg); }
+  17% { opacity: .86; transform: perspective(3em) rotateX(0); }
+  23% { opacity: .36; transform: perspective(3em) rotateX(0); }
+  31%,65% { opacity: .94; transform: perspective(3em) rotateX(0); }
+}
 :where(.side-copy>p,.portfolio-prose p,.principle-copy p) { transition:color 450ms; }
 :where(.side-copy>p,.portfolio-prose p,.principle-copy p):hover { color:#f3ece3; }
 :where(.manifesto-copy em,.contact-context strong,.roots-copy strong) { transition:filter 450ms,text-decoration-color 450ms; }
@@ -42,7 +57,7 @@ html, body { background:#000; }
 @media(prefers-reduced-motion:reduce) {
   .explore-letter{animation:none!important}
   .role-prototype-strip,.role-tech-panel{transition:none}
-  .hero-glyph-cell:hover .hero-glyph{translate:0 0}
+  .hero-glyph-cell[data-glyph-spark] :is(.hero-glyph-face,.hero-glyph-bit){animation:none}
 }
 .project-title-silver,.project-title-color{transition:filter 500ms,translate 600ms}
 .project-deck h3:hover :is(.project-title-silver,.project-title-color){filter:brightness(1.2);translate:0 -.025em}

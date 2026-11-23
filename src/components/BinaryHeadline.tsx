@@ -2,35 +2,74 @@
 
 import { useEffect, useRef } from "react";
 
-/** Real words reserve the layout; code resolves only after the intro clears. */
+/** The hidden glyphs reserve the headline while the visible letters change. */
 export default function BinaryHeadline({ lines, id }: { lines: string[]; id: string }) {
   const title = useRef<HTMLHeadingElement>(null);
+
   useEffect(() => {
     const element = title.current;
     if (!element) return;
     const abort = new AbortController(), { signal } = abort;
     const root = document.documentElement;
     const media = matchMedia("(prefers-reduced-motion: reduce)");
-    const compact = root.dataset.motionProfile === "compact";
     const rows = [...element.querySelectorAll<HTMLElement>(".decode-row")];
     const codes = rows.map(row => row.querySelector<HTMLElement>(".decode-code"));
+    const sparks = new Set<HTMLElement>();
     let visible = false, played = false, fontsReady = false, menuOpen = false;
     let heroVisible = root.dataset.heroVisible === "true";
     let frame = 0, started = 0, lastCode = -1;
+
     const staticMotion = () => media.matches || root.classList.contains("journey-paused");
-    const syncLetters = () => { element.dataset.letterMotion = String(!compact && visible && played && element.dataset.decode === "settled" && !document.hidden && !menuOpen && !staticMotion()); };
+    const motionActive = () => heroVisible && visible && played && element.dataset.decode === "settled" &&
+      !document.hidden && !menuOpen && !staticMotion();
+
     element.querySelectorAll<HTMLElement>(".hero-glyph").forEach(glyph => {
       glyph.style.setProperty("--glyph-duration", `${9 + Math.random() * 10}s`);
       glyph.style.setProperty("--glyph-delay", `${-Math.random() * 18}s`);
     });
+
+    function clearSparks() {
+      sparks.forEach(cell => cell.removeAttribute("data-glyph-spark"));
+      sparks.clear();
+    }
+
+    const syncLetters = () => {
+      const active = motionActive();
+      element.dataset.letterMotion = String(active);
+      if (!active) clearSparks();
+    };
+
+    element.addEventListener("pointerover", event => {
+      if (event.pointerType === "touch" || !motionActive() || !(event.target instanceof Element)) return;
+      const cell = event.target.closest<HTMLElement>(".hero-glyph-cell");
+      if (!cell || sparks.has(cell) || (event.relatedTarget instanceof Node && cell.contains(event.relatedTarget))) return;
+      const bit = cell.querySelector(".hero-glyph-bit");
+      if (!bit) return;
+      bit.textContent = Math.random() < .5 ? "0" : "1";
+      sparks.add(cell);
+      cell.setAttribute("data-glyph-spark", "");
+    }, { signal });
+
+    function clearSpark(event: AnimationEvent) {
+      if (event.animationName !== "hero-bit-flicker" || !(event.target instanceof Element)) return;
+      const cell = event.target.closest<HTMLElement>(".hero-glyph-cell");
+      if (!cell) return;
+      sparks.delete(cell);
+      cell.removeAttribute("data-glyph-spark");
+    }
+    element.addEventListener("animationend", clearSpark, { signal });
+    element.addEventListener("animationcancel", clearSpark, { signal });
+
     const finish = () => {
-      cancelAnimationFrame(frame); frame = 0;
+      cancelAnimationFrame(frame);
+      frame = 0;
       element.dataset.decode = "settled";
       rows.forEach(row => { row.dataset.signal = "settled"; row.style.setProperty("--decode-reveal", "1"); });
       root.dataset.heroTextReady = "true";
       syncLetters();
     };
     const duration = 220 + Math.max(0, rows.length - 1) * 100 + 760 + 550;
+
     const tick = (now: number) => {
       if (!visible || document.hidden || staticMotion()) { finish(); return; }
       const elapsed = now - started, step = Math.floor(elapsed / 80);
@@ -43,19 +82,24 @@ export default function BinaryHeadline({ lines, id }: { lines: string[]; id: str
         if (progress === 1 && row.dataset.signal !== "locked") row.dataset.signal = "locked";
       });
       lastCode = step;
-      if (elapsed < duration) frame = requestAnimationFrame(tick); else finish();
+      if (elapsed < duration) frame = requestAnimationFrame(tick);
+      else finish();
     };
+
     const start = () => {
       if (signal.aborted || played || !fontsReady || !visible || !heroVisible || document.hidden) return;
       played = true;
       if (staticMotion() || root.dataset.introTimedOut || root.dataset.introRecovered) { finish(); return; }
-      started = performance.now(); element.dataset.decode = "decoding";
+      started = performance.now();
+      element.dataset.decode = "decoding";
       rows.forEach(row => { row.dataset.signal = "decoding"; });
       frame = requestAnimationFrame(tick);
     };
-    const observer = new IntersectionObserver(entries => {
-      visible = entries[0].isIntersecting;
-      if (visible) start(); else if (played) finish();
+
+    const observer = new IntersectionObserver(([entry]) => {
+      visible = entry.isIntersecting && entry.intersectionRatio >= .2;
+      if (visible) start();
+      else if (frame) finish();
       syncLetters();
     }, { threshold: .2 });
     if (staticMotion() || root.dataset.introTimedOut || root.dataset.introRecovered) { played = true; finish(); }
@@ -67,21 +111,42 @@ export default function BinaryHeadline({ lines, id }: { lines: string[]; id: str
       start();
     });
     observer.observe(element);
-    window.addEventListener("octagram:hero-visible", () => { heroVisible = true; start(); }, { signal });
+    window.addEventListener("octagram:hero-visible", () => { heroVisible = true; start(); syncLetters(); }, { signal });
     window.addEventListener("octagram:hero-settle", () => { played = true; finish(); }, { signal });
     window.addEventListener("octagram:motion", event => {
       if ((event as CustomEvent<boolean>).detail || staticMotion()) { played = true; finish(); } else start();
       syncLetters();
     }, { signal });
-    media.addEventListener("change", () => { if (media.matches) { played = true; finish(); } else start(); }, { signal });
-    document.addEventListener("visibilitychange", () => { if (document.hidden && played) finish(); else start(); syncLetters(); }, { signal });
+    media.addEventListener("change", () => { if (media.matches) { played = true; finish(); } else start(); syncLetters(); }, { signal });
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden && frame) finish();
+      else start();
+      syncLetters();
+    }, { signal });
     window.addEventListener("octagram:menu", event => { menuOpen = Boolean((event as CustomEvent<boolean>).detail); syncLetters(); }, { signal });
-    return () => { abort.abort(); observer.disconnect(); cancelAnimationFrame(frame); };
+    return () => {
+      abort.abort();
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+      element.dataset.letterMotion = "false";
+      clearSparks();
+    };
   }, []);
 
   return <h1 ref={title} id={id} className="binary-headline" data-decode="waiting" aria-label={lines.join(" ")}>
     {lines.map(line => <span className="hero-line decode-row" key={line} aria-hidden="true">
-      <span className="decode-ink"><span className="decode-word">{[...line].map((letter,index)=>letter === " " ? <span className="hero-glyph-space" key={index}>&nbsp;</span> : <span className="hero-glyph-cell" key={index}><span className="hero-glyph-reserve">{letter}</span><span className="hero-glyph">{letter}</span></span>)}</span><span className="decode-code">0101 0010 0110 1010 1100 0101 0010</span></span>
+      <span className="decode-ink">
+        <span className="decode-word">
+          {[...line].map((letter, index) => letter === " "
+            ? <span className="hero-glyph-space" key={index}>&nbsp;</span>
+            : <span className="hero-glyph-cell" key={index}>
+                <span className="hero-glyph-reserve">{letter}</span>
+                <span className="hero-glyph-face"><span className="hero-glyph">{letter}</span></span>
+                <span className="hero-glyph-bit">0</span>
+              </span>)}
+        </span>
+        <span className="decode-code">0101 0010 0110 1010 1100 0101 0010</span>
+      </span>
     </span>)}
   </h1>;
 }

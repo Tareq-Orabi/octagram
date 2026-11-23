@@ -8,3 +8,10 @@ export function readMotionPreference(): boolean {
 }
 
 export const compactMotionQuery = "(max-width: 800px), (hover: none) and (pointer: coarse)";
+
+export const brainRevealSeconds = 1.4;
+
+export function initialBrainRevealTime({ heroIntro, brainRevealed }: DOMStringMap, progress: number) {
+  const openingCleared = heroIntro === "finished" || heroIntro === "skipped";
+  return openingCleared && brainRevealed !== "true" && progress <= .3 ? 0 : brainRevealSeconds;
+}

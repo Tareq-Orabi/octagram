@@ -58,7 +58,8 @@ function hsv(r: number, g: number, b: number) {
           : (r - g) / d + 4) / 6;
   return { h, s: v ? d / v : 0, v };
 }
-export function createBrain(THREE: ThreeModule) {
+export function createBrain(THREE: ThreeModule, compact = false) {
+  const capacity = compact ? REFERENCE_PARTICLE_COUNT : PARTICLE_COUNT;
   const group = new THREE.Group();
   group.name = "reference-brain";
   let disposed = false,
@@ -66,6 +67,8 @@ export function createBrain(THREE: ThreeModule) {
     reveal = 1,
     spread = 0,
     morph = 0;
+  let settled = false, settleFrames = 0;
+  let previousReveal = -1, previousSpread = -1, previousMorph = -1;
   let previousTime = 0,
     previousX = POINTER_OFF,
     previousY = POINTER_OFF;
@@ -96,7 +99,7 @@ export function createBrain(THREE: ThreeModule) {
     transparent: true,
     depthWrite: true,
     depthTest: true,
-    vertexShader: `${SIMPLEX_NOISE}
+    vertexShader: `${compact ? "" : SIMPLEX_NOISE}
       attribute vec3 aCenter;
       attribute vec3 aColor;
       attribute vec3 aRandom;
@@ -120,7 +123,7 @@ export function createBrain(THREE: ThreeModule) {
         float stagger=clamp(uReveal*1.5-aRandom.x*.5,0.,1.);
         float show=stagger*stagger*(3.-2.*stagger);
         float scale=.1*(aScale*uParticleScale+influence*.75)*show;
-        vec3 local=rotateParticle(position,snoise(aCenter*.619)+uTime)*scale;
+        vec3 local=rotateParticle(position,${compact ? "aRandom.y*6.28318" : "snoise(aCenter*.619)"}+uTime)*scale;
         vec4 view=centerView+modelViewMatrix*vec4(local,0.);
         gl_Position=projectionMatrix*view;
         vColor=aColor;
@@ -153,7 +156,8 @@ export function createBrain(THREE: ThreeModule) {
     const mint = new THREE.Color("#9ac6b4"),
       teal = new THREE.Color("#3f8f91");
     const color = new THREE.Color();
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    const cream = new THREE.Color("#fff2d5");
+    for (let i = 0; i < capacity; i++) {
       const { h, s, v } = hsv(
         sourceColors[i * 3],
         sourceColors[i * 3 + 1],
@@ -161,7 +165,7 @@ export function createBrain(THREE: ThreeModule) {
       );
       if (s < 0.17) {
         color.copy(i % 3 === 0 ? mint : peach);
-        color.lerp(new THREE.Color("#fff2d5"), 0.48);
+        color.lerp(cream, 0.48);
       } else if (h < 0.08) color.copy(coral).lerp(orange, h / 0.08);
       else if (h < 0.21) color.copy(orange).lerp(lime, (h - 0.08) / 0.13);
       else if (h < 0.4) color.copy(lime).lerp(mint, (h - 0.21) / 0.19);
@@ -183,13 +187,12 @@ export function createBrain(THREE: ThreeModule) {
     )
       throw new Error("Invalid reference brain data");
     const referenceCount = header[2],
-      count = PARTICLE_COUNT,
+      count = capacity,
       vertexCount = header[3],
       indexCount = header[4];
     let offset = 32;
-    source = expandReferencePositions(
-      new Float32Array(buffer, offset, referenceCount * 3),
-    );
+    const reference = new Float32Array(buffer, offset, referenceCount * 3);
+    source = compact ? reference : expandReferencePositions(reference);
     offset += referenceCount * 12;
     const referenceScales = new Float32Array(buffer, offset, referenceCount);
     offset += referenceCount * 4;
@@ -210,9 +213,13 @@ export function createBrain(THREE: ThreeModule) {
         index * 3,
       );
     }
-    const vertices = new Float32Array(buffer, offset, vertexCount * 3);
+    const vertices = compact ? new Float32Array([
+      1, 0, 0, -1, 0, 0, 0, 1, 0, 0, -1, 0, 0, 0, 1, 0, 0, -1,
+    ]) : new Float32Array(buffer, offset, vertexCount * 3);
     offset += vertexCount * 12;
-    const indices = new Uint16Array(buffer, offset, indexCount);
+    const indices = compact ? new Uint16Array([
+      0, 2, 4, 2, 1, 4, 1, 3, 4, 3, 0, 4, 2, 0, 5, 1, 2, 5, 3, 1, 5, 0, 3, 5,
+    ]) : new Uint16Array(buffer, offset, indexCount);
     centers = source.slice();
     velocities = new Float32Array(count * 3);
     randoms = new Float32Array(count * 3);
@@ -239,7 +246,7 @@ export function createBrain(THREE: ThreeModule) {
     );
     geometry.instanceCount = Math.round(count * quality);
     const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = "20000-hollow-brain-particles";
+    mesh.name = "Octagram brain particles";
     group.userData.particleCount = count;
     mesh.frustumCulled = false;
     mesh.onBeforeRender = (renderer) => {
@@ -276,11 +283,21 @@ export function createBrain(THREE: ThreeModule) {
     const frame = Math.min(2, Math.max(0.1, (time - previousTime) * 60 || 1));
     previousTime = time;
     if (!centerAttribute) return;
+    if (reveal !== previousReveal || spread !== previousSpread || morph !== previousMorph) {
+      previousReveal = reveal;
+      previousSpread = spread;
+      previousMorph = morph;
+      settled = false;
+      settleFrames = 0;
+    }
+    if (settled) return;
+    settleFrames += frame;
+    settled = reduced || settleFrames >= 65;
     const friction = Math.pow(0.892, frame),
       spring = 0.006 * frame;
     const targetLength = targets?.length ?? 0;
     const lock = Math.pow(morph, 8) * .16;
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
+    for (let i = 0; i < (geometry?.instanceCount ?? capacity); i++) {
       const p = i * 3,
         order = randoms[p],
         scatter = 1 + spread * (1 + randoms[p + 1] * 4);
@@ -294,7 +311,7 @@ export function createBrain(THREE: ThreeModule) {
             : source[index];
         const base = source[index] + (target - source[index]) * morph;
         const desired = base * scatter * radius;
-        if (reduced) {
+        if (settled) {
           centers[index] = desired;
           velocities[index] = 0;
         } else {
@@ -310,8 +327,12 @@ export function createBrain(THREE: ThreeModule) {
     centerAttribute.needsUpdate = true;
   }
   function setQuality(factor: number) {
-    quality = clamp(factor, 0.7, 1);
-    if (geometry) geometry.instanceCount = Math.round(PARTICLE_COUNT * quality);
+    const next = clamp(factor, compact ? .6 : .7, 1);
+    if (next === quality) return;
+    quality = next;
+    if (geometry) geometry.instanceCount = Math.round(capacity * quality);
+    settled = false;
+    settleFrames = 65;
   }
   return {
     group,
@@ -332,7 +353,11 @@ export function createBrain(THREE: ThreeModule) {
     },
     // Retain the supplied buffer: the director can morph a reusable target without allocation.
     setMorph: (positions: Float32Array, value: number) => {
-      targets = positions;
+      if (targets !== positions) {
+        targets = positions;
+        settled = false;
+        settleFrames = 0;
+      }
       morph = clamp(value);
     },
     dispose: () => {

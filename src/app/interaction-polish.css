@@ -70,7 +70,12 @@
   --hero-palette-ink: #69aaff;
   --hero-palette-cursor: url("../assets/cursors/brain-blue.svg");
 }
-:is(.brain-poster, .intro-poster) { transition: filter 800ms ease-in-out; }
+.brain-poster { transition: opacity 1100ms ease-out, filter 800ms ease-in-out; }
+.intro-poster { transition: filter 800ms ease-in-out; }
+:root[data-hero-intro="pending"] .brain-poster { opacity: 0; }
+.brief-trigger-label { display: inline-flex; align-items: center; gap: .45em; }
+.brief-trigger-label svg, .clean-footer svg { flex: none; width: .95em; height: .95em; }
+.footer-top svg { width: 15px; height: 15px; }
 .hero-artwork { position: absolute; inset: 0; pointer-events: none; }
 .compact-brain-canvas {
   display: none;
@@ -91,7 +96,10 @@
   opacity: 0;
   transition: opacity 340ms ease-out;
 }
-:root[data-compact-brain] .logo-poster { opacity: var(--compact-logo-opacity, 1); }
+:root[data-compact-brain] .logo-poster {
+  opacity: var(--compact-logo-opacity, 1);
+  scale: var(--compact-logo-scale, 1);
+}
 :root:has(.company-hero[data-hero-palette]:not([data-hero-palette="original"])) :is(.brain-poster, .intro-poster) {
   filter: grayscale(1) sepia(1) saturate(4.7) hue-rotate(var(--hero-palette-hue)) brightness(1.14) contrast(1.1);
 }

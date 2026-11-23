@@ -148,8 +148,17 @@ export default function JourneyInteractions() {
     }
     function paintScene(now: number) {
       sceneFrame = 0;
-      if (signal.aborted || compact.matches || !measured) return;
+      if (signal.aborted || !measured || root.dataset.heroVisible !== "true") return;
       const scroll = window.scrollY, height = innerHeight;
+      const phone = compact.matches, storyVisible = scroll >= measured.vision.top - height * .12 && scroll < measured.jordan.top;
+      if (phone && !storyVisible) {
+        playback.update({ raw: 0, delta: 0, active: false, pass: false, direct: false, enabled: false });
+        publishPassageFrame(undefined);
+        lastPhase = "native";
+        lastTick = 0;
+        if (headingVisible) cueHeading(4.08);
+        return;
+      }
       const raw = narrativeProgress(scroll, measured, height);
       // Hysteresis chooses a complete clip, not a frame for every scroll pixel.
       const goingUp = scroll < lastScroll;
@@ -162,7 +171,7 @@ export default function JourneyInteractions() {
         raw, delta: paused || !lastTick ? 0 : (now - lastTick) / 1000,
         // Native momentum and a resize can briefly report the previous scroll
         // position. The gate owns this clip until it finishes or is skipped.
-        active: locked || (scroll >= measured.vision.top - height * .12 && scroll < measured.team.top),
+        active: locked || (phone ? storyVisible : scroll >= measured.vision.top - height * .12 && scroll < measured.team.top),
         pass: passRequested, direct: directEntry || (!locked && goingUp),
         enabled: !media.matches && !root.classList.contains("journey-paused"),
       });
@@ -182,14 +191,16 @@ export default function JourneyInteractions() {
       vision?.toggleAttribute("data-vision-return", returning);
       vision?.style.setProperty("--vision-return-opacity", String(frame.visionReveal ?? 1));
       publishPassageFrame(frame);
-      root.dataset.passagePhase = frame.phase;
-      root.dataset.passageProgress = frame.progress.toFixed(4);
-      root.style.setProperty("--passage-amount", Math.max(0, Math.min(1, (frame.progress - 3.18) / .9)).toFixed(5));
       const progress = frame.progress;
-      const scene = evaluateNarrative(progress, innerWidth < 768);
       cueHeading(progress);
-      vision?.style.setProperty("--vision-copy-opacity", scene.visionOpacity.toFixed(4));
-      roots?.style.setProperty("--roots-copy-opacity", scene.rootsOpacity.toFixed(4));
+      if (!phone) {
+        root.dataset.passagePhase = frame.phase;
+        root.dataset.passageProgress = progress.toFixed(4);
+        root.style.setProperty("--passage-amount", Math.max(0, Math.min(1, (progress - 3.18) / .9)).toFixed(5));
+        const scene = evaluateNarrative(progress, innerWidth < 768);
+        vision?.style.setProperty("--vision-copy-opacity", scene.visionOpacity.toFixed(4));
+        roots?.style.setProperty("--roots-copy-opacity", scene.rootsOpacity.toFixed(4));
+      }
       if (locked && (!frame.running || media.matches || root.classList.contains("journey-paused"))) {
         hideSkip();
         gate?.release();
@@ -199,10 +210,13 @@ export default function JourneyInteractions() {
       if (playing) scheduleScene();
     }
     function scheduleScene() {
-      if (!sceneFrame && !signal.aborted && !compact.matches) sceneFrame = requestAnimationFrame(paintScene);
+      if (sceneFrame || signal.aborted || !measured) return;
+      if (compact.matches && lastPhase === "native" &&
+        (window.scrollY < measured.vision.top - innerHeight * .12 || window.scrollY >= measured.jordan.top)) return;
+      sceneFrame = requestAnimationFrame(paintScene);
     }
     function measureScene() {
-      if (signal.aborted || compact.matches) return;
+      if (signal.aborted) return;
       const result = {} as NarrativeBounds;
       for (const id of ["home", "about", "manifesto", "vision", "jordan", "team", "contact"] as const) {
         const section = id === "jordan" ? roots : document.getElementById(id);
@@ -241,6 +255,7 @@ export default function JourneyInteractions() {
     window.addEventListener("hashchange", () => { directEntry = location.hash !== "#vision"; scheduleScene(); }, { signal });
     window.addEventListener("octagram:menu", ((event: CustomEvent<boolean>) => { menuOpen = event.detail; lastTick = 0; scheduleScene(); }) as EventListener, { signal });
     window.addEventListener("octagram:ready", scheduleScene, { signal });
+    window.addEventListener("octagram:hero-visible", scheduleScene, { signal });
     window.addEventListener("octagram:motion", motionChanged, { signal });
     window.addEventListener("octagram:passage-skip", () => finishPassage(), { signal });
     media.addEventListener("change", motionChanged, { signal });
@@ -256,11 +271,11 @@ export default function JourneyInteractions() {
         root.style.removeProperty("--passage-amount");
         vision?.removeAttribute("data-vision-return");
         vision?.style.removeProperty("--vision-return-opacity");
+        vision?.style.removeProperty("--vision-copy-opacity");
+        roots?.style.removeProperty("--roots-copy-opacity");
         publishPassageFrame(undefined);
-      } else {
-        gate ??= connectGate();
-        measureScene();
-      }
+      } else gate ??= connectGate();
+      measureScene();
     };
     compact.addEventListener("change", syncPassage, { signal });
     document.addEventListener("visibilitychange", () => {

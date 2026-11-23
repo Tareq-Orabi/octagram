@@ -166,7 +166,6 @@ export default function ServiceCards({ services }: { services: CompanyService[] 
                         <div className="service-feature-disclosure" id={details} inert={!open}>
                           <div className="service-feature-offerings">
                             <ul>{service.offerings.map(offering => <li key={offering}>{offering}</li>)}</ul>
-                            <a href="#contact">Discuss this service <span aria-hidden="true">↗</span></a>
                           </div>
                         </div>
                       </div>

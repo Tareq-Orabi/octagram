@@ -10,7 +10,7 @@ export const teamScenes = [
   {
     first: "Mazen", last: "Abu Tahoun", short: "Frontend", color: "#9ec6b4", light: "#effcf4", deep: "#41978b",
     statement: ["Make it", "feel right."],
-    skills: ["Frontend architecture", "Interface implementation", "Product requirements", "Digital experiences", "Technical coordination"],
+    skills: ["Building portfolios", "Landing pages", "Homepages", "Frontend architecture", "Interface implementation", "Product requirements", "Digital experiences", "Technical coordination"],
     artwork: ["Interfaces with presence", "Layers of experience", "Form in motion", "The details matter"],
     code: ["compose the interface", "connect the interaction", "adapt the experience", "refine the details"],
   },

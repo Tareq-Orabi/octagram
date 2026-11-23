@@ -5,7 +5,7 @@ import ProjectScenes from "@/components/ProjectScenes";
 import PortfolioField from "@/components/PortfolioField";
 import TeamStudio from "@/components/TeamStudio";
 import StudioMotion from "@/components/StudioMotion";
-import KineticLink, { AnimatedLabel } from "@/components/KineticLink";
+import KineticLink, { AnimatedLabel, ArrowIcon } from "@/components/KineticLink";
 import BinaryHeadline from "@/components/BinaryHeadline";
 import ExploreText from "@/components/ExploreText";
 import RotatingCta from "@/components/RotatingCta";
@@ -15,7 +15,6 @@ import ServiceCards from "@/components/ServiceCards";
 import EyeIntro from "@/components/EyeIntro";
 import EyeOutro from "@/components/EyeOutro";
 import ExperienceLoader from "@/components/ExperienceLoader";
-import CompactBrain from "@/components/CompactBrain";
 import SiteInteractions from "@/components/SiteInteractions";
 import { companyContent as content } from "@/lib/company-content";
 import { compactMotionQuery } from "@/lib/experience-preferences";
@@ -38,7 +37,6 @@ export default function HomePage() {
         Skip to content
       </a>
       <ExperienceLoader />
-      <CompactBrain />
       <EyeIntro />
       <header className="header" id="top">
         <NavBrand />
@@ -244,7 +242,7 @@ export default function HomePage() {
             <ContactContext />
             <details className="contact-panel">
               <summary className="button primary">
-                <span>Prepare a project brief <span aria-hidden="true">↗</span></span>
+                <span className="brief-trigger-label">Prepare a project brief <ArrowIcon /></span>
               </summary>
               <form id="contact-form">
                 <div className="form-row">
@@ -256,7 +254,7 @@ export default function HomePage() {
                       id="name"
                       name="name"
                       autoComplete="name"
-                      placeholder="e.g. Mohammed "
+                      placeholder="e.g. Leen Haddad"
                       required
                       maxLength={120}
                     />
@@ -270,7 +268,7 @@ export default function HomePage() {
                       name="email"
                       autoComplete="email"
                       type="email"
-                      placeholder="[EMAIL_ADDRESS]"
+                      placeholder="leen@example.com"
                       required
                       maxLength={254}
                     />
@@ -320,8 +318,8 @@ export default function HomePage() {
               <img src="/assets/brand/logo.svg" width="28" height="28" alt="" loading="lazy" />
               <span>OCTAGRAM</span>
             </a>
-            <nav aria-label="Octagram links"><a href="https://www.instagram.com/octagram.jo/" target="_blank" rel="noopener noreferrer">Instagram <span aria-hidden="true">↗</span></a><a href="https://wa.me/962780668491" target="_blank" rel="noopener noreferrer">WhatsApp <span aria-hidden="true">↗</span></a></nav>
-            <a href="#home" className="footer-top" aria-label="Back to top">Back to top <span aria-hidden="true">↑</span></a>
+            <nav aria-label="Octagram links"><a href="https://www.instagram.com/octagram.jo/" target="_blank" rel="noopener noreferrer">Instagram <ArrowIcon /></a><a href="https://wa.me/962780668491" target="_blank" rel="noopener noreferrer">WhatsApp <ArrowIcon /></a></nav>
+            <a href="#home" className="footer-top" aria-label="Back to top">Back to top <span aria-hidden="true"><ArrowIcon direction="up" /></span></a>
             <p className="footer-copyright">
               © <span id="year">{new Date().getFullYear()}</span> Octagram
             </p>

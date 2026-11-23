@@ -1,26 +1,15 @@
 import { heroPalettes } from "@/lib/hero-palettes";
-import { evaluateNarrative, ramp } from "./choreography";
+import { framedNarrative, sceneProgress, ramp, type NarrativeBounds, type SceneViewport, type ShotPose } from "./choreography";
+import type { PassageFrame } from "@/lib/chapter-playback";
 import { compactBrainSample } from "./compact-brain-sample";
 
-export type ArtworkFrame = { x: number; y: number; size: number };
-export type CompactBrainLayout = {
-  width: number;
-  height: number;
-  homeTop: number;
-  aboutTop: number;
-  manifestoTop: number;
-  visionTop: number;
-  visionHeight: number;
-  readingHeight: number;
-  stickyVision: boolean;
-  hero: ArtworkFrame;
-  about: ArtworkFrame;
-  logo: ArtworkFrame;
+export type CompactBrainLayout = SceneViewport & {
+  bounds: NarrativeBounds;
 };
 
 const originals = [0xec746c, 0xf38e57, 0xfab754, 0xf2e77b, 0xa3d4b3, 0x5ab5b1, 0xc4ded1, 0xf4c6a2];
 const stride = 7;
-const pixelBudget = 192_000;
+const pixelBudget = 174_000;
 const mix = (a: number, b: number, t: number) => a + (b - a) * t;
 const fraction = (value: number) => value - Math.floor(value);
 function smooth(value: number, from: number, to: number) {
@@ -28,36 +17,27 @@ function smooth(value: number, from: number, to: number) {
   return t * t * (3 - 2 * t);
 }
 
-export function compactBrainPose(layout: CompactBrainLayout, scroll: number, actualScroll: number) {
-  const { width, height, homeTop, aboutTop, manifestoTop, visionTop, visionHeight, readingHeight } = layout;
-  let progress = 3 + .32 * ramp(scroll, visionTop, visionTop + height * .32);
-  if (scroll < aboutTop) progress = ramp(scroll, homeTop, aboutTop);
-  else if (scroll < manifestoTop) progress = 1 + ramp(scroll, aboutTop, manifestoTop);
-  else if (scroll < visionTop) progress = 2 + ramp(scroll, manifestoTop, visionTop);
-
-  const story = evaluateNarrative(progress, true);
-  const travel = smooth(progress, .12, 1.08);
-  const scatterTravel = smooth(progress, 1.42, 2.16);
-  const heroY = layout.hero.y - Math.max(0, Math.min(height * .28, (scroll - homeTop) * .62));
-  const aboutY = layout.about.y + Math.max(-.11, Math.min(.12, (aboutTop - scroll) / height * .23)) * height;
-  const visionOffset = visionTop - actualScroll;
-  const logoTop = layout.stickyVision
-    ? Math.min(Math.max(0, visionOffset), visionOffset + visionHeight - readingHeight)
-    : visionOffset;
-  const logoY = logoTop + layout.logo.y;
-  const logoApproach = Math.max(height * .24, Math.min(height * .56, logoY));
+export function compactBrainPose(
+  layout: CompactBrainLayout, scroll: number, actualScroll: number, playback?: PassageFrame,
+) {
+  const { width, height, bounds } = layout;
+  const progress = sceneProgress(actualScroll, scroll, bounds, height, playback);
+  const scene = framedNarrative(progress, actualScroll, layout, scroll);
+  const focal = height / (2 * Math.tan(25 * Math.PI / 180));
+  const project = (pose: ShotPose) => {
+    const ratio = focal / Math.max(2, scene.cameraZ - pose.z);
+    return { x: width / 2 + pose.x * ratio, y: height / 2 - pose.y * ratio, scale: pose.scale * ratio };
+  };
+  const brain = project(scene.brain), logo = project(scene.logo);
   return {
-    x: mix(mix(layout.hero.x, layout.about.x, travel), width * .5, scatterTravel),
-    y: mix(mix(heroY, aboutY, travel), height * .47, scatterTravel),
-    size: mix(mix(layout.hero.size, layout.about.size, travel), Math.min(width * .91, height * .63), scatterTravel),
-    logoX: layout.logo.x,
-    logoY: mix(logoApproach, logoY, smooth(progress, 2.87, 3.12)),
-    logoSize: layout.logo.size,
-    logoOpacity: smooth(progress, 2.99, 3.17),
-    ambientOpacity: story.ambientOpacity * (1 - smooth(-visionOffset, height * .46, visionHeight)),
-    yaw: story.brain.yaw,
-    morph: story.brainMorph,
-    spread: story.brainSpread,
+    ...brain, progress,
+    logoX: logo.x, logoY: logo.y, logoSize: logo.scale * 3.7,
+    logoOpacity: scene.logo.opacity * (playback?.visionReveal ?? 1),
+    passage: scene.passage,
+    ambientOpacity: scene.ambientOpacity * (1 - scene.framing * .5),
+    yaw: scene.brain.yaw, pitch: scene.brain.pitch,
+    morph: scene.brainMorph, spread: scene.brainSpread,
+    brainOpacity: scene.brain.opacity,
   };
 }
 
@@ -140,14 +120,14 @@ export function createCompactBrain(canvas: HTMLCanvasElement, palette: string) {
     }
   }
 
-  function drawFragments(pose: ReturnType<typeof compactBrainPose>, seconds: number, scroll: number, lightweight: boolean) {
+  function drawFragments(pose: ReturnType<typeof compactBrainPose>, seconds: number, scroll: number, reveal: number, lightweight: boolean) {
     const halo = smooth(pose.morph, .12, 1);
     const spread = Math.min(width, height) * .48;
     context.lineWidth = .92;
     for (let group = 0; group < fragments.length; group++) {
       context.strokeStyle = context.fillStyle = colors[group];
       const solid = group % 3 === 0;
-      context.globalAlpha = pose.ambientOpacity * (solid ? .54 : .88);
+      context.globalAlpha = pose.ambientOpacity * reveal * (solid ? .66 : 1);
       context.beginPath();
       const pieces = fragments[group];
       for (let index = 0; index < (lightweight ? 5 : pieces.length); index++) {
@@ -168,16 +148,18 @@ export function createCompactBrain(canvas: HTMLCanvasElement, palette: string) {
     }
   }
 
-  function drawBrain(pose: ReturnType<typeof compactBrainPose>, seconds: number, lightweight: boolean, logoReady: boolean) {
-    context.globalAlpha = logoReady ? 1 - pose.logoOpacity : 1;
-    if (context.globalAlpha < .015) return;
-    const { x: midX, y: midY, size, morph, spread } = pose;
-    const swing = pose.yaw + (.065 + .20 * Math.sin(seconds * .68)) * (1 - morph);
-    const nod = (-.05 + .12 * Math.sin(seconds * .53 + .38)) * (1 - morph);
-    const cos = Math.cos(swing), sin = Math.sin(swing), tilt = Math.sin(nod), upright = Math.cos(nod);
+  function drawBrain(
+    pose: ReturnType<typeof compactBrainPose>, seconds: number, reveal: number,
+    opacity: number, lightweight: boolean,
+  ) {
+    if (opacity < .01 || reveal < .005) return;
+    context.globalAlpha = opacity;
+    const { x: midX, y: midY, scale, morph, spread } = pose;
+    const cos = Math.cos(pose.yaw), sin = Math.sin(pose.yaw);
+    const tilt = Math.sin(pose.pitch), upright = Math.cos(pose.pitch);
     const waveX = Math.sin(seconds * 1.5), waveY = Math.cos(seconds * 1.5);
-    const breath = size / 9.55 * (1 + .023 * Math.sin(seconds * .94));
-    const pointScale = Math.max(.66, size / 350);
+    const pointScale = Math.max(.59, scale / 36);
+    const revealing = reveal < 1;
 
     for (let group = 0; group < particles.length; group++) {
       const points = particles[group];
@@ -185,18 +167,21 @@ export function createCompactBrain(canvas: HTMLCanvasElement, palette: string) {
       context.beginPath();
       for (let at = 0; at < points.length; at += 8) {
         if (lightweight && at % 24 === 0) continue;
-        const x = points[at], y = points[at + 1], z = points[at + 2];
+        const x = points[at], y = points[at + 1], z = points[at + 2], motion = points[at + 4];
+        const show = revealing ? smooth(reveal, (motion + 1) * .25, (motion + 1) * .25 + .46) : 1;
+        if (show < .025) continue;
         const depth = z * cos - x * sin;
         const cameraZ = depth * upright + y * tilt;
-        const sway = waveX * points[at + 4] + waveY * points[at + 5];
-        const lens = breath * (1 + cameraZ * .038) * (1 + spread * (1.1 + points[at + 4] * .64));
-        const px = mix(midX + (x * cos + z * sin + sway * .047) * lens,
+        const sway = (waveX * motion + waveY * points[at + 5]) * (1 - morph);
+        const lens = scale * (1 + cameraZ * .038) * (1 + spread * (2.05 + motion * 1.5)) *
+          (1 + (1 - show) * (.14 + motion * .48));
+        const px = mix(midX + (x * cos + z * sin + sway * .043) * lens,
           pose.logoX + points[at + 6] * pose.logoSize, morph);
-        const py = mix(midY - (y * upright - depth * tilt + sway * .057) * lens,
+        const py = mix(midY - (y * upright - depth * tilt + sway * .053) * lens,
           pose.logoY + points[at + 7] * pose.logoSize, morph);
         if (px < -2 || py < -2 || px > width + 2 || py > height + 2) continue;
-        const radius = pointScale * (.41 + points[at + 3] * .91) * (.85 + cameraZ * .082 + sway * .09);
-        if (radius < .96) context.rect(px - radius * .66, py - radius * .66, radius * 1.32, radius * 1.32);
+        const radius = pointScale * (.42 + points[at + 3] * .93) * (.85 + cameraZ * .082 + sway * .09) * show;
+        if (radius < .92) context.rect(px - radius * .66, py - radius * .66, radius * 1.32, radius * 1.32);
         else {
           context.moveTo(px, py - radius);
           context.lineTo(px + radius * .81, py + radius * .64);
@@ -221,11 +206,14 @@ export function createCompactBrain(canvas: HTMLCanvasElement, palette: string) {
     setPalette(id: string) {
       destination = tones[Math.max(0, heroPalettes.findIndex(item => item.id === id))];
     },
-    draw(pose: ReturnType<typeof compactBrainPose>, seconds: number, dt: number, scroll: number, lightweight: boolean, logoReady: boolean) {
+    draw(
+      pose: ReturnType<typeof compactBrainPose>, seconds: number, dt: number, scroll: number, reveal: number,
+      brainOpacity: number, lightweight: boolean,
+    ) {
       context.clearRect(0, 0, width, height);
       colorFrame(dt, pose.morph);
-      drawFragments(pose, seconds, scroll, lightweight);
-      drawBrain(pose, seconds, lightweight, logoReady);
+      if (pose.ambientOpacity > .005) drawFragments(pose, seconds, scroll, reveal, lightweight);
+      drawBrain(pose, seconds, reveal, brainOpacity, lightweight);
     },
     dispose() {
       canvas.width = canvas.height = 1;

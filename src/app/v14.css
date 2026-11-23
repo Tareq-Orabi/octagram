@@ -28,9 +28,11 @@ html, body, .closing-scene, .eye-outro,
 .company-hero .hero-content { width: min(59%,800px); }
 .company-hero h1.binary-headline { font-size: clamp(43px,4.8vw,76px); line-height: 1.12; margin-bottom: 28px; }
 .company-hero .hero-description { max-width: 37ch; font-size: clamp(15px,1.2vw,18px); color: #c6c6c6; }
-.hero-glyph-cell { display: inline-grid; grid-template-areas: "glyph"; place-items: center; vertical-align: baseline; margin-inline: -.011em; }
-.hero-glyph-reserve, .hero-glyph { grid-area: glyph; }
+.hero-glyph-cell { position: relative; display: inline-grid; grid-template-areas: "glyph"; place-items: center; vertical-align: baseline; margin-inline: -.011em; }
+.hero-glyph-reserve, .hero-glyph-face { grid-area: glyph; }
 .hero-glyph-reserve { font-weight: 800; visibility: hidden; }
+.hero-glyph-face { display: grid; }
+.hero-glyph-bit { position: absolute; inset: 0; display: grid; place-items: center; }
 .hero-glyph { font-variation-settings: "wght" 650; animation: hero-letter-life var(--glyph-duration,14s) var(--glyph-delay,0s) ease-in-out infinite; animation-play-state: paused; }
 .hero-glyph-space { display: inline-block; width: .22em; }
 .binary-headline[data-letter-motion="true"] .hero-glyph { animation-play-state: running; }

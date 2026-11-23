@@ -21,7 +21,9 @@ export default function TeamStudio({ members }: { members: TeamMember[] }) {
           <p className="team-position"><i />{member.role}</p>
           <h3 className="team-gradient-name" id={`team-person-${index}`} aria-label={member.name}><span aria-hidden="true"><NameWord text={scene.first} offset={0}/><NameWord text={scene.last} offset={scene.first.length}/></span></h3>
           <p className="team-description">{member.description}</p>
-          <div className="team-person-actions">{member.url ? <KineticLink href={member.url} external className="team-profile-link" ariaLabel={`${member.name} on LinkedIn`}>Meet on LinkedIn</KineticLink> : <KineticLink href="#contact" className="team-profile-link">Let’s talk</KineticLink>}
+          <div className="team-person-actions">
+            {scene.short === "Frontend" && <KineticLink href="#contact" className="team-profile-link">Build your website</KineticLink>}
+            {member.url ? <KineticLink href={member.url} external className="team-profile-link" ariaLabel={`${member.name} on LinkedIn`}>Meet on LinkedIn</KineticLink> : <KineticLink href="#contact" className="team-profile-link">Let’s talk</KineticLink>}
             <button type="button" className="team-bio-trigger" data-open-stage-dialog={`team-bio-${index}`}>About the role <span aria-hidden="true">＋</span></button></div>
           <div className="team-skills" aria-label={`${member.name} skills`} tabIndex={0}><div className="team-skills-track">{[0,1].map(copy=><div className="team-skills-group" key={copy} aria-hidden={copy===1 ? true : undefined}>{scene.skills.map(skill=><span key={skill}><i>✦</i>{skill}</span>)}</div>)}</div></div>
         </div>
